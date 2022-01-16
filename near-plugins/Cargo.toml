@@ -1,0 +1,13 @@
+[package]
+name = "near-plugins"
+version = "0.1.0"
+authors = ["Marcelo Fornet <marcelo@aurora.dev>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+# proc-macro = true
+
+[dependencies]
+near-sdk = "4.0.0-pre.5"
+near-plugins-derive = { path = "../near-plugins-derive" }

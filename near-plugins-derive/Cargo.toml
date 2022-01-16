@@ -1,0 +1,14 @@
+[package]
+name = "near-plugins-derive"
+version = "0.1.0"
+authors = ["Marcelo Fornet <marcelo@aurora.dev>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+darling = "0.13.1"
+proc-macro2 = "1.0.26"
+quote = "1.0.9"
+syn = { version = "1.0.69", features = ["full"] }
