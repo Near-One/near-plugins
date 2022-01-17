@@ -1,4 +1,3 @@
-/// TODO
 use near_sdk::{env, AccountId};
 
 pub trait Ownable {
@@ -11,7 +10,7 @@ pub trait Ownable {
     fn is_owner(&self) -> bool;
 
     fn is_self(&self) -> bool {
-        near_sdk::env::current_account_id() == near_sdk::env::signer_account_id()
+        near_sdk::env::current_account_id() == near_sdk::env::predecessor_account_id()
     }
 
     fn assert_owner(&self) {
@@ -19,10 +18,8 @@ pub trait Ownable {
     }
 
     fn assert_owner_or_self(&self) {
-        let predecessor = env::predecessor_account_id();
-        let current = env::current_account_id();
         assert!(
-            predecessor == current || self.is_owner(),
+            self.is_self() || self.is_owner(),
             "Ownable: Function not called from self or owner"
         );
     }
