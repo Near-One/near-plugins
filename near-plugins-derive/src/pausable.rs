@@ -116,3 +116,5 @@ pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
     }
     .into()
 }
+
+// TODO: Macro that only runs when some functionality is paused #[if_paused("features")]
