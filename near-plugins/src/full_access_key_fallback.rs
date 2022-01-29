@@ -13,7 +13,7 @@ use crate::events::{AsEvent, EventMetadata};
 ///
 /// Contract must be Ownable. Only the owner can attach a new FAK.
 /// The owner can be set to any arbitrary NEAR account id, for example a DAO.
-use near_sdk::{AccountId, PublicKey};
+use near_sdk::{AccountId, Promise, PublicKey};
 use serde::Serialize;
 
 pub trait FullAccessKeyFallback {

@@ -71,7 +71,7 @@ struct Counter {
 }
 
 #[near_bindgen]
-impl Contract {
+impl Counter {
   /// Specify the owner of the contract in the constructor
   #[init]
   fn new() -> Self {
@@ -97,7 +97,7 @@ struct Counter {
 }
 
 #[near_bindgen]
-impl Contract {
+impl Counter {
   /// Specify the owner of the contract in the constructor
   #[init]
   fn new() -> Self {
@@ -148,7 +148,7 @@ impl Contract {
 }
 ```
 
-### [Upgradable](/near-plugins/src/pausable.rs)
+### [Upgradable](/near-plugins/src/upgradable.rs)
 
 Allows a contract to be upgraded by owner without having a Full Access Key.
 
@@ -162,7 +162,7 @@ struct Counter {
 }
 
 #[near_bindgen]
-impl Contract {
+impl Counter {
   /// Specify the owner of the contract in the constructor
   #[init]
   fn new() -> Self {
