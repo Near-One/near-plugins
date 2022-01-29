@@ -9,9 +9,10 @@ pub fn derive_fak_fallback(input: TokenStream) -> TokenStream {
     let output = quote! {
         #[near_bindgen]
         impl FullAccessKeyFallback for #ident {
-            #[check_only(self, owner)]
-            fn add_full_access_key(&mut self, public_key: near_sdk::PublicKey) -> near_sdk::Promise {
-                near_sdk::Promise::new(near_sdk::env::current_account_id()).add_full_access_key(public_key)
+            #[only(owner)]
+            fn attach_full_access_key(&mut self, public_key: ::near_sdk::PublicKey) -> near_sdk::Promise {
+                ::near_sdk::Promise::new(::near_sdk::env::current_account_id())
+                    .add_full_access_key(public_key)
             }
         }
     };

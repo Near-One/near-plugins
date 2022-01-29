@@ -1,4 +1,4 @@
-use crate::utils::is_near_bindgen_wrapped_code;
+use crate::utils::is_near_bindgen_wrapped_or_marshall;
 use darling::FromDeriveInput;
 use proc_macro::{self, TokenStream};
 use quote::quote;
@@ -75,7 +75,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
 pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse::<ItemFn>(item.clone()).unwrap();
 
-    if is_near_bindgen_wrapped_code(&input) {
+    if is_near_bindgen_wrapped_or_marshall(&input) {
         return item;
     }
 

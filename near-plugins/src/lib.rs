@@ -2,6 +2,7 @@ mod events;
 mod full_access_key_fallback;
 mod ownable;
 mod pausable;
+mod test_utils;
 mod upgradable;
 
 pub use full_access_key_fallback::FullAccessKeyFallback;
