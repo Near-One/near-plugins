@@ -19,40 +19,40 @@ Contract example using _Ownable_ plugin.
 #[near_bindgen]
 #[derive(Ownable)]
 struct Counter {
-  counter: u64
+  counter: u64,
 }
 
 #[near_bindgen]
-impl Contract {
+impl Counter {
   /// Specify the owner of the contract in the constructor
   #[init]
   fn new() -> Self {
-    let contract = Self { counter: 0 };
-    contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
-    contract
+      let mut contract = Self { counter: 0 };
+      contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
+      contract
   }
 
   /// Only owner account, or the contract itself can call this method.
   #[only(self, owner)]
-  fn protected_1(&mut self) {
-    self.counter += 1;
+  fn protected(&mut self) {
+      self.counter += 1;
   }
 
   /// *Only* owner account can call this method.
   #[only(owner)]
-  fn protected_2(&mut self) {
-    self.counter += 1;
+  fn protected_owner(&mut self) {
+      self.counter += 1;
   }
 
   /// *Only* self account can call this method. This can be used even if the contract is not Ownable.
   #[only(self)]
-  fn protected_3(&mut self) {
-    self.counter += 1;
+  fn protected_self(&mut self) {
+      self.counter += 1;
   }
 
   /// Everyone can call this method
   fn unprotected(&mut self) {
-    self.counter += 1;
+      self.counter += 1;
   }
 }
 ```

@@ -7,7 +7,7 @@
 ///
 /// Features are identified by keys.
 ///
-/// ## Default implementatino:
+/// ## Default implementation:
 ///
 /// Key "ALL" is understood to pause all "pausable" features at once.
 /// Provided implementation is optimized for the case where only a small amount of features are
@@ -56,5 +56,3 @@ struct Unpause {
     /// Key identifying the feature that was unpaused.
     key: String,
 }
-
-/// TODO: Macro that only runs when some functionality is paused #[on_pause("features", not_all)]

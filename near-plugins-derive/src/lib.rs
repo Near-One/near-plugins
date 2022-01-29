@@ -12,8 +12,8 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn check_only(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    ownable::check_only(attrs, item)
+pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    ownable::only(attrs, item)
 }
 
 #[proc_macro_derive(Upgradable, attributes(upgradable))]

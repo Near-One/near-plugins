@@ -16,7 +16,7 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
     let opts = Opts::from_derive_input(&input).expect("Wrong options");
     let DeriveInput { ident, .. } = input;
 
-    let owner_storage_key = opts.owner_storage_key.unwrap_or("__OWNER".to_string());
+    let owner_storage_key = opts.owner_storage_key.unwrap_or("__OWNER__".to_string());
 
     let output = quote! {
         #[near_bindgen]
@@ -24,21 +24,53 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
             fn owner_storage_key(&self) -> Vec<u8> {
                 (#owner_storage_key).as_bytes().to_vec()
             }
-            fn get_owner(&self) -> Option<AccountId> {
+
+            fn owner_get(&self) -> Option<::near_sdk::AccountId> {
                 ::near_sdk::env::storage_read(&self.owner_storage_key()).map(|owner_bytes| {
-                    let owner_raw = String::from_utf8(owner_bytes).expect("Ownable: Invalid string format");
-                    owner_raw.try_into().expect("Ownable: Invalid account id")
+                    let owner_raw =
+                        String::from_utf8(owner_bytes).expect("Ownable: Invalid string format");
+                    std::convert::TryInto::try_into(owner_raw).expect("Ownable: Invalid account id")
                 })
             }
 
-            fn set_owner(&mut self, owner: AccountId) {
-                self.assert_owner_or_self();
-                env::storage_write(&self.owner_storage_key(), owner.as_ref().as_bytes());
+            fn owner_set(&mut self, owner: Option<::near_sdk::AccountId>) {
+                let current_owner = self.owner_get();
+
+                if let Some(owner) = current_owner.as_ref() {
+                    assert_eq!(
+                        &::near_sdk::env::predecessor_account_id(),
+                        owner,
+                        "Ownable: Only owner can update current owner"
+                    );
+                } else {
+                    // If owner is not set, only self can update the owner.
+                    // Used mostly on constructor.
+                    assert_eq!(
+                        ::near_sdk::env::predecessor_account_id(),
+                        ::near_sdk::env::current_account_id(),
+                        "Ownable: Owner not set. Only self can set the owner"
+                    );
+                }
+
+                ::near_sdk::log!(crate::events::AsEvent::event(
+                    &crate::ownable::OwnershipTransferred {
+                        previous_owner: current_owner,
+                        new_owner: owner.clone()
+                    }
+                ));
+
+                match owner.as_ref() {
+                    Some(owner) => ::near_sdk::env::storage_write(
+                        &self.owner_storage_key(),
+                        owner.as_ref().as_bytes(),
+                    ),
+                    None => ::near_sdk::env::storage_remove(&self.owner_storage_key()),
+                };
             }
 
-            fn is_owner(&self) -> bool {
-                self.get_owner().map_or(false, |owner| {
-                    owner == env::predecessor_account_id()
+            fn owner_is(&self) -> bool {
+                self.owner_get().map_or(false, |owner| {
+                    owner == ::near_sdk::env::predecessor_account_id()
                 })
             }
         }
@@ -47,7 +79,7 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
     output.into()
 }
 
-pub fn check_only(attrs: TokenStream, item: TokenStream) -> TokenStream {
+pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse::<ItemFn>(item.clone()).unwrap();
     if is_near_bindgen_wrapped_code(&input) {
         return item;
@@ -71,17 +103,22 @@ pub fn check_only(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let stmts = &block.stmts;
 
     let owner_check = match (contains_self, contains_owner) {
-            (true, true) => quote! {
-                self.assert_owner_or_self();
-            },
-            (true, false) => quote! {
+        (true, true) => quote! {
+            let __predecessor_account_id = ::near_sdk::env::predecessor_account_id();
+            if self.owner_get() != Some(__predecessor_account_id) {
                 ::near_sdk::assert_self();
-            },
-            (false, true) => quote! {
-                self.assert_owner();
-            },
-            (false, false) => panic!("check_only attribute doesn't specify which account to check. Select at least one in [self, owner]."),
-        };
+            }
+        },
+        (true, false) => quote! {
+            ::near_sdk::assert_self();
+        },
+        (false, true) => quote! {
+            assert!(self.owner_is(), "Ownable: Method must be called from owner.");
+        },
+        (false, false) => panic!(
+            "Ownable::only macro target not specified. Select at least one in [self, owner]."
+        ),
+    };
 
     // https://stackoverflow.com/a/66851407
     quote! {
