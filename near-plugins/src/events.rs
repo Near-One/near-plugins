@@ -27,6 +27,10 @@ pub trait AsEvent<T: Serialize> {
             near_sdk::serde_json::to_string(&self.metadata()).unwrap()
         )
     }
+
+    fn emit(&self) {
+        near_sdk::log!(self.event());
+    }
 }
 
 #[cfg(test)]

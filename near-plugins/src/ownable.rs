@@ -1,6 +1,5 @@
 use crate::events::{AsEvent, EventMetadata};
-use near_sdk::serde::Serialize;
-/// # Ownable
+/// # Ownable:
 ///
 /// Trait which provides a basic access control mechanism, where
 /// there is an account (an owner) that can be granted exclusive access to
@@ -14,6 +13,7 @@ use near_sdk::serde::Serialize;
 /// Inspired by Open Zeppelin Ownable module:
 /// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol
 use near_sdk::AccountId;
+use serde::Serialize;
 
 pub trait Ownable {
     /// Key of storage slot to save the current owner.
@@ -201,7 +201,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = r#"Ownable: Method must be called from owner."#)]
+    #[should_panic(expected = r#"Ownable: Method must be called from owner"#)]
     fn protected_owner_self_fail() {
         let (mut counter, _) = setup_basic();
 
@@ -210,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = r#"Ownable: Method must be called from owner."#)]
+    #[should_panic(expected = r#"Ownable: Method must be called from owner"#)]
     fn protected_owner_fail() {
         let (mut counter, mut ctx) = setup_basic();
 

@@ -35,3 +35,8 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
 pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
     pausable::pause(attrs, item)
 }
+
+#[proc_macro_attribute]
+pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    pausable::if_paused(attrs, item)
+}

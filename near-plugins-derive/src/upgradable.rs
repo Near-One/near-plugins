@@ -14,7 +14,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
     let opts = Opts::from_derive_input(&input).expect("Wrong options");
     let DeriveInput { ident, .. } = input;
 
-    let code_storage_key = opts.code_storage_key.unwrap_or("__CODE".to_string());
+    let code_storage_key = opts.code_storage_key.unwrap_or("__CODE__".to_string());
 
     let output = quote! {
         #[near_bindgen]
@@ -46,7 +46,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             #[check_only(self, owner)]
             fn deploy_code(&mut self) -> near_sdk::Promise {
                 near_sdk::Promise::new(near_sdk::env::current_account_id())
-                    .deploy_contract(self.get_staged_code().expect("Upgradable: No staged code."))
+                    .deploy_contract(self.get_staged_code().expect("Upgradable: No staged code"))
             }
         }
     };

@@ -52,6 +52,7 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
                     );
                 }
 
+                // TODO: Use .emit
                 ::near_sdk::log!(crate::events::AsEvent::event(
                     &crate::ownable::OwnershipTransferred {
                         previous_owner: current_owner,
@@ -86,6 +87,7 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
     }
     let mut contains_self = false;
     let mut contains_owner = false;
+    // TODO: Use darling for this
     for attr in attrs {
         match attr.to_string().as_str() {
             "self" => contains_self = true,
@@ -113,11 +115,11 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
             ::near_sdk::assert_self();
         },
         (false, true) => quote! {
-            assert!(self.owner_is(), "Ownable: Method must be called from owner.");
+            assert!(self.owner_is(), "Ownable: Method must be called from owner");
         },
-        (false, false) => panic!(
-            "Ownable::only macro target not specified. Select at least one in [self, owner]."
-        ),
+        (false, false) => {
+            panic!("Ownable::only macro target not specified. Select at least one in [self, owner]")
+        }
     };
 
     // https://stackoverflow.com/a/66851407

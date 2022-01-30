@@ -12,6 +12,7 @@ pub fn derive_fak_fallback(input: TokenStream) -> TokenStream {
             #[only(owner)]
             fn attach_full_access_key(&mut self, public_key: ::near_sdk::PublicKey) -> near_sdk::Promise {
                 let current_account_id = ::near_sdk::env::current_account_id();
+                // TODO: Use .emit
                 ::near_sdk::log!(crate::events::AsEvent::event(
                     &crate::full_access_key_fallback::FullAccessKeyAdded {
                         by: current_account_id.clone(),

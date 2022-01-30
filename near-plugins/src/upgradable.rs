@@ -34,7 +34,6 @@ pub trait Upgradable {
     fn up_staged_code(&self) -> Option<Vec<u8>>;
 
     /// Returns hash of the staged code
-    /// TODO: Should we add a method that returns the hash in base58
     fn up_staged_code_hash(&self) -> Option<CryptoHash>;
 
     /// Allows authorized account to deploy staged code. If no code is staged the method fails.
@@ -44,13 +43,11 @@ pub trait Upgradable {
 /// Event emitted when the code is staged
 struct StageCode {
     by: AccountId,
-    // TODO: Serialize with base58
     code_hash: CryptoHash,
 }
 
 /// Event emitted when the code is deployed
 struct DeployCode {
     by: AccountId,
-    // TODO: Serialize with base58
     code_hash: CryptoHash,
 }
