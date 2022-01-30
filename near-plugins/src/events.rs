@@ -1,6 +1,6 @@
-/// # NEAR Events
-///
-/// Description of Events on NEAR following [NEP-297](https://nomicon.io/Standards/EventsFormat)
+//! # NEAR Events
+//!
+//! Description of Events on NEAR following [NEP-297](https://nomicon.io/Standards/EventsFormat)
 use serde::Serialize;
 
 /// Interface to capture metadata about an event

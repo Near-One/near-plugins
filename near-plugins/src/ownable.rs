@@ -1,17 +1,17 @@
+//! # Ownable:
+//!
+//! Trait which provides a basic access control mechanism, where
+//! there is an account (an owner) that can be granted exclusive access to
+//! specific functions.
+//!
+//! During creation of the contract set the owner using `owner_set`. Protect functions that should
+//! only be called by the owner using #[only(owner)].
+//!
+//! ## Credits:
+//!
+//! Inspired by Open Zeppelin Ownable module:
+//! https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol
 use crate::events::{AsEvent, EventMetadata};
-/// # Ownable:
-///
-/// Trait which provides a basic access control mechanism, where
-/// there is an account (an owner) that can be granted exclusive access to
-/// specific functions.
-///
-/// During creation of the contract set the owner using `owner_set`. Protect functions that should
-/// only be called by the owner using #[only(owner)].
-///
-/// ## Credits:
-///
-/// Inspired by Open Zeppelin Ownable module:
-/// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol
 use near_sdk::AccountId;
 use serde::Serialize;
 

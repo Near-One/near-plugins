@@ -1,27 +1,27 @@
-/// # Pausable:
-///
-/// Trait which allows contracts to implement an emergency stop mechanism that can be triggered
-/// by an authorized account. This authorized account can pause certain features which will
-/// prevent some methods or behaviors to be executed. It is expected as well that some methods
-/// only work in case certain feature is paused, this will be useful to implement escape hatches.
-///
-/// Features are identified by keys.
-///
-/// ## Default implementation:
-///
-/// Key "ALL" is understood to pause all "pausable" features at once.
-/// Provided implementation is optimized for the case where only a small amount of features are
-/// paused at a single moment. If all features are meant to be paused, use "ALL" instead. This is done
-/// by storing all paused keys in a single slot on the storage. Notice that unpausing "ALL" will not
-/// necessarily unpause all features, if other features are still present in the paused_list.
-///
-/// Only owner and self can call `pa_pause_feature` / `pa_unpause_feature`. Requires the contract to
-/// be Ownable.
-///
-/// ## Credits:
-///
-/// Inspired by Open Zeppelin Pausable module:
-/// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/Pausable.sol
+//! # Pausable:
+//!
+//! Trait which allows contracts to implement an emergency stop mechanism that can be triggered
+//! by an authorized account. This authorized account can pause certain features which will
+//! prevent some methods or behaviors to be executed. It is expected as well that some methods
+//! only work in case certain feature is paused, this will be useful to implement escape hatches.
+//!
+//! Features are identified by keys.
+//!
+//! ## Default implementation:
+//!
+//! Key "ALL" is understood to pause all "pausable" features at once.
+//! Provided implementation is optimized for the case where only a small amount of features are
+//! paused at a single moment. If all features are meant to be paused, use "ALL" instead. This is done
+//! by storing all paused keys in a single slot on the storage. Notice that unpausing "ALL" will not
+//! necessarily unpause all features, if other features are still present in the paused_list.
+//!
+//! Only owner and self can call `pa_pause_feature` / `pa_unpause_feature`. Requires the contract to
+//! be Ownable.
+//!
+//! ## Credits:
+//!
+//! Inspired by Open Zeppelin Pausable module:
+//! https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/Pausable.sol
 use crate::events::{AsEvent, EventMetadata};
 use near_sdk::AccountId;
 use serde::Serialize;

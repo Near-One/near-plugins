@@ -1,7 +1,8 @@
 use near_sdk::VMContext;
 use std::convert::TryInto;
 
-pub fn get_context() -> VMContext {
+#[allow(dead_code)]
+pub(crate) fn get_context() -> VMContext {
     VMContext {
         current_account_id: "alice.test".to_string().try_into().unwrap(),
         signer_account_id: "bob.test".to_string().try_into().unwrap(),
