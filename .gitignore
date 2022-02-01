@@ -1,2 +1,6 @@
 /target
 Cargo.lock
+
+# Ignore IDE data
+.vscode/
+.idea/
