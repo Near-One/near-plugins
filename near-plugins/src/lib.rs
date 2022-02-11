@@ -2,6 +2,7 @@ pub mod events;
 pub mod full_access_key_fallback;
 pub mod ownable;
 pub mod pausable;
+#[cfg(not(target_arch = "wasm32"))]
 mod test_utils;
 pub mod upgradable;
 

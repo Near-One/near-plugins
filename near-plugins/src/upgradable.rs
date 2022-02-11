@@ -78,6 +78,7 @@ impl AsEvent<DeployCode> for DeployCode {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod tests {
     // TODO: Make simulation test that verifies code is deployed

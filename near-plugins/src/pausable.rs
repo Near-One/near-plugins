@@ -85,6 +85,7 @@ impl AsEvent<Unpause> for Unpause {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod tests {
     use crate as near_plugins;

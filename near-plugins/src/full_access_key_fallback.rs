@@ -40,6 +40,7 @@ impl AsEvent<FullAccessKeyAdded> for FullAccessKeyAdded {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod tests {
     // TODO: Make simulation test that verifies key get's added to the account
