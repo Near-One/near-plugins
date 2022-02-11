@@ -24,9 +24,9 @@ pub trait FullAccessKeyFallback {
 
 /// Event emitted every time a new FullAccessKey is added
 #[derive(Serialize, Clone)]
-struct FullAccessKeyAdded {
-    by: AccountId,
-    public_key: PublicKey,
+pub struct FullAccessKeyAdded {
+    pub by: AccountId,
+    pub public_key: PublicKey,
 }
 
 impl AsEvent<FullAccessKeyAdded> for FullAccessKeyAdded {
@@ -43,8 +43,9 @@ impl AsEvent<FullAccessKeyAdded> for FullAccessKeyAdded {
 #[cfg(test)]
 mod tests {
     // TODO: Make simulation test that verifies key get's added to the account
+    use crate as near_plugins;
     use crate::test_utils::get_context;
-    use crate::{only, FullAccessKeyFallback, Ownable};
+    use crate::{FullAccessKeyFallback, Ownable};
     use near_sdk::{near_bindgen, testing_env, PublicKey};
     use std::convert::TryInto;
     use std::str::FromStr;

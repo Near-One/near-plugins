@@ -1,9 +1,9 @@
-mod events;
-mod full_access_key_fallback;
-mod ownable;
-mod pausable;
+pub mod events;
+pub mod full_access_key_fallback;
+pub mod ownable;
+pub mod pausable;
 mod test_utils;
-mod upgradable;
+pub mod upgradable;
 
 pub use full_access_key_fallback::FullAccessKeyFallback;
 pub use near_plugins_derive::{

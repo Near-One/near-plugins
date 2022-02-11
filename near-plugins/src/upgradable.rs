@@ -81,8 +81,9 @@ impl AsEvent<DeployCode> for DeployCode {
 #[cfg(test)]
 mod tests {
     // TODO: Make simulation test that verifies code is deployed
+    use crate as near_plugins;
     use crate::test_utils::get_context;
-    use crate::{only, Ownable, Upgradable};
+    use crate::{Ownable, Upgradable};
     use near_sdk::env::sha256;
     use near_sdk::{near_bindgen, testing_env, VMContext};
     use std::convert::TryInto;

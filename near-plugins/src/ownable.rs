@@ -57,6 +57,7 @@ impl AsEvent<OwnershipTransferred> for OwnershipTransferred {
 
 #[cfg(test)]
 mod tests {
+    use crate as near_plugins;
     use crate::test_utils::get_context;
     use crate::{only, Ownable};
     use near_sdk::{near_bindgen, testing_env, VMContext};

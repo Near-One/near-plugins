@@ -1,4 +1,4 @@
-use crate::utils::is_near_bindgen_wrapped_or_marshall;
+use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
 use darling::{FromDeriveInput, FromMeta};
 use proc_macro::{self, TokenStream};
 use quote::quote;
@@ -11,6 +11,8 @@ struct Opts {
 }
 
 pub fn derive_pausable(input: TokenStream) -> TokenStream {
+    let cratename = cratename();
+
     let input = parse_macro_input!(input);
     let opts = Opts::from_derive_input(&input).expect("Wrong options");
     let DeriveInput { ident, .. } = input;
@@ -37,16 +39,17 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                 })
             }
 
-            #[crate::only(owner)]
+            #[#cratename::only(owner)]
             fn pa_pause_feature(&mut self, key: String) {
                 let mut paused_keys = self.pa_all_paused().unwrap_or_default();
                 paused_keys.insert(key.clone());
 
-                crate::pausable::Pause {
-                    by: ::near_sdk::env::predecessor_account_id(),
-                    key,
-                }
-                .emit();
+                ::near_sdk::log!(#cratename::events::AsEvent::event(
+                    &#cratename::pausable::Pause {
+                        by: ::near_sdk::env::predecessor_account_id(),
+                        key,
+                    }
+                ));
 
                 ::near_sdk::env::storage_write(
                     self.pa_storage_key().as_ref(),
@@ -57,16 +60,17 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                 );
             }
 
-            #[crate::only(owner)]
+            #[#cratename::only(owner)]
             fn pa_unpause_feature(&mut self, key: String) {
                 let mut paused_keys = self.pa_all_paused().unwrap_or_default();
                 paused_keys.remove(&key);
 
-                crate::pausable::Unpause {
-                    by: ::near_sdk::env::predecessor_account_id(),
-                    key,
-                }
-                .emit();
+                ::near_sdk::log!(#cratename::events::AsEvent::event(
+                    &#cratename::pausable::Unpause {
+                        by: ::near_sdk::env::predecessor_account_id(),
+                        key,
+                    }
+                ));
 
                 if paused_keys.is_empty() {
                     ::near_sdk::env::storage_remove(self.pa_storage_key().as_ref());

@@ -1,3 +1,4 @@
+use crate::utils::cratename;
 use darling::FromDeriveInput;
 use proc_macro::{self, TokenStream};
 use quote::quote;
@@ -10,6 +11,8 @@ struct Opts {
 }
 
 pub fn derive_upgradable(input: TokenStream) -> TokenStream {
+    let cratename = cratename();
+
     let input = parse_macro_input!(input);
     let opts = Opts::from_derive_input(&input).expect("Wrong options");
     let DeriveInput { ident, .. } = input;
@@ -23,7 +26,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 (#code_storage_key).as_bytes().to_vec()
             }
 
-            #[only(owner)]
+            #[#cratename::only(owner)]
             fn up_stage_code(&mut self, #[serializer(borsh)] code: Vec<u8>) {
                 if code.is_empty() {
                     near_sdk::env::storage_remove(self.up_storage_key().as_ref());
@@ -39,10 +42,10 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
 
             fn up_staged_code_hash(&self) -> Option<::near_sdk::CryptoHash> {
                 self.up_staged_code()
-                    .map(|code| near_sdk::env::sha256(code.as_ref()).try_into().unwrap())
+                    .map(|code| std::convert::TryInto::try_into(near_sdk::env::sha256(code.as_ref())).unwrap())
             }
 
-            #[only(owner)]
+            #[#cratename::only(owner)]
             fn up_deploy_code(&mut self) -> near_sdk::Promise {
                 near_sdk::Promise::new(near_sdk::env::current_account_id())
                     .deploy_contract(self.up_staged_code().expect("Upgradable: No staged code"))

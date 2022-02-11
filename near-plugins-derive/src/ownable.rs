@@ -1,9 +1,8 @@
-use crate::utils::is_near_bindgen_wrapped_or_marshall;
+use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
 use darling::FromDeriveInput;
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use syn::{parse, ItemFn};
-use syn::{parse_macro_input, DeriveInput};
+use syn::{parse, parse_macro_input, DeriveInput, ItemFn};
 
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(ownable), forward_attrs(allow, doc, cfg))]
@@ -12,6 +11,8 @@ struct Opts {
 }
 
 pub fn derive_ownable(input: TokenStream) -> TokenStream {
+    let cratename = cratename();
+
     let input = parse_macro_input!(input);
     let opts = Opts::from_derive_input(&input).expect("Wrong options");
     let DeriveInput { ident, .. } = input;
@@ -52,9 +53,8 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
                     );
                 }
 
-                // TODO: Use .emit
-                ::near_sdk::log!(crate::events::AsEvent::event(
-                    &crate::ownable::OwnershipTransferred {
+                ::near_sdk::log!(#cratename::events::AsEvent::event(
+                    &#cratename::ownable::OwnershipTransferred {
                         previous_owner: current_owner,
                         new_owner: owner.clone()
                     }

@@ -47,11 +47,11 @@ pub trait Pausable {
 
 /// Event emitted when a feature is paused.
 #[derive(Serialize, Clone)]
-struct Pause {
+pub struct Pause {
     /// Account Id that triggered the pause.
-    by: AccountId,
+    pub by: AccountId,
     /// Key identifying the feature that was paused.
-    key: String,
+    pub key: String,
 }
 
 impl AsEvent<Pause> for Pause {
@@ -67,11 +67,11 @@ impl AsEvent<Pause> for Pause {
 
 /// Event emitted when a feature is unpaused.
 #[derive(Serialize, Clone)]
-struct Unpause {
+pub struct Unpause {
     /// Account Id that triggered the unpause.
-    by: AccountId,
+    pub by: AccountId,
     /// Key identifying the feature that was unpaused.
-    key: String,
+    pub key: String,
 }
 
 impl AsEvent<Unpause> for Unpause {
@@ -87,7 +87,7 @@ impl AsEvent<Unpause> for Unpause {
 
 #[cfg(test)]
 mod tests {
-    use crate::events::AsEvent;
+    use crate as near_plugins;
     use crate::test_utils::get_context;
     use crate::{if_paused, pause, Ownable, Pausable};
     use std::collections::HashSet;

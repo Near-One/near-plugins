@@ -12,3 +12,4 @@ darling = "0.13.1"
 proc-macro2 = "1.0.26"
 quote = "1.0.9"
 syn = { version = "1.0.69", features = ["full"] }
+proc-macro-crate = "0.1.5"
