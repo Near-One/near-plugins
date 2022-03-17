@@ -190,8 +190,7 @@ automatically from macros. They can be changed if the trait is manually implemen
 ## Roadmap
 
 - Access Control: Implement a plugin similar to [OpenZeppelin's Access Control](https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/access).
-- Allow deriving plugins privately, i.e. without making the methods public.
-    This will allow developers to create custom logic on top of the plugin without modifying source code.
+- Factory upgrades: Allow upgrading all deployed contracts from the factory fetching binary upstream.
 - Events ergonomics. `Event` macro that can be used in the following way:
 ```rust
 #[derive(Serialize, Event(standard="nepXXX", version="1.0.1", action="transfer"))]
@@ -202,5 +201,7 @@ struct Transfer {
 // In the contract
 let transfer = Transfer { value: 1 };
 transfer.emit(); // At this step the event is serialized and the log is emitted.
+- Allow deriving plugins privately, i.e. without making the methods public.
+    This will allow developers to create custom logic on top of the plugin without modifying source code.
 ```
 
