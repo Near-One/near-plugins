@@ -198,10 +198,10 @@ struct Transfer {
     value: u64
 }
 
-// In the contract
+/// In the contract
 let transfer = Transfer { value: 1 };
 transfer.emit(); // At this step the event is serialized and the log is emitted.
+```
 - Allow deriving plugins privately, i.e. without making the methods public.
     This will allow developers to create custom logic on top of the plugin without modifying source code.
-```
 
