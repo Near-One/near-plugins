@@ -8,7 +8,7 @@ readme = "README.md"
 repository = "https://github.com/aurora-is-near/near-plugins"
 homepage = "https://github.com/aurora-is-near/near-plugins"
 description = """
-Plugin system to extend NEAR contracts easily.
+Plugin system to extend NEAR contracts using macros.
 """
 keywords = ["near", "smart contract", "plugin"]
 

@@ -3,6 +3,11 @@ name = "near-plugins-derive"
 version = "0.1.0"
 authors = ["Marcelo Fornet <marcelo@aurora.dev>"]
 edition = "2018"
+license = "CC0-1.0"
+readme = "README.md"
+description = """
+Plugin system to extend NEAR contracts using macros.
+"""
 
 [lib]
 proc-macro = true
