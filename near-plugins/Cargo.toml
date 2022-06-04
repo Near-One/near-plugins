@@ -18,7 +18,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 near-sdk = "4.0.0-pre.5"
-near-plugins-derive = { path = "../near-plugins-derive" }
+near-plugins-derive = { path = "../near-plugins-derive", version = "0.1.0" }
 serde = "1"
 
 [dev-dependencies]
