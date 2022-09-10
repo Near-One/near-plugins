@@ -1,5 +1,6 @@
 /target
 Cargo.lock
+near-plugins/tests/contracts/*/target
 
 # Ignore IDE data
 .vscode/
