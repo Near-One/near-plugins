@@ -170,12 +170,12 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             fn acl_grant_role_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role = <#role_type>::from_str(&role).expect(#ERR_PARSE_ROLE);
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
                 self.#acl_field.grant_role_unchecked(role, &account_id)
             }
 
             fn acl_has_role(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role = <#role_type>::from_str(&role).expect(#ERR_PARSE_ROLE);
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
                 self.#acl_field.has_role(role, &account_id)
             }
         }

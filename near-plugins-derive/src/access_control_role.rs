@@ -57,11 +57,10 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             }
         }
 
-        // TODO use `TryFrom<&str>` (for consistency)
-        impl ::std::str::FromStr for #ident {
-            type Err = &'static str;
+        impl ::std::convert::TryFrom<&str> for #ident {
+            type Error = &'static str;
 
-            fn from_str(value: &str) -> Result<#ident, Self::Err> {
+            fn try_from(value: &str) -> Result<#ident, Self::Error> {
                 match value {
                     #(
                         #variant_names => Ok(#ident::#variant_items),

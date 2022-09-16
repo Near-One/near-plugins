@@ -2,7 +2,7 @@ use near_plugins::{access_control, AccessControlRole, AccessControllable};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::{env, log, near_bindgen, AccountId};
 use std::collections::HashMap;
-use std::str::FromStr;
+use std::convert::TryFrom;
 
 #[derive(AccessControlRole, BorshSerialize, BorshDeserialize)]
 pub enum Role {
