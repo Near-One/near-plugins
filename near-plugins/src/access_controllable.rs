@@ -16,7 +16,8 @@ use near_sdk::AccountId;
 ///
 /// [does not support]: https://github.com/near/near-sdk-rs/blob/9d99077c6acfde68c06845f2a1eb2b5ed7983401/near-sdk/compilation_tests/impl_generic.stderr
 pub trait AccessControllable {
-    fn acl_storage_prefix(&self) -> &[u8];
+    /// Returns the storage prefix for collections related to access control.
+    fn acl_storage_prefix() -> &'static [u8];
 
     /// Grants admin permissions for `role` to `account_id`, __without__
     /// checking permissions of the predecessor.

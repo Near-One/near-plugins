@@ -70,8 +70,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
         impl Default for #acl_type {
             fn default() -> Self {
-                // TODO make AccessControllable::acl_storage_prefix static, then use here
-                let base_prefix = (#storage_prefix).as_bytes();
+                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 Self {
                      permissions: ::near_sdk::collections::UnorderedMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Permissions),
@@ -103,8 +102,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
         impl #acl_type {
             fn new_bearers_set(permission: #permissions_ident) -> ::near_sdk::collections::UnorderedSet<::near_sdk::AccountId> {
-                // TODO make AccessControllable::acl_storage_prefix static, then use here
-                let base_prefix = (#storage_prefix).as_bytes();
+                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 let specifier = __AclStorageKey::BearersSet { permission };
                 ::near_sdk::collections::UnorderedSet::new(__acl_storage_prefix(base_prefix, specifier))
             }
@@ -163,7 +161,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         // [documented]: https://docs.near.org/sdk/rust/contract-interface/public-methods#exposing-trait-implementations
         #[near_bindgen]
         impl AccessControllable for #ident {
-            fn acl_storage_prefix(&self) -> &[u8] {
+            fn acl_storage_prefix() -> &'static [u8] {
                 (#storage_prefix).as_bytes()
             }
 
