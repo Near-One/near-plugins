@@ -17,7 +17,7 @@ pub(crate) fn get_context() -> VMContext {
         account_locked_balance: 0,
         storage_usage: 10_000,
         attached_deposit: 0,
-        prepaid_gas: Gas(10u64.pow(18)),
+        prepaid_gas: Gas(1_000_000 * Gas::ONE_TERA.0),
         random_seed: [0; 32],
         output_data_receivers: vec![],
         epoch_height: 19,
