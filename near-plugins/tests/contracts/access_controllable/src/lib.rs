@@ -11,7 +11,7 @@ pub enum Role {
     Level3,
 }
 
-#[access_control(storage_prefix = "__foo", role_type = "Role")]
+#[access_control(role_type = "Role")]
 #[near_bindgen]
 #[derive(Default, BorshDeserialize, BorshSerialize)]
 pub struct StatusMessage {
