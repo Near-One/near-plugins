@@ -79,18 +79,18 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
 
         // TODO explain enum<->bitflag conversion
         impl AccessControlRole for #ident {
-            fn acl_super_admin_permission_bitflag() -> u128 {
+            fn acl_super_admin_permission() -> u128 {
                 safe_leftshift(1, 0)
             }
 
-            fn acl_permission_bitflag(self) -> u128 {
+            fn acl_permission(self) -> u128 {
                 let n = (u8::from(self) + 1)
                     .checked_mul(2)
                     .expect("Too many enum variants") - 1;
                 safe_leftshift(1, n)
             }
 
-            fn acl_admin_permission_bitflag(self) -> u128 {
+            fn acl_admin_permission(self) -> u128 {
                 let n = (u8::from(self) + 1)
                     .checked_mul(2)
                     .expect("Too many enum variants");

@@ -115,7 +115,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             fn grant_role_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
-                let flag = <#permissions_ident>::from_bits(role.acl_permission_bitflag())
+                let flag = <#permissions_ident>::from_bits(role.acl_permission())
                     .expect(#ERR_PARSE_BITFLAG);
                 let mut permissions = self.get_or_init_permissions(account_id);
 
@@ -133,7 +133,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn has_role(&self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 match self.permissions.get(account_id) {
                     Some(permissions) => {
-                        let flag = <#permissions_ident>::from_bits(role.acl_permission_bitflag())
+                        let flag = <#permissions_ident>::from_bits(role.acl_permission())
                             .expect(#ERR_PARSE_BITFLAG);
                         permissions.contains(flag)
                     }
