@@ -1,7 +1,11 @@
 use proc_macro::TokenStream;
+use proc_macro2::{Ident, Span};
 use quote::quote;
 use std::convert::TryFrom;
 use syn::{parse_macro_input, ItemEnum};
+
+const DEFAULT_SUPER_ADMIN_NAME: &str = "__SUPER_ADMIN";
+const DEFAULT_BITFLAGS_TYPE_NAME: &str = "RoleFlags";
 
 pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
     // This derive doesn't take attributes, so no need to use `darling`.
@@ -10,6 +14,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         ident, variants, ..
     } = input;
 
+    // TODO cleanup by using range (see bitflags_idxs below)
     let (variant_idxs, variant_items): (Vec<_>, Vec<_>) =
         variants.iter().cloned().enumerate().unzip();
     let variant_idxs = variant_idxs
@@ -22,6 +27,11 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         .iter()
         .map(|v| format!("{}", v.ident))
         .collect::<Vec<_>>();
+
+    let bitflags_type_ident = Ident::new(DEFAULT_BITFLAGS_TYPE_NAME, Span::call_site());
+    let bitflags_idents = bitflags_idents(variant_names.as_ref(), bitflags_type_ident.span());
+    let bitflags_idxs = 0..u8::try_from(bitflags_idents.len())
+        .expect("The number of bitflags should be representable by u8");
 
     let output = quote! {
         impl From<#ident> for u8 {
@@ -99,19 +109,34 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         }
 
         ::bitflags::bitflags! {
-            // TODO generate dynamically
             #[derive(BorshDeserialize, BorshSerialize, Default)]
-            struct RoleFlags: u128 {
-                const __SUPER_ADMIN = 1u128 << 0;
-                const LEVEL1 = 1u128 << 1;
-                const LEVEL1_ADMIN = 1u128 << 2;
-                const LEVEL2 = 1u128 << 3;
-                const LEVEL2_ADMIN = 1u128 << 4;
-                const LEVEL3 = 1u128 << 5;
-                const LEVEL3_ADMIN = 1u128 << 6;
+            struct #bitflags_type_ident: u128 {
+                #(
+                    const #bitflags_idents = 1u128 << #bitflags_idxs;
+                )*
             }
         }
     };
 
     output.into()
+}
+
+fn bitflags_idents(names: &[String], span: Span) -> Vec<Ident> {
+    // Assuming enum variant names are in camel case, simply converting them
+    // to uppercase is not ideal. However, bitflag identifiers aren't exposed,
+    // so let's not bother with converting camel to screaming-snake case.
+    let names = names
+        .iter()
+        .map(|name| name.to_uppercase())
+        .collect::<Vec<_>>();
+    let admin_names = names
+        .iter()
+        .map(|name| format!("{}_ADMIN", name))
+        .collect::<Vec<_>>();
+    let mut idents = vec![Ident::new(DEFAULT_SUPER_ADMIN_NAME, span.clone())];
+    for (name, admin_name) in names.iter().zip(admin_names) {
+        idents.push(Ident::new(name.as_ref(), span.clone()));
+        idents.push(Ident::new(admin_name.as_ref(), span.clone()));
+    }
+    idents
 }
