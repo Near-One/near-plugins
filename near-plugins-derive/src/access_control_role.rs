@@ -99,6 +99,16 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             }
         }
 
+        impl From<#ident> for String {
+            fn from(value: #ident) -> Self {
+                match value {
+                    #(
+                        #ident::#variants => #variant_names.to_string(),
+                    )*
+                }
+            }
+        }
+
         impl ::std::convert::TryFrom<&str> for #ident {
             type Error = &'static str;
 

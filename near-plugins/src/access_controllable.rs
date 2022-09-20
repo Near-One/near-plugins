@@ -32,3 +32,35 @@ pub trait AccessControllable {
     /// Returns whether `account_id` has been granted `role`.
     fn acl_has_role(&self, role: String, account_id: AccountId) -> bool;
 }
+
+pub mod events {
+    use crate::events::{AsEvent, EventMetadata};
+    use near_sdk::serde::Serialize;
+    use near_sdk::AccountId;
+
+    const STANDARD: &str = "AccessControllable";
+    const VERSION: &str = "1.0.0";
+
+    /// Event emitted when a role is granted to an account.
+    #[derive(Serialize, Clone)]
+    #[serde(crate = "near_sdk::serde")]
+    pub struct RoleGranted {
+        /// Role that was granted.
+        pub role: String,
+        /// Account that was granted the role.
+        pub to: AccountId,
+        /// Account that granted the role.
+        pub by: AccountId,
+    }
+
+    impl AsEvent<RoleGranted> for RoleGranted {
+        fn metadata(&self) -> EventMetadata<RoleGranted> {
+            EventMetadata {
+                standard: STANDARD.to_string(),
+                version: VERSION.to_string(),
+                event: "role_granted".to_string(),
+                data: Some(self.clone()),
+            }
+        }
+    }
+}

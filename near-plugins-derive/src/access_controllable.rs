@@ -1,4 +1,5 @@
 use crate::access_control_role::new_bitflags_type_ident;
+use crate::utils::cratename;
 use darling::FromMeta;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
@@ -21,6 +22,7 @@ const ERR_PARSE_BITFLAG: &str = "Value does not correspond to a permission";
 const ERR_PARSE_ROLE: &str = "Value does not correspond to a role";
 
 pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let cratename = cratename();
     let attr_args = parse_macro_input!(attrs as AttributeArgs);
     let mut input: ItemStruct = parse_macro_input!(item);
     let acl_field = syn::Ident::new(DEFAULT_ACL_FIELD_NAME, Span::call_site());
@@ -116,7 +118,13 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     permissions.insert(flag);
                     self.permissions.insert(account_id, &permissions);
                     self.add_bearer(flag, account_id);
-                    // TODO emit event
+
+                    let event = ::#cratename::access_controllable::events::RoleGranted {
+                        role: role.into(),
+                        by: ::near_sdk::env::predecessor_account_id(),
+                        to: account_id.clone(),
+                    };
+                    event.emit();
                 }
 
                 is_new_grantee

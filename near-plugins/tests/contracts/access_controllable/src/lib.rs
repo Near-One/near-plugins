@@ -1,10 +1,11 @@
+use near_plugins::events::AsEvent;
 use near_plugins::{access_control, AccessControlRole, AccessControllable};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::{env, log, near_bindgen, AccountId};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
-#[derive(AccessControlRole, BorshSerialize, BorshDeserialize)]
+#[derive(AccessControlRole, BorshSerialize, BorshDeserialize, Copy, Clone)]
 pub enum Role {
     LevelA,
     LevelB,
