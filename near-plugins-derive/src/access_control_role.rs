@@ -60,7 +60,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         (0..u8::try_from(variants.len()).expect("Too many enum variants")).collect();
     let variant_names: Vec<_> = variants.iter().map(|v| format!("{}", v.ident)).collect();
 
-    let bitflags_type_ident = Ident::new(DEFAULT_BITFLAGS_TYPE_NAME, Span::call_site());
+    let bitflags_type_ident = new_bitflags_type_ident(Span::call_site());
     let bitflags_idents = bitflags_idents(variant_names.as_ref(), bitflags_type_ident.span());
     let bitflags_idxs: Vec<_> =
         (0..u8::try_from(bitflags_idents.len()).expect("Too many bitflags")).collect();
@@ -154,6 +154,10 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
     };
 
     output.into()
+}
+
+pub fn new_bitflags_type_ident(span: Span) -> Ident {
+    Ident::new(DEFAULT_BITFLAGS_TYPE_NAME, span)
 }
 
 fn bitflags_idents(names: &[String], span: Span) -> Vec<Ident> {

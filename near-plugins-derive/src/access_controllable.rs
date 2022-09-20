@@ -1,3 +1,4 @@
+use crate::access_control_role::new_bitflags_type_ident;
 use darling::FromMeta;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
@@ -24,8 +25,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
     let mut input: ItemStruct = parse_macro_input!(item);
     let acl_field = syn::Ident::new(DEFAULT_ACL_FIELD_NAME, Span::call_site());
     let acl_type = syn::Ident::new(DEFAULT_ACL_TYPE_NAME, Span::call_site());
-    // TODO determine name of ident dynamically
-    let permissions_ident = syn::Ident::new("RoleFlags", Span::call_site());
+    let bitflags_type = new_bitflags_type_ident(Span::call_site());
     if let Err(e) = inject_acl_field(&mut input, &acl_field, &acl_type) {
         return TokenStream::from(e.to_compile_error());
     }
@@ -51,11 +51,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             /// Stores permissions per account.
             permissions: ::near_sdk::collections::UnorderedMap<
                 ::near_sdk::AccountId,
-                #permissions_ident,
+                #bitflags_type,
             >,
             /// Stores the set of accounts that bear a permission.
             bearers: ::near_sdk::collections::UnorderedMap<
-                #permissions_ident,
+                #bitflags_type,
                 ::near_sdk::collections::UnorderedSet<::near_sdk::AccountId>,
             >,
         }
@@ -81,7 +81,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         enum __AclStorageKey {
             Permissions,
             Bearers,
-            BearersSet { permission: #permissions_ident },
+            BearersSet { permission: #bitflags_type },
         }
 
         /// Generates a prefix by concatenating the input parameters.
@@ -93,21 +93,21 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         }
 
         impl #acl_type {
-            fn new_bearers_set(permission: #permissions_ident) -> ::near_sdk::collections::UnorderedSet<::near_sdk::AccountId> {
+            fn new_bearers_set(permission: #bitflags_type) -> ::near_sdk::collections::UnorderedSet<::near_sdk::AccountId> {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 let specifier = __AclStorageKey::BearersSet { permission };
                 ::near_sdk::collections::UnorderedSet::new(__acl_storage_prefix(base_prefix, specifier))
             }
 
-            fn get_or_init_permissions(&self, account_id: &::near_sdk::AccountId) -> #permissions_ident {
+            fn get_or_init_permissions(&self, account_id: &::near_sdk::AccountId) -> #bitflags_type {
                 match self.permissions.get(account_id) {
                     Some(permissions) => permissions,
-                    None => <#permissions_ident>::empty(),
+                    None => <#bitflags_type>::empty(),
                 }
             }
 
             fn grant_role_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
-                let flag = <#permissions_ident>::from_bits(role.acl_permission())
+                let flag = <#bitflags_type>::from_bits(role.acl_permission())
                     .expect(#ERR_PARSE_BITFLAG);
                 let mut permissions = self.get_or_init_permissions(account_id);
 
@@ -125,7 +125,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn has_role(&self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 match self.permissions.get(account_id) {
                     Some(permissions) => {
-                        let flag = <#permissions_ident>::from_bits(role.acl_permission())
+                        let flag = <#bitflags_type>::from_bits(role.acl_permission())
                             .expect(#ERR_PARSE_BITFLAG);
                         permissions.contains(flag)
                     }
@@ -134,7 +134,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             /// Adds `account_id` to the set of `permission` bearers.
-            fn add_bearer(&mut self, permission: #permissions_ident, account_id: &::near_sdk::AccountId) {
+            fn add_bearer(&mut self, permission: #bitflags_type, account_id: &::near_sdk::AccountId) {
                 let mut set = match self.bearers.get(&permission) {
                     Some(set) => set,
                     None => Self::new_bearers_set(permission),
