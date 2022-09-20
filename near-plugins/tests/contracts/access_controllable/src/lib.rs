@@ -6,9 +6,9 @@ use std::convert::TryFrom;
 
 #[derive(AccessControlRole, BorshSerialize, BorshDeserialize)]
 pub enum Role {
-    Level1,
-    Level2,
-    Level3,
+    LevelA,
+    LevelB,
+    LevelC,
 }
 
 #[access_control(role_type = "Role")]
@@ -38,6 +38,6 @@ impl StatusMessage {
     //    self.acl.has_role(role, account_id)
     //
     // b) Using attributes (not yet implemented), e.g.
-    //    #[acl_any(Role::Level1, Role::Level2)]
+    //    #[acl_any(Role::LevelA, Role::LevelB)]
     //    pub fn foo(&mut self) {}
 }

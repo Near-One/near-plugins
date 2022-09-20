@@ -46,7 +46,7 @@ async fn test_acl_has_role() -> anyhow::Result<()> {
     let res = account
         .call(contract.id(), "acl_has_role")
         .args_json(json!({
-            "role": "Level1",
+            "role": "LevelA",
             "account_id": account.id(),
         }))
         .view()
@@ -56,7 +56,7 @@ async fn test_acl_has_role() -> anyhow::Result<()> {
     contract
         .call("acl_grant_role_unchecked")
         .args_json(json!({
-            "role": "Level1",
+            "role": "LevelA",
             "account_id": account.id(),
         }))
         .max_gas()
@@ -67,7 +67,7 @@ async fn test_acl_has_role() -> anyhow::Result<()> {
     let res = account
         .call(contract.id(), "acl_has_role")
         .args_json(json!({
-            "role": "Level1",
+            "role": "LevelA",
             "account_id": account.id(),
         }))
         .view()
