@@ -1,3 +1,44 @@
+//! Implements `AccessControlRole` for an enum.
+//!
+//! The conversion of enum variants to bitflags representable by `u128` is the
+//! key part of this implementation. Assume the trait is derived on the
+//! following enum:
+//!
+//! ```
+//! #[derive(AccessControlRole)]
+//! pub enum Role {
+//!     LevelA,
+//!     LevelB,
+//!     LevelC,
+//! }
+//! ```
+//!
+//! This results in the following bitflags:
+//! ```
+//! bitflags! {
+//!     struct RoleFlags: u128 {
+//!         const __SUPER_ADMIN = 1u128 << 0;
+//!         const LEVELA        = 1u128 << 1;
+//!         const LEVELA_ADMIN  = 1u128 << 2;
+//!         const LEVELB        = 1u128 << 3;
+//!         const LEVELB_ADMIN  = 1u128 << 4;
+//!         const LEVELC        = 1u128 << 5;
+//!         const LEVELC_ADMIN  = 1u128 << 6;
+//!     }
+//! }
+//! ```
+//!
+//! The mapping between enum variants and bitflag has these properties:
+//!
+//! - Each flag has exactly one bit with value 1.
+//! - A bitflag `1u128 << x` with odd `x` represents a role permission.
+//! - A bitflag `1u128 << x` with even `x` represents an admin permission.
+//! - Shifting a role's 1-bit to the left by one position yields the
+//!   corresponding admin permission.
+//!
+//! The last property aims to facilitate migrations which add or remove enum
+//! variants.
+
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
@@ -87,13 +128,14 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
                 .expect("Too many enum variants to be represented by bitflags")
         }
 
-        // TODO explain enum<->bitflag conversion
         impl AccessControlRole for #ident {
             fn acl_super_admin_permission() -> u128 {
+                // See module documentation.
                 safe_leftshift(1, 0)
             }
 
             fn acl_permission(self) -> u128 {
+                // Shift 1u128 left by an odd number, see module documentation.
                 let n = (u8::from(self) + 1)
                     .checked_mul(2)
                     .expect("Too many enum variants") - 1;
@@ -101,6 +143,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             }
 
             fn acl_admin_permission(self) -> u128 {
+                // Shift 1u128 left by an even number, see module documentation.
                 let n = (u8::from(self) + 1)
                     .checked_mul(2)
                     .expect("Too many enum variants");
@@ -109,6 +152,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         }
 
         ::bitflags::bitflags! {
+            /// Encodes permissions for roles and admins.
             #[derive(BorshDeserialize, BorshSerialize, Default)]
             struct #bitflags_type_ident: u128 {
                 #(
