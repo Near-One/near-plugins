@@ -145,10 +145,9 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
         }
 
-        // TODO control which functions are exposed externally
-        // `near_bindgen` externally exposes functions in trait implementations
-        // _even_ if they are not `pub`. This behavior is [documented] (but
-        // still surprising IMO).
+        // Note that `#[near-bindgen]` exposes non-public functions in trait
+        // implementations. This is [documented] behavior. Therefore some
+        // functions are made `#[private]` despite _not_ being public.
         //
         // [documented]: https://docs.near.org/sdk/rust/contract-interface/public-methods#exposing-trait-implementations
         #[near_bindgen]
@@ -157,10 +156,12 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 (#storage_prefix).as_bytes()
             }
 
+            #[private]
             fn acl_add_admin_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
                 false // TODO
             }
 
+            #[private]
             fn acl_grant_role_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
                 let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
                 self.#acl_field.grant_role_unchecked(role, &account_id)
