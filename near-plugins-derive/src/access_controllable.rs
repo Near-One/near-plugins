@@ -13,10 +13,8 @@ pub struct MacroArgs {
 }
 
 const DEFAULT_STORAGE_PREFIX: &str = "__acl";
-
-/// TODO allow customization via macro arguments
-const ACL_FIELD_NAME: &str = "__acl";
-const ACL_TYPE_NAME: &str = "__Acl";
+const DEFAULT_ACL_FIELD_NAME: &str = "__acl";
+const DEFAULT_ACL_TYPE_NAME: &str = "__Acl";
 
 const ERR_PARSE_BITFLAG: &str = "Value does not correspond to a permission";
 const ERR_PARSE_ROLE: &str = "Value does not correspond to a role";
@@ -24,14 +22,8 @@ const ERR_PARSE_ROLE: &str = "Value does not correspond to a role";
 pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let attr_args = parse_macro_input!(attrs as AttributeArgs);
     let mut input: ItemStruct = parse_macro_input!(item);
-    // TODO seems like this is required for ItemFn but not for ItemStruct?
-    /*
-    if is_near_bindgen_wrapped_or_marshall(&input) {
-        return item;
-    }
-    */
-    let acl_field = syn::Ident::new(ACL_FIELD_NAME, Span::call_site());
-    let acl_type = syn::Ident::new(ACL_TYPE_NAME, Span::call_site());
+    let acl_field = syn::Ident::new(DEFAULT_ACL_FIELD_NAME, Span::call_site());
+    let acl_type = syn::Ident::new(DEFAULT_ACL_TYPE_NAME, Span::call_site());
     // TODO determine name of ident dynamically
     let permissions_ident = syn::Ident::new("RoleFlags", Span::call_site());
     if let Err(e) = inject_acl_field(&mut input, &acl_field, &acl_type) {
