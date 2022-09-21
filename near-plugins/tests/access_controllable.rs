@@ -1,3 +1,6 @@
+mod common;
+
+use common::access_controllable_contract::{AccessControllableContract, Caller};
 use near_sdk::serde_json::json;
 
 /// Smoke test of contract setup and basic functionality.
@@ -37,42 +40,23 @@ async fn test_set_and_get_status() -> anyhow::Result<()> {
 async fn test_acl_has_role() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
     let wasm = workspaces::compile_project("./tests/contracts/access_controllable").await?;
-    let contract = worker.dev_deploy(&wasm).await?;
-
+    let contract = AccessControllableContract::new(worker.dev_deploy(&wasm).await?);
     let account = worker.dev_create_account().await?;
 
-    // TODO add helper functions to execute frequent transactions
-
-    let res = account
-        .call(contract.id(), "acl_has_role")
-        .args_json(json!({
-            "role": "LevelA",
-            "account_id": account.id(),
-        }))
-        .view()
+    let has_role = contract
+        .acl_has_role(account.clone().into(), "LevelA", account.id())
         .await?;
-    assert_eq!(res.json::<bool>()?, false);
+    assert_eq!(has_role, false);
 
     contract
-        .call("acl_grant_role_unchecked")
-        .args_json(json!({
-            "role": "LevelA",
-            "account_id": account.id(),
-        }))
-        .max_gas()
-        .transact()
+        .acl_grant_role_unchecked(Caller::Contract, "LevelA", account.id())
         .await?
         .into_result()?;
 
-    let res = account
-        .call(contract.id(), "acl_has_role")
-        .args_json(json!({
-            "role": "LevelA",
-            "account_id": account.id(),
-        }))
-        .view()
+    let has_role = contract
+        .acl_has_role(account.clone().into(), "LevelA", account.id())
         .await?;
-    assert_eq!(res.json::<bool>()?, true);
+    assert_eq!(has_role, true);
 
     Ok(())
 }
