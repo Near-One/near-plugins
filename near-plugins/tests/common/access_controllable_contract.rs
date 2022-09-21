@@ -28,6 +28,10 @@ impl AccessControllableContract {
         Self { contract }
     }
 
+    pub fn contract(&self) -> &Contract {
+        &self.contract
+    }
+
     fn account(&self, caller: Caller) -> Account {
         match caller {
             Caller::Contract => self.contract.as_account().clone(),

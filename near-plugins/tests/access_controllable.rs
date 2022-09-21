@@ -2,15 +2,34 @@ mod common;
 
 use common::access_controllable_contract::{AccessControllableContract, Caller};
 use near_sdk::serde_json::json;
+use workspaces::Account;
+
+const PROJECT_PATH: &str = "./tests/contracts/access_controllable";
+
+/// Bundles resources required in tests.
+struct Setup {
+    /// Deployed instance of the contract in [`PROJECT_PATH`].
+    contract: AccessControllableContract,
+    /// A newly created account (which differs from the contract).
+    account: Account,
+}
+
+impl Setup {
+    async fn new() -> anyhow::Result<Self> {
+        let worker = workspaces::sandbox().await?;
+        let wasm = workspaces::compile_project(PROJECT_PATH).await?;
+        let contract = AccessControllableContract::new(worker.dev_deploy(&wasm).await?);
+        let account = worker.dev_create_account().await?;
+
+        Ok(Self { contract, account })
+    }
+}
 
 /// Smoke test of contract setup and basic functionality.
 #[tokio::test]
 async fn test_set_and_get_status() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
-    let wasm = workspaces::compile_project("./tests/contracts/access_controllable").await?;
-    let contract = worker.dev_deploy(&wasm).await?;
-
-    let account = worker.dev_create_account().await?;
+    let Setup { contract, account } = Setup::new().await?;
+    let contract = contract.contract();
     let message = "hello world";
 
     account
@@ -38,10 +57,7 @@ async fn test_set_and_get_status() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_acl_has_role() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
-    let wasm = workspaces::compile_project("./tests/contracts/access_controllable").await?;
-    let contract = AccessControllableContract::new(worker.dev_deploy(&wasm).await?);
-    let account = worker.dev_create_account().await?;
+    let Setup { contract, account } = Setup::new().await?;
 
     let has_role = contract
         .acl_has_role(account.clone().into(), "LevelA", account.id())
@@ -60,3 +76,5 @@ async fn test_acl_has_role() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+// TODO add test for acl_grant_role_unchecked
