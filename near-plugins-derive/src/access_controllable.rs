@@ -165,11 +165,6 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             #[private]
-            fn acl_add_admin_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                false // TODO
-            }
-
-            #[private]
             fn acl_grant_role_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
                 let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
                 self.#acl_field.grant_role_unchecked(role, &account_id)

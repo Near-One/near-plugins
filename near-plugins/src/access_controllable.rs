@@ -19,12 +19,6 @@ pub trait AccessControllable {
     /// Returns the storage prefix for collections related to access control.
     fn acl_storage_prefix() -> &'static [u8];
 
-    /// Grants admin permissions for `role` to `account_id`, __without__
-    /// checking permissions of the predecessor.
-    ///
-    /// Returns whether `account_id` was newly added to the admins for `role`.
-    fn acl_add_admin_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
-
     /// Grants `role` to `account_id` __without__ checking any permissions.
     /// Returns whether `role` was newly granted to `account_id`.
     fn acl_grant_role_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
