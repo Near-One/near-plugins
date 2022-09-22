@@ -57,6 +57,14 @@ impl AccessControllableContract {
         Ok(res.json::<bool>()?)
     }
 
+    pub async fn assert_acl_has_role(&self, want: bool, role: &str, account_id: &AccountId) {
+        let has_role = self
+            .acl_has_role(Caller::Contract, role, account_id)
+            .await
+            .unwrap();
+        assert_eq!(has_role, want);
+    }
+
     pub async fn acl_grant_role_unchecked(
         &self,
         caller: Caller,
