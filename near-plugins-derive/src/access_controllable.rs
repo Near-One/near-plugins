@@ -33,7 +33,6 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
     }
     let ItemStruct { ident, .. } = input.clone();
 
-    // TODO verify trait bounds on `role_enum`: BorshSerialize, BorshDeserialize, ...
     let macro_args = match MacroArgs::from_list(&attr_args) {
         Ok(args) => args,
         Err(e) => {

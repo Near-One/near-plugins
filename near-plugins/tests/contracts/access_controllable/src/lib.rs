@@ -5,7 +5,7 @@ use near_sdk::{env, log, near_bindgen, AccountId};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
-#[derive(AccessControlRole, BorshSerialize, BorshDeserialize, Copy, Clone)]
+#[derive(AccessControlRole, Copy, Clone)]
 pub enum Role {
     LevelA,
     LevelB,

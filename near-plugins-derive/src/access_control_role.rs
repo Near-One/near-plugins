@@ -47,6 +47,7 @@ use syn::{parse_macro_input, ItemEnum};
 
 const DEFAULT_SUPER_ADMIN_NAME: &str = "__SUPER_ADMIN";
 const DEFAULT_BITFLAGS_TYPE_NAME: &str = "RoleFlags";
+const DEFAULT_BOUNDCHECKER_TYPE_NAME: &str = "__AclBoundchecker";
 
 pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
     // This derive doesn't take attributes, so no need to use `darling`.
@@ -60,12 +61,34 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         (0..u8::try_from(variants.len()).expect("Too many enum variants")).collect();
     let variant_names: Vec<_> = variants.iter().map(|v| format!("{}", v.ident)).collect();
 
+    let boundchecker_type = Ident::new(DEFAULT_BOUNDCHECKER_TYPE_NAME, ident.span());
     let bitflags_type_ident = new_bitflags_type_ident(Span::call_site());
     let bitflags_idents = bitflags_idents(variant_names.as_ref(), bitflags_type_ident.span());
     let bitflags_idxs: Vec<_> =
         (0..u8::try_from(bitflags_idents.len()).expect("Too many bitflags")).collect();
 
     let output = quote! {
+        // Ensure #ident satisfies bounds required for acl. This is done
+        // explicitly to provide a clear error message to developers whose
+        // enum doesn't satisfy the required bounds.
+        //
+        // Without this explicit check, compilation would still fail if a bound
+        // is not satisfied. Though with less a clear error message.
+        struct #boundchecker_type<T: Copy + Clone> {
+            _marker: ::std::marker::PhantomData<T>,
+        }
+        impl<T: Copy + Clone> #boundchecker_type<T> {
+            fn new() -> Self {
+                Self {  _marker: Default::default() }
+            }
+        }
+        impl #ident {
+            fn check_bounds() {
+                // Compilation will fail if #ident doesn't satisfy above bounds.
+                let _x = #boundchecker_type::<#ident>::new();
+            }
+        }
+
         impl From<#ident> for u8 {
             fn from(value: #ident) -> Self {
                 match value {
