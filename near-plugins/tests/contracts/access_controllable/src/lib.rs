@@ -33,7 +33,7 @@ impl StatusMessage {
         self.records.get(&account_id).cloned()
     }
 
-    #[access_control_any(roles(Role::LevelA, Role::LevelB))]
+    #[access_control_any(roles(Role::LevelA, Role::LevelC))]
     pub fn restricted_greeting(&self) -> String {
         "hello world".to_string()
     }
