@@ -4,7 +4,7 @@
 //! key part of this implementation. Assume the trait is derived on the
 //! following enum:
 //!
-//! ```
+//! ```ignore
 //! #[derive(AccessControlRole)]
 //! pub enum Role {
 //!     LevelA,
@@ -14,7 +14,7 @@
 //! ```
 //!
 //! This results in the following bitflags:
-//! ```
+//! ```ignore
 //! bitflags! {
 //!     struct RoleFlags: u128 {
 //!         const __SUPER_ADMIN = 1u128 << 0;

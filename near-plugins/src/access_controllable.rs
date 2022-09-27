@@ -6,7 +6,7 @@ use near_sdk::AccountId;
 /// not possible to use a generic type `R` since `near-sdk` [does not support]
 /// `impl` type parameters.
 ///
-/// ```
+/// ```ignore
 /// // This is not possible:
 /// impl<R> AccessControllable<R> for Contract {/* ... */}
 /// ```
@@ -25,6 +25,9 @@ pub trait AccessControllable {
 
     /// Returns whether `account_id` has been granted `role`.
     fn acl_has_role(&self, role: String, account_id: AccountId) -> bool;
+
+    /// Returns whether `account_id` has been granted any of the `roles`.
+    fn acl_has_any_role(&self, roles: Vec<String>, account_id: AccountId) -> bool;
 }
 
 pub mod events {

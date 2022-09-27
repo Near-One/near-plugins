@@ -52,3 +52,8 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
 pub fn access_control(attrs: TokenStream, item: TokenStream) -> TokenStream {
     access_controllable::access_controllable(attrs, item)
 }
+
+#[proc_macro_attribute]
+pub fn access_control_any(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    access_controllable::access_control_any(attrs, item)
+}

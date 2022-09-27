@@ -1,11 +1,11 @@
 use crate::access_control_role::new_bitflags_type_ident;
-use crate::utils::cratename;
+use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
 use darling::FromMeta;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 use syn::parse::Parser;
-use syn::{parse_macro_input, AttributeArgs, ItemStruct};
+use syn::{parse_macro_input, AttributeArgs, ItemFn, ItemStruct};
 
 #[derive(Debug, FromMeta)]
 pub struct MacroArgs {
@@ -140,6 +140,29 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 }
             }
 
+            fn has_any_role(
+                &self, roles: Vec<#role_type>,
+                account_id: &::near_sdk::AccountId
+            ) -> bool {
+                let permissions: Vec<#bitflags_type> = roles
+                    .iter()
+                    .map(|role| {
+                        <#bitflags_type>::from_bits(role.acl_permission())
+                            .expect(#ERR_PARSE_BITFLAG)
+                    })
+                    .collect();
+                let target = permissions.iter().fold(
+                    <#bitflags_type>::empty(),
+                    |acc, &x| acc | x,
+                );
+                self.has_any_permission(target, account_id)
+            }
+
+            fn has_any_permission(&self, target: #bitflags_type, account_id: &::near_sdk::AccountId) -> bool {
+                let permissions = self.get_or_init_permissions(account_id);
+                target.intersects(permissions)
+            }
+
             /// Adds `account_id` to the set of `permission` bearers.
             fn add_bearer(&mut self, permission: #bitflags_type, account_id: &::near_sdk::AccountId) {
                 let mut set = match self.bearers.get(&permission) {
@@ -173,6 +196,14 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
                 self.#acl_field.has_role(role, &account_id)
             }
+
+            fn acl_has_any_role(&self, roles: Vec<String>, account_id: ::near_sdk::AccountId) -> bool {
+                let roles: Vec<#role_type> = roles
+                    .iter()
+                    .map(|role| <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE))
+                    .collect();
+                self.#acl_field.has_any_role(roles, &account_id)
+            }
         }
     };
 
@@ -198,4 +229,59 @@ fn inject_acl_field(
         #field_name: #acl_type
     })?);
     Ok(())
+}
+
+#[derive(Debug, FromMeta)]
+pub struct MacroArgsAny {
+    roles: darling::util::PathList,
+}
+
+pub fn access_control_any(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let attr_args = parse_macro_input!(attrs as AttributeArgs);
+    let cloned_item = item.clone();
+    let input: ItemFn = parse_macro_input!(cloned_item);
+    if is_near_bindgen_wrapped_or_marshall(&input) {
+        return item;
+    }
+
+    let ItemFn {
+        attrs,
+        vis,
+        sig,
+        block,
+    } = input;
+    let function_name = sig.ident.to_string();
+    let stmts = &block.stmts;
+
+    let macro_args = match MacroArgsAny::from_list(&attr_args) {
+        Ok(args) => args,
+        Err(e) => {
+            return TokenStream::from(e.write_errors());
+        }
+    };
+    let roles = macro_args.roles;
+    assert!(roles.len() > 0, "Specify at least one role");
+
+    let acl_check = quote! {
+        let __roles: Vec<&str> = vec![#(#roles.into()),*];
+        let __roles_ser: Vec<String> = __roles.iter().map(|&role| role.into()).collect();
+        let __account_id = ::near_sdk::env::predecessor_account_id();
+        if !self.acl_has_any_role(__roles_ser, __account_id) {
+            let message = format!(
+                "Insufficient permissions for method {} restricted by access control. Requires one of these roles: {:?}",
+                #function_name,
+                __roles,
+            );
+            env::panic_str(&message);
+        }
+    };
+
+    // https://stackoverflow.com/a/66851407
+    quote! {
+        #(#attrs)* #vis #sig {
+            #acl_check
+            #(#stmts)*
+        }
+    }
+    .into()
 }

@@ -1,5 +1,5 @@
 use near_plugins::events::AsEvent;
-use near_plugins::{access_control, AccessControlRole, AccessControllable};
+use near_plugins::{access_control, access_control_any, AccessControlRole, AccessControllable};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::{env, log, near_bindgen, AccountId};
 use std::collections::HashMap;
@@ -33,12 +33,19 @@ impl StatusMessage {
         self.records.get(&account_id).cloned()
     }
 
-    // The contract can interact with Acl by:
+    #[access_control_any(roles(Role::LevelA, Role::LevelB))]
+    pub fn restricted_greeting(&self) -> String {
+        "hello world".to_string()
+    }
+
+    // In addition, `AccessControllable` trait methods can be called directly:
     //
-    // a) Calling functions, e.g.
-    //    self.acl.has_role(role, account_id)
-    //
-    // b) Using attributes (not yet implemented), e.g.
-    //    #[acl_any(Role::LevelA, Role::LevelB)]
-    //    pub fn foo(&mut self) {}
+    // ```
+    // pub fn foo(&self) {
+    //     let role = Role::LevelA;
+    //     if self.acl_has_role(role.into(), &env::predecessor_account_id()) {
+    //         // ..
+    //     }
+    // }
+    // ```
 }
