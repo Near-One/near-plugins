@@ -144,17 +144,17 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 &self, roles: Vec<#role_type>,
                 account_id: &::near_sdk::AccountId
             ) -> bool {
-                let permissions: Vec<#bitflags_type> = roles
+                // Create a bitflags value with active bits for all `roles`.
+                let target = roles
                     .iter()
                     .map(|role| {
                         <#bitflags_type>::from_bits(role.acl_permission())
                             .expect(#ERR_PARSE_BITFLAG)
                     })
-                    .collect();
-                let target = permissions.iter().fold(
-                    <#bitflags_type>::empty(),
-                    |acc, &x| acc | x,
-                );
+                    .fold(
+                        <#bitflags_type>::empty(),
+                        |acc, x| acc | x,
+                    );
                 self.has_any_permission(target, account_id)
             }
 
