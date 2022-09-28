@@ -164,7 +164,19 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             /// Adds `account_id` to the set of `permission` bearers.
+            ///
+            /// # Panics
+            ///
+            /// Panics if `permission` has more than one active bit. The type of
+            /// permission defines only flags which have one active bit. Still,
+            /// developers might call this function with a `permission` that has
+            /// multiple active bits. In that case, the panic prevents polluting
+            /// state.
             fn add_bearer(&mut self, permission: #bitflags_type, account_id: &::near_sdk::AccountId) {
+                assert!(
+                    permission.bits().is_power_of_two(),
+                    "Adding a bearer is allowed only for permissions with exactly one active bit"
+                );
                 let mut set = match self.bearers.get(&permission) {
                     Some(set) => set,
                     None => Self::new_bearers_set(permission),
