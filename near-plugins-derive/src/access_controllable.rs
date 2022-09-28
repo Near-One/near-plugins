@@ -262,15 +262,17 @@ pub fn access_control_any(attrs: TokenStream, item: TokenStream) -> TokenStream 
     let roles = macro_args.roles;
     assert!(roles.len() > 0, "Specify at least one role");
 
+    // TODO optimize case `roles.len() == 1` (speed up expected common case)
     let acl_check = quote! {
-        let __roles: Vec<&str> = vec![#(#roles.into()),*];
-        let __roles_ser: Vec<String> = __roles.iter().map(|&role| role.into()).collect();
-        let __account_id = ::near_sdk::env::predecessor_account_id();
-        if !self.acl_has_any_role(__roles_ser, __account_id) {
+        let __acl_any_roles: Vec<&str> = vec![#(#roles.into()),*];
+        let __acl_any_roles_ser: Vec<String> =
+            __acl_any_roles.iter().map(|&role| role.into()).collect();
+        let __acl_any_account_id = ::near_sdk::env::predecessor_account_id();
+        if !self.acl_has_any_role(__acl_any_roles_ser, __acl_any_account_id) {
             let message = format!(
                 "Insufficient permissions for method {} restricted by access control. Requires one of these roles: {:?}",
                 #function_name,
-                __roles,
+                __acl_any_roles,
             );
             env::panic_str(&message);
         }
