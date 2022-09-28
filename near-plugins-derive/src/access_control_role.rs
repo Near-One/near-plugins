@@ -56,7 +56,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         ident, variants, ..
     } = input;
 
-    let variants = variants.iter().collect::<Vec<_>>();
+    let variants = variants.into_iter().collect::<Vec<_>>();
     let variant_idxs: Vec<_> =
         (0..u8::try_from(variants.len()).expect("Too many enum variants")).collect();
     let variant_names: Vec<_> = variants.iter().map(|v| format!("{}", v.ident)).collect();
@@ -155,7 +155,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         impl AccessControlRole for #ident {
             fn acl_super_admin_permission() -> u128 {
                 // See module documentation.
-                safe_leftshift(1, 0)
+                1 // corresponds to safe_leftshift(1, 0)
             }
 
             fn acl_permission(self) -> u128 {
