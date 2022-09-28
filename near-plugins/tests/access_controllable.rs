@@ -65,7 +65,7 @@ struct AclFailure {
 }
 
 impl TxOutcome {
-    fn assert_success(&self, want: String) {
+    fn assert_success(&self, expected: String) {
         let got = match self {
             TxOutcome::Success(got) => got.clone(),
             TxOutcome::AclFailure(failure) => panic!(
@@ -73,7 +73,7 @@ impl TxOutcome {
                 failure
             ),
         };
-        assert_eq!(got, want);
+        assert_eq!(got, expected);
     }
 
     fn assert_acl_failure(&self) {
@@ -209,7 +209,7 @@ async fn test_acl_grant_role_unchecked() -> anyhow::Result<()> {
 async fn test_attribute_access_control_any() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
     let raw_contract = setup.contract.contract();
-    let want_result = "hello world".to_string();
+    let expected_result = "hello world".to_string();
 
     // Account without any of the required permissions is restricted.
     let account = setup.new_account_with_roles(&[]).await?;
@@ -225,27 +225,27 @@ async fn test_attribute_access_control_any() -> anyhow::Result<()> {
     let account = setup.new_account_with_roles(&["LevelA"]).await?;
     call_restricted_greeting(raw_contract, &account)
         .await?
-        .assert_success(want_result.clone());
+        .assert_success(expected_result.clone());
     let account = setup.new_account_with_roles(&["LevelC"]).await?;
     call_restricted_greeting(raw_contract, &account)
         .await?
-        .assert_success(want_result.clone());
+        .assert_success(expected_result.clone());
     let account = setup.new_account_with_roles(&["LevelA", "LevelB"]).await?;
     call_restricted_greeting(raw_contract, &account)
         .await?
-        .assert_success(want_result.clone());
+        .assert_success(expected_result.clone());
 
     // Account with both permissions succeeds.
     let account = setup.new_account_with_roles(&["LevelA", "LevelC"]).await?;
     call_restricted_greeting(raw_contract, &account)
         .await?
-        .assert_success(want_result.clone());
+        .assert_success(expected_result.clone());
     let account = setup
         .new_account_with_roles(&["LevelA", "LevelB", "LevelC"])
         .await?;
     call_restricted_greeting(raw_contract, &account)
         .await?
-        .assert_success(want_result.clone());
+        .assert_success(expected_result.clone());
 
     // TODO once admin fns are implemented, add tests for cases mentioned in
     // https://github.com/aurora-is-near/near-plugins/pull/5#discussion_r973784721
