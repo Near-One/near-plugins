@@ -107,6 +107,82 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 }
             }
 
+            fn add_admin(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> Option<bool> {
+                if !self.is_admin(role, &::near_sdk::env::predecessor_account_id()) {
+                    return None;
+                }
+                Some(self.add_admin_unchecked(role, account_id))
+            }
+
+            fn add_admin_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
+                let flag = <#bitflags_type>::from_bits(role.acl_admin_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                let mut permissions = self.get_or_init_permissions(account_id);
+
+                let is_new_admin = !permissions.contains(flag);
+                if is_new_admin {
+                    permissions.insert(flag);
+                    self.permissions.insert(account_id, &permissions);
+                    self.add_bearer(flag, account_id);
+
+                    let event = ::#cratename::access_controllable::events::AdminAdded {
+                        role: role.into(),
+                        account: account_id.clone(),
+                        by: ::near_sdk::env::predecessor_account_id(),
+                    };
+                    event.emit();
+                }
+
+                is_new_admin
+            }
+
+            fn is_admin(&self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
+                let permissions = {
+                    match self.permissions.get(account_id) {
+                        Some(permissions) => permissions,
+                        None => return false,
+                    }
+                };
+                let super_admin = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                let role_admin = <#bitflags_type>::from_bits(role.acl_admin_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                permissions.contains(super_admin) || permissions.contains(role_admin)
+            }
+
+            fn revoke_admin(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> Option<bool> {
+                if !self.is_admin(role, &::near_sdk::env::predecessor_account_id()) {
+                    return None;
+                }
+                Some(self.revoke_admin_unchecked(role, account_id))
+            }
+
+            fn renounce_admin(&mut self, role: #role_type) -> bool {
+                self.revoke_admin_unchecked(role, &::near_sdk::env::predecessor_account_id())
+            }
+
+            fn revoke_admin_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
+                let flag = <#bitflags_type>::from_bits(role.acl_admin_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                let mut permissions = self.get_or_init_permissions(account_id);
+
+                let was_admin = permissions.contains(flag);
+                if was_admin {
+                    permissions.remove(flag);
+                    self.permissions.insert(account_id, &permissions);
+                    self.remove_bearer(flag, account_id);
+
+                    let event = ::#cratename::access_controllable::events::AdminRevoked {
+                        role: role.into(),
+                        account: account_id.clone(),
+                        by: ::near_sdk::env::predecessor_account_id(),
+                    };
+                    event.emit();
+                }
+
+                was_admin
+            }
+
             fn grant_role_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_permission())
                     .expect(#ERR_PARSE_BITFLAG);
@@ -185,6 +261,19 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     self.bearers.insert(&permission, &set);
                 }
             }
+
+            /// Removes `account_id` from the set of `permission` bearers.
+            fn remove_bearer(&mut self, permission: #bitflags_type, account_id: &::near_sdk::AccountId) {
+                // If `permission` is invalid (more than one active bit), this
+                // function is a no-op, due to the check in `add_bearer`.
+                let mut set = match self.bearers.get(&permission) {
+                    Some(set) => set,
+                    None => return,
+                };
+                if let true = set.remove(account_id) {
+                    self.bearers.insert(&permission, &set);
+                }
+            }
         }
 
         // Note that `#[near-bindgen]` exposes non-public functions in trait
@@ -196,6 +285,38 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         impl AccessControllable for #ident {
             fn acl_storage_prefix() -> &'static [u8] {
                 (#storage_prefix).as_bytes()
+            }
+
+            fn acl_add_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.add_admin(role, &account_id)
+            }
+
+            #[private]
+            fn acl_add_admin_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.add_admin_unchecked(role, &account_id)
+            }
+
+            fn acl_is_admin(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.is_admin(role, &account_id)
+            }
+
+            fn acl_revoke_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.revoke_admin(role, &account_id)
+            }
+
+            fn acl_renounce_admin(&mut self, role: String) -> bool {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.renounce_admin(role)
+            }
+
+            #[private]
+            fn acl_revoke_admin_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.revoke_admin_unchecked(role, &account_id)
             }
 
             #[private]
