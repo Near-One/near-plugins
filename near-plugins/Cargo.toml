@@ -22,4 +22,8 @@ near-plugins-derive = { path = "../near-plugins-derive" }
 serde = "1"
 
 [dev-dependencies]
+anyhow = "1.0"
 borsh = "0.9"
+tokio = { version = "1", features = ["full"] }
+# Feature `unstable` is required for compiling contracts during tests.
+workspaces = { version = "0.5", features = ["unstable"] }
