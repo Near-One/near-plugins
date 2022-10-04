@@ -107,6 +107,60 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 }
             }
 
+            fn add_super_admin_unchecked(&mut self, account_id: &::near_sdk::AccountId) -> bool {
+                let flag = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                let mut permissions = self.get_or_init_permissions(account_id);
+
+                let is_new_super_admin = !permissions.contains(flag);
+                if is_new_super_admin {
+                    permissions.insert(flag);
+                    self.permissions.insert(account_id, &permissions);
+                    self.add_bearer(flag, account_id);
+
+                    let event = ::#cratename::access_controllable::events::SuperAdminAdded {
+                        account: account_id.clone(),
+                        by: ::near_sdk::env::predecessor_account_id(),
+                    };
+                    event.emit();
+                }
+
+                is_new_super_admin
+            }
+
+            fn is_super_admin(&self, account_id: &::near_sdk::AccountId) -> bool {
+                let permissions = {
+                    match self.permissions.get(account_id) {
+                        Some(permissions) => permissions,
+                        None => return false,
+                    }
+                };
+                let super_admin = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                permissions.contains(super_admin)
+            }
+
+            fn revoke_super_admin_unchecked(&mut self, account_id: &::near_sdk::AccountId) -> bool {
+                let flag = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                let mut permissions = self.get_or_init_permissions(account_id);
+
+                let was_super_admin = permissions.contains(flag);
+                if was_super_admin {
+                    permissions.remove(flag);
+                    self.permissions.insert(account_id, &permissions);
+                    self.remove_bearer(flag, account_id);
+
+                    let event = ::#cratename::access_controllable::events::SuperAdminRevoked {
+                        account: account_id.clone(),
+                        by: ::near_sdk::env::predecessor_account_id(),
+                    };
+                    event.emit();
+                }
+
+                was_super_admin
+            }
+
             fn add_admin(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> Option<bool> {
                 if !self.is_admin(role, &::near_sdk::env::predecessor_account_id()) {
                     return None;
@@ -285,6 +339,20 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         impl AccessControllable for #ident {
             fn acl_storage_prefix() -> &'static [u8] {
                 (#storage_prefix).as_bytes()
+            }
+
+            #[private]
+            fn acl_add_super_admin_unchecked(&mut self, account_id: ::near_sdk::AccountId) -> bool {
+                self.#acl_field.add_super_admin_unchecked(&account_id)
+            }
+
+            fn acl_is_super_admin(&self, account_id: ::near_sdk::AccountId) -> bool {
+                self.#acl_field.is_super_admin(&account_id)
+            }
+
+            #[private]
+            fn acl_revoke_super_admin_unchecked(&mut self, account_id: ::near_sdk::AccountId) -> bool {
+                self.#acl_field.revoke_super_admin_unchecked(&account_id)
             }
 
             fn acl_add_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {

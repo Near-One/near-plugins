@@ -37,14 +37,13 @@ impl Setup {
         })
     }
 
-    async fn new_account_with_roles(&self, roles: &[&str]) -> anyhow::Result<Account> {
+    /// Returns a new account that is super-admin.
+    async fn new_super_admin_account(&self) -> anyhow::Result<Account> {
         let account = self.worker.dev_create_account().await?;
-        for &role in roles {
-            self.contract
-                .acl_grant_role_unchecked(Caller::Contract, role, account.id())
-                .await?
-                .into_result()?;
-        }
+        self.contract
+            .acl_add_super_admin_unchecked(Caller::Contract, account.id())
+            .await?
+            .into_result()?;
         Ok(account)
     }
 
@@ -54,6 +53,17 @@ impl Setup {
         for &role in roles {
             self.contract
                 .acl_add_admin_unchecked(Caller::Contract, role, account.id())
+                .await?
+                .into_result()?;
+        }
+        Ok(account)
+    }
+
+    async fn new_account_with_roles(&self, roles: &[&str]) -> anyhow::Result<Account> {
+        let account = self.worker.dev_create_account().await?;
+        for &role in roles {
+            self.contract
+                .acl_grant_role_unchecked(Caller::Contract, role, account.id())
                 .await?
                 .into_result()?;
         }
@@ -155,6 +165,85 @@ async fn test_set_and_get_status() -> anyhow::Result<()> {
         .json()?;
 
     assert_eq!(res, message);
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_is_super_admin() -> anyhow::Result<()> {
+    let Setup {
+        contract, account, ..
+    } = Setup::new().await?;
+
+    let is_super_admin = contract
+        .acl_is_super_admin(account.clone().into(), account.id())
+        .await?;
+    assert_eq!(is_super_admin, false);
+
+    contract
+        .acl_add_super_admin_unchecked(Caller::Contract, account.id())
+        .await?
+        .into_result()?;
+
+    let is_super_admin = contract
+        .acl_is_super_admin(account.clone().into(), account.id())
+        .await?;
+    assert_eq!(is_super_admin, true);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_add_super_admin_unchecked() -> anyhow::Result<()> {
+    let Setup {
+        contract, account, ..
+    } = Setup::new().await?;
+
+    contract
+        .assert_acl_is_super_admin(false, account.id())
+        .await;
+    let res = contract
+        .acl_add_super_admin_unchecked(Caller::Contract, account.id())
+        .await?;
+    assert_success_with(res, true);
+    contract.assert_acl_is_super_admin(true, account.id()).await;
+
+    // Adding as super-admin again behaves as expected.
+    let res = contract
+        .acl_add_super_admin_unchecked(Caller::Contract, account.id())
+        .await?;
+    assert_success_with(res, false);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_revoke_super_admin_unchecked() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let account = setup.new_super_admin_account().await?;
+
+    setup
+        .contract
+        .assert_acl_is_super_admin(true, account.id())
+        .await;
+
+    // Revoke an existing super-admin permission.
+    let res = setup
+        .contract
+        .acl_revoke_super_admin_unchecked(Caller::Contract, account.id())
+        .await?;
+    assert_success_with(res, true);
+    setup
+        .contract
+        .assert_acl_is_super_admin(false, account.id())
+        .await;
+
+    // Revoke from an account which is not super-admin.
+    let res = setup
+        .contract
+        .acl_revoke_super_admin_unchecked(Caller::Contract, account.id())
+        .await?;
+    assert_success_with(res, false);
+
     Ok(())
 }
 
@@ -492,6 +581,30 @@ async fn test_attribute_access_control_any() -> anyhow::Result<()> {
     // TODO once admin fns are implemented, add tests for cases mentioned in
     // https://github.com/aurora-is-near/near-plugins/pull/5#discussion_r973784721
 
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_add_super_admin_unchecked_is_private() -> anyhow::Result<()> {
+    let Setup {
+        contract, account, ..
+    } = Setup::new().await?;
+    let res = contract
+        .acl_add_super_admin_unchecked(account.clone().into(), account.id())
+        .await?;
+    assert_private_method_failure(res, "acl_add_super_admin_unchecked");
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_revoke_super_admin_unchecked_is_private() -> anyhow::Result<()> {
+    let Setup {
+        contract, account, ..
+    } = Setup::new().await?;
+    let res = contract
+        .acl_revoke_super_admin_unchecked(account.clone().into(), account.id())
+        .await?;
+    assert_private_method_failure(res, "acl_revoke_super_admin_unchecked");
     Ok(())
 }
 
