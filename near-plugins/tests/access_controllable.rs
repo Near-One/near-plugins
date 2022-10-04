@@ -11,6 +11,9 @@ use workspaces::{Account, Contract, Worker};
 
 const PROJECT_PATH: &str = "./tests/contracts/access_controllable";
 
+/// All roles which are defined in the contract in [`PROJECT_PATH`].
+const ALL_ROLES: [&str; 3] = ["LevelA", "LevelB", "LevelC"];
+
 // TODO verify return values (e.g. of acl_add_admin)
 
 /// Bundles resources required in tests.
@@ -247,14 +250,95 @@ async fn test_acl_revoke_super_admin_unchecked() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Verify that a super-admin is admin for every role.
+#[tokio::test]
+async fn test_super_admin_is_any_admin() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let super_admin = setup.new_super_admin_account().await?;
+
+    for role in ALL_ROLES {
+        setup
+            .contract
+            .assert_acl_is_admin(true, role, super_admin.id())
+            .await;
+    }
+
+    Ok(())
+}
+
+/// Verify that a super-admin may add admins for every role.
+#[tokio::test]
+async fn test_super_admin_may_add_any_admin() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let super_admin = setup.new_super_admin_account().await?;
+
+    for role in ALL_ROLES {
+        let account = setup.worker.dev_create_account().await?;
+        setup
+            .contract
+            .assert_acl_is_admin(false, role, account.id())
+            .await;
+
+        let res = setup
+            .contract
+            .acl_add_admin(super_admin.clone().into(), role, account.id())
+            .await?;
+        assert_eq!(res, Some(true));
+        setup
+            .contract
+            .assert_acl_is_admin(true, role, account.id())
+            .await;
+    }
+
+    Ok(())
+}
+
+/// Verify that a super-admin may revoke admins for every role.
+#[tokio::test]
+async fn test_super_admin_may_revoke_any_admin() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let super_admin = setup.new_super_admin_account().await?;
+
+    for role in ALL_ROLES {
+        let admin = setup.new_account_as_admin(&[role]).await?;
+        setup
+            .contract
+            .assert_acl_is_admin(true, role, admin.id())
+            .await;
+
+        let res = setup
+            .contract
+            .acl_revoke_admin(super_admin.clone().into(), role, admin.id())
+            .await?;
+        assert_eq!(res, Some(true));
+        setup
+            .contract
+            .assert_acl_is_admin(false, role, admin.id())
+            .await;
+    }
+    Ok(())
+}
+
+/// Verify that a super-admin may grant every role.
+#[tokio::test]
+async fn test_super_admin_may_grant_any_role() -> anyhow::Result<()> {
+    // TODO once acl_grant_role is implemented
+    Ok(())
+}
+
+/// Verify that a super-admin may revoke every role.
+#[tokio::test]
+async fn test_super_admin_may_revoke_any_role() -> anyhow::Result<()> {
+    // TODO once acl_revoke_role is implemented
+    Ok(())
+}
+
 #[tokio::test]
 async fn test_acl_is_admin() -> anyhow::Result<()> {
     let Setup {
         contract, account, ..
     } = Setup::new().await?;
     let role = "LevelA";
-
-    // TODO super-admin related cases
 
     let is_admin = contract
         .acl_is_admin(account.clone().into(), role, account.id())
@@ -315,8 +399,6 @@ async fn test_acl_add_admin() -> anyhow::Result<()> {
         .acl_add_admin(acc_adding_admin.clone().into(), role, acc_to_be_admin.id())
         .await?;
     assert_eq!(added, Some(false));
-
-    // TODO test super admin may add admin for a roles he's not admin for
 
     Ok(())
 }
@@ -395,8 +477,6 @@ async fn test_acl_revoke_admin() -> anyhow::Result<()> {
         .acl_revoke_admin(revoker.into(), role, account.id())
         .await?;
     assert_eq!(res, Some(false));
-
-    // TODO super-admin may revoke any role.
 
     Ok(())
 }
