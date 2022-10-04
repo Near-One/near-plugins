@@ -14,8 +14,6 @@ const PROJECT_PATH: &str = "./tests/contracts/access_controllable";
 /// All roles which are defined in the contract in [`PROJECT_PATH`].
 const ALL_ROLES: [&str; 3] = ["LevelA", "LevelB", "LevelC"];
 
-// TODO verify return values (e.g. of acl_add_admin)
-
 /// Bundles resources required in tests.
 struct Setup {
     /// The worker interacting with the current sandbox.
@@ -632,6 +630,18 @@ async fn test_attribute_access_control_any() -> anyhow::Result<()> {
         .await?
         .assert_acl_failure();
 
+    // A super-admin which has not been granted the role is restricted.
+    let super_admin = setup.new_super_admin_account().await?;
+    call_restricted_greeting(raw_contract, &super_admin)
+        .await?
+        .assert_acl_failure();
+
+    // An admin for a permitted role is restricted (no grantee of role itself).
+    let admin = setup.new_account_as_admin(&["LevelA"]).await?;
+    call_restricted_greeting(raw_contract, &admin)
+        .await?
+        .assert_acl_failure();
+
     // Account with one of the required permissions succeeds.
     let account = setup.new_account_with_roles(&["LevelA"]).await?;
     call_restricted_greeting(raw_contract, &account)
@@ -657,9 +667,6 @@ async fn test_attribute_access_control_any() -> anyhow::Result<()> {
     call_restricted_greeting(raw_contract, &account)
         .await?
         .assert_success(expected_result.clone());
-
-    // TODO once admin fns are implemented, add tests for cases mentioned in
-    // https://github.com/aurora-is-near/near-plugins/pull/5#discussion_r973784721
 
     Ok(())
 }
