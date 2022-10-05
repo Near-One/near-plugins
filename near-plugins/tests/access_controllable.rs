@@ -411,17 +411,17 @@ async fn test_acl_add_admin_unchecked() -> anyhow::Result<()> {
     contract
         .assert_acl_is_admin(false, role, account.id())
         .await;
-    contract
+    let res = contract
         .acl_add_admin_unchecked(Caller::Contract, role, account.id())
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     contract.assert_acl_is_admin(true, role, account.id()).await;
 
-    // Adding as admin again doesn't lead to failures.
-    contract
+    // Adding as admin again behaves as expected.
+    let res = contract
         .acl_add_admin_unchecked(Caller::Contract, role, account.id())
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, false);
 
     Ok(())
 }
@@ -599,17 +599,17 @@ async fn test_acl_grant_role_unchecked() -> anyhow::Result<()> {
     contract
         .assert_acl_has_role(false, role, account.id())
         .await;
-    contract
+    let res = contract
         .acl_grant_role_unchecked(Caller::Contract, role, account.id())
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     contract.assert_acl_has_role(true, role, account.id()).await;
 
-    // Granting a role again doesn't lead to failures.
-    contract
+    // Granting a role again behaves as expected.
+    let res = contract
         .acl_grant_role_unchecked(Caller::Contract, role, account.id())
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, false);
 
     Ok(())
 }
