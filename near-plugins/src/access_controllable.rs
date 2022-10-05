@@ -61,8 +61,49 @@ pub trait AccessControllable {
     /// whether the predecessor was an admin for `role`.
     fn acl_renounce_admin(&mut self, role: String) -> bool;
 
+    /// Revokes admin permissions from `account_id` __without__ checking any
+    /// permissions. Returns whether `account_id` was an admin for `role`.
+    ///
+    /// This method is `#[private]` in the implementation provided by this
+    /// crate.
+    fn acl_revoke_admin_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
+
+    /// Grants `role` to `account_id` provided that the predecessor has
+    /// sufficient permissions, i.e. is an admin as defined by [`acl_is_admin`].
+    ///
+    /// In case of sufficient permissions, the returned `Some(bool)` indicates
+    /// whether `account_id` is a new grantee of `role`. Without permissions,
+    /// `None` is returned and internal state is not modified.
+    fn acl_grant_role(&mut self, role: String, account_id: AccountId) -> Option<bool>;
+
+    /// Grants `role` to `account_id` __without__ checking any permissions.
+    /// Returns whether `role` was newly granted to `account_id`.
+    ///
+    /// This method is `#[private]` in the implementation provided by this
+    /// crate.
+    fn acl_grant_role_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
+
     /// Returns whether `account_id` has been granted `role`.
     fn acl_has_role(&self, role: String, account_id: AccountId) -> bool;
+
+    /// Revokes `role` from `account_id` provided that the predecessor has
+    /// sufficient permissions, i.e. is an admin as defined by [`acl_is_admin`].
+    ///
+    /// In case of sufficient permissions, the returned `Some(bool)` indicates
+    /// whether `account_id` was a grantee of `role`. Without permissions,
+    /// `None` is returned and internal state is not modified.
+    fn acl_revoke_role(&mut self, role: String, account_id: AccountId) -> Option<bool>;
+
+    /// Revokes `role` from the predecessor and returns whether it was a grantee
+    /// of `role`.
+    fn acl_renounce_role(&mut self, role: String) -> bool;
+
+    /// Revokes `role` from `account_id` __without__ checking any permissions.
+    /// Returns whether `account_id` was a grantee of `role`.
+    ///
+    /// This method is `#[private]` in the implementation provided by this
+    /// crate.
+    fn acl_revoke_role_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
 
     /// Returns whether `account_id` has been granted any of the `roles`.
     fn acl_has_any_role(&self, roles: Vec<String>, account_id: AccountId) -> bool;
@@ -182,6 +223,29 @@ pub mod events {
                 standard: STANDARD.to_string(),
                 version: VERSION.to_string(),
                 event: "role_granted".to_string(),
+                data: Some(self.clone()),
+            }
+        }
+    }
+
+    /// Event emitted when a role is revoked from an account.
+    #[derive(Serialize, Clone)]
+    #[serde(crate = "near_sdk::serde")]
+    pub struct RoleRevoked {
+        /// Role that was revoked.
+        pub role: String,
+        /// Account from whom the role was revoked.
+        pub from: AccountId,
+        /// Account that revoked the role.
+        pub by: AccountId,
+    }
+
+    impl AsEvent<RoleRevoked> for RoleRevoked {
+        fn metadata(&self) -> EventMetadata<RoleRevoked> {
+            EventMetadata {
+                standard: STANDARD.to_string(),
+                version: VERSION.to_string(),
+                event: "role_revoked".to_string(),
                 data: Some(self.clone()),
             }
         }
