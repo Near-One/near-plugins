@@ -477,13 +477,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
             fn acl_has_role(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
                 let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
-                self.#acl_field.renounce_role(role)
-            }
-
-            #[private]
-            fn acl_revoke_role_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
-                self.#acl_field.revoke_role_unchecked(role, &account_id)
+                self.#acl_field.has_role(role, &account_id)
             }
 
             fn acl_has_any_role(&self, roles: Vec<String>, account_id: ::near_sdk::AccountId) -> bool {
