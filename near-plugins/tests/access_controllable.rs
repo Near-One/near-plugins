@@ -640,6 +640,51 @@ async fn test_acl_has_role() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_acl_grant_role() -> anyhow::Result<()> {
+    let Setup {
+        worker,
+        contract,
+        account,
+        ..
+    } = Setup::new().await?;
+    let role = "LevelB";
+
+    let granter = account;
+    let grantee = worker.dev_create_account().await?;
+
+    // An account which isn't admin can't grant the role.
+    contract
+        .assert_acl_is_admin(false, role, granter.id())
+        .await;
+    let granted = contract
+        .acl_grant_role(granter.clone().into(), role, grantee.id())
+        .await?;
+    assert_eq!(granted, None);
+    contract
+        .assert_acl_has_role(false, role, grantee.id())
+        .await;
+
+    // Admin can grant the role.
+    contract
+        .acl_add_admin_unchecked(Caller::Contract, role, granter.id())
+        .await?
+        .into_result()?;
+    let granted = contract
+        .acl_grant_role(granter.clone().into(), role, grantee.id())
+        .await?;
+    assert_eq!(granted, Some(true));
+    contract.assert_acl_has_role(true, role, grantee.id()).await;
+
+    // Granting the role to an account which already is a grantee.
+    let granted = contract
+        .acl_grant_role(granter.clone().into(), role, grantee.id())
+        .await?;
+    assert_eq!(granted, Some(false));
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_acl_grant_role_unchecked() -> anyhow::Result<()> {
     let Setup {
         contract, account, ..
@@ -658,6 +703,144 @@ async fn test_acl_grant_role_unchecked() -> anyhow::Result<()> {
     // Granting a role again behaves as expected.
     let res = contract
         .acl_grant_role_unchecked(Caller::Contract, role, account.id())
+        .await?;
+    assert_success_with(res, false);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_revoke_role() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let role = "LevelB";
+    let grantee = setup.new_account_with_roles(&[role]).await?;
+
+    setup
+        .contract
+        .assert_acl_has_role(true, role, grantee.id())
+        .await;
+
+    // Revoke is a no-op if revoker is not an admin for the role.
+    let revoker = setup.new_account_as_admin(&[]).await?;
+    let res = setup
+        .contract
+        .acl_revoke_role(revoker.into(), role, grantee.id())
+        .await?;
+    assert_eq!(res, None);
+    let revoker = setup.new_account_as_admin(&["LevelA"]).await?;
+    let res = setup
+        .contract
+        .acl_revoke_role(revoker.into(), role, grantee.id())
+        .await?;
+    assert_eq!(res, None);
+    setup
+        .contract
+        .assert_acl_has_role(true, role, grantee.id())
+        .await;
+
+    // Revoke succeeds if the revoker is an admin for the role.
+    let revoker = setup.new_account_as_admin(&[role]).await?;
+    let res = setup
+        .contract
+        .acl_revoke_role(revoker.into(), role, grantee.id())
+        .await?;
+    assert_eq!(res, Some(true));
+    setup
+        .contract
+        .assert_acl_has_role(false, role, grantee.id())
+        .await;
+
+    // Revoking a role that isn't granted returns `Some(false)`.
+    let revoker = setup.new_account_as_admin(&[role]).await?;
+    let account = setup.worker.dev_create_account().await?;
+    let res = setup
+        .contract
+        .acl_revoke_role(revoker.into(), role, account.id())
+        .await?;
+    assert_eq!(res, Some(false));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_renounce_role() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let role = "LevelC";
+
+    // An account which is isn't grantee calls `acl_renounce_role`.
+    let res = setup
+        .contract
+        .acl_renounce_role(setup.account.clone().into(), role)
+        .await?;
+    assert_eq!(res, false);
+
+    // A grantee calls `acl_renounce_admin`.
+    let grantee = setup.new_account_with_roles(&[role]).await?;
+    setup
+        .contract
+        .assert_acl_has_role(true, role, grantee.id())
+        .await;
+    let res = setup
+        .contract
+        .acl_renounce_role(grantee.clone().into(), role)
+        .await?;
+    assert_eq!(res, true);
+    setup
+        .contract
+        .assert_acl_has_role(false, role, grantee.id())
+        .await;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_revoke_role_unchecked() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let account = setup.new_account_with_roles(&["LevelA", "LevelC"]).await?;
+
+    setup
+        .contract
+        .assert_acl_has_role(true, "LevelA", account.id())
+        .await;
+    setup
+        .contract
+        .assert_acl_has_role(true, "LevelC", account.id())
+        .await;
+
+    // Revoke one of the roles.
+    let res = setup
+        .contract
+        .acl_revoke_role_unchecked(Caller::Contract, "LevelA", account.id())
+        .await?;
+    assert_success_with(res, true);
+    setup
+        .contract
+        .assert_acl_has_role(false, "LevelA", account.id())
+        .await;
+    setup
+        .contract
+        .assert_acl_has_role(true, "LevelC", account.id())
+        .await;
+
+    // Revoke the other role too.
+    let res = setup
+        .contract
+        .acl_revoke_role_unchecked(Caller::Contract, "LevelC", account.id())
+        .await?;
+    assert_success_with(res, true);
+    setup
+        .contract
+        .assert_acl_has_role(false, "LevelA", account.id())
+        .await;
+    setup
+        .contract
+        .assert_acl_has_role(false, "LevelC", account.id())
+        .await;
+
+    // Revoking behaves as expected if the role is not granted.
+    let res = setup
+        .contract
+        .acl_revoke_role_unchecked(Caller::Contract, "LevelC", account.id())
         .await?;
     assert_success_with(res, false);
 
@@ -770,6 +953,18 @@ async fn test_acl_add_admin_unchecked_is_private() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_acl_revoke_admin_unchecked_is_private() -> anyhow::Result<()> {
+    let Setup {
+        contract, account, ..
+    } = Setup::new().await?;
+    let res = contract
+        .acl_revoke_admin_unchecked(account.clone().into(), "LevelA", account.id())
+        .await?;
+    assert_private_method_failure(res, "acl_revoke_admin_unchecked");
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_acl_grant_role_unchecked_is_private() -> anyhow::Result<()> {
     let Setup {
         contract, account, ..
@@ -782,13 +977,13 @@ async fn test_acl_grant_role_unchecked_is_private() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn test_acl_revoke_admin_unchecked_is_private() -> anyhow::Result<()> {
+async fn test_acl_revoke_role_unchecked_is_private() -> anyhow::Result<()> {
     let Setup {
         contract, account, ..
     } = Setup::new().await?;
     let res = contract
-        .acl_revoke_admin_unchecked(account.clone().into(), "LevelA", account.id())
+        .acl_revoke_role_unchecked(account.clone().into(), "LevelA", account.id())
         .await?;
-    assert_private_method_failure(res, "acl_revoke_admin_unchecked");
+    assert_private_method_failure(res, "acl_revoke_role_unchecked");
     Ok(())
 }

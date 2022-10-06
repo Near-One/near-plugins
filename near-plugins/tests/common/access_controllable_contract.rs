@@ -251,6 +251,27 @@ impl AccessControllableContract {
         assert_eq!(has_role, expected);
     }
 
+    pub async fn acl_grant_role(
+        &self,
+        caller: Caller,
+        role: &str,
+        account_id: &AccountId,
+    ) -> anyhow::Result<Option<bool>> {
+        let res = self
+            .account(caller)
+            .call(self.contract.id(), "acl_grant_role")
+            .args_json(json!({
+                "role": role,
+                "account_id": account_id,
+            }))
+            .max_gas()
+            .transact()
+            .await?
+            .into_result()?
+            .json::<Option<bool>>()?;
+        Ok(res)
+    }
+
     pub async fn acl_grant_role_unchecked(
         &self,
         caller: Caller,
@@ -259,6 +280,59 @@ impl AccessControllableContract {
     ) -> workspaces::Result<ExecutionFinalResult> {
         self.account(caller)
             .call(self.contract.id(), "acl_grant_role_unchecked")
+            .args_json(json!({
+                "role": role,
+                "account_id": account_id,
+            }))
+            .max_gas()
+            .transact()
+            .await
+    }
+
+    pub async fn acl_revoke_role(
+        &self,
+        caller: Caller,
+        role: &str,
+        account_id: &AccountId,
+    ) -> anyhow::Result<Option<bool>> {
+        let res = self
+            .account(caller)
+            .call(self.contract.id(), "acl_revoke_role")
+            .args_json(json!({
+                "role": role,
+                "account_id": account_id,
+            }))
+            .max_gas()
+            .transact()
+            .await?
+            .into_result()?
+            .json::<Option<bool>>()?;
+        Ok(res)
+    }
+
+    pub async fn acl_renounce_role(&self, caller: Caller, role: &str) -> anyhow::Result<bool> {
+        let res = self
+            .account(caller)
+            .call(self.contract.id(), "acl_renounce_role")
+            .args_json(json!({
+                "role": role,
+            }))
+            .max_gas()
+            .transact()
+            .await?
+            .into_result()?
+            .json::<bool>()?;
+        Ok(res)
+    }
+
+    pub async fn acl_revoke_role_unchecked(
+        &self,
+        caller: Caller,
+        role: &str,
+        account_id: &AccountId,
+    ) -> workspaces::Result<ExecutionFinalResult> {
+        self.account(caller)
+            .call(self.contract.id(), "acl_revoke_role_unchecked")
             .args_json(json!({
                 "role": role,
                 "account_id": account_id,
