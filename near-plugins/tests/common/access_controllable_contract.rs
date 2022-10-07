@@ -341,4 +341,50 @@ impl AccessControllableContract {
             .transact()
             .await
     }
+
+    pub async fn acl_get_admins(
+        &self,
+        caller: Caller,
+        role: &str,
+        skip: u64,
+        limit: u64,
+    ) -> anyhow::Result<Vec<AccountId>> {
+        let res = self
+            .account(caller)
+            .call(self.contract.id(), "acl_get_admins")
+            .args_json(json!({
+                "role": role,
+                "skip": skip,
+                "limit": limit,
+            }))
+            .max_gas()
+            .transact()
+            .await?
+            .into_result()?
+            .json::<Vec<AccountId>>()?;
+        Ok(res)
+    }
+
+    pub async fn acl_get_grantees(
+        &self,
+        caller: Caller,
+        role: &str,
+        skip: u64,
+        limit: u64,
+    ) -> anyhow::Result<Vec<AccountId>> {
+        let res = self
+            .account(caller)
+            .call(self.contract.id(), "acl_get_grantees")
+            .args_json(json!({
+                "role": role,
+                "skip": skip,
+                "limit": limit,
+            }))
+            .max_gas()
+            .transact()
+            .await?
+            .into_result()?
+            .json::<Vec<AccountId>>()?;
+        Ok(res)
+    }
 }

@@ -387,6 +387,23 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 }
             }
 
+            /// Enables paginated retrieval of bearers. Returns up to `limit`
+            /// bearers of `permission`, skipping the first `skip` items.
+            ///
+            /// # Panics
+            ///
+            /// Panics if `skip` or `limit` are outside the range of `usize`.
+            fn get_bearers(&self, permission: #bitflags_type, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
+                let skip = usize::try_from(skip).expect("skip should be in the range of usize");
+                let limit = usize::try_from(limit).expect("limit should be in the range of usize");
+
+                let set = match self.bearers.get(&permission) {
+                    Some(set) => set,
+                    None => return vec![],
+                };
+                set.iter().skip(skip).take(limit).collect()
+            }
+
             /// Removes `account_id` from the set of `permission` bearers.
             fn remove_bearer(&mut self, permission: #bitflags_type, account_id: &::near_sdk::AccountId) {
                 // If `permission` is invalid (more than one active bit), this
@@ -475,6 +492,20 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     .map(|role| <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE))
                     .collect();
                 self.#acl_field.has_any_role(roles, &account_id)
+            }
+
+            fn acl_get_admins(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let permission = <#bitflags_type>::from_bits(role.acl_admin_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                self.#acl_field.get_bearers(permission, skip, limit)
+            }
+
+            fn acl_get_grantees(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let permission = <#bitflags_type>::from_bits(role.acl_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                self.#acl_field.get_bearers(permission, skip, limit)
             }
         }
     };

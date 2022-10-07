@@ -107,6 +107,14 @@ pub trait AccessControllable {
 
     /// Returns whether `account_id` has been granted any of the `roles`.
     fn acl_has_any_role(&self, roles: Vec<String>, account_id: AccountId) -> bool;
+
+    /// Enables paginated retrieval of admins of `role`. It returns upt to
+    /// `limit` admins and skips the first `skip` admins.
+    fn acl_get_admins(&self, role: String, skip: u64, limit: u64) -> Vec<AccountId>;
+
+    /// Enables paginated retrieval of grantees of `role`. It returns up to
+    /// `limit` grantees and skips the first `skip` grantees.
+    fn acl_get_grantees(&self, role: String, skip: u64, limit: u64) -> Vec<AccountId>;
 }
 
 pub mod events {

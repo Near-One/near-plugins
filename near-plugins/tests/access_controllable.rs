@@ -5,6 +5,7 @@ use common::utils::{
     assert_insufficient_acl_permissions, assert_private_method_failure, assert_success_with,
 };
 use near_sdk::serde_json::json;
+use std::convert::TryFrom;
 use workspaces::network::Sandbox;
 use workspaces::result::ExecutionFinalResult;
 use workspaces::{Account, Contract, Worker};
@@ -913,6 +914,148 @@ async fn test_acl_init_super_admin_is_private() -> anyhow::Result<()> {
         .acl_init_super_admin(account.clone().into(), account.id())
         .await?;
     assert_private_method_failure(res, "acl_init_super_admin");
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_get_admins() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let role = "LevelB";
+
+    let admin_ids = vec![
+        setup.new_account_as_admin(&[role]).await?,
+        setup.new_account_as_admin(&[role]).await?,
+        setup.new_account_as_admin(&[role]).await?,
+    ]
+    .iter()
+    .map(|account| account.id().clone())
+    .collect::<Vec<_>>();
+
+    // Behaves as expected for limit = 0.
+    let actual = setup
+        .contract
+        .acl_get_admins(setup.account.clone().into(), role, 0, 0)
+        .await?;
+    assert_eq!(actual, vec![],);
+
+    // Skip outside of the number of existing admins.
+    let n = u64::try_from(admin_ids.len()).unwrap();
+    let actual = setup
+        .contract
+        .acl_get_admins(setup.account.clone().into(), role, n, 1)
+        .await?;
+    assert_eq!(actual, vec![],);
+
+    // Retrieve admins with step size 1.
+    for i in 0..3 {
+        let actual = setup
+            .contract
+            .acl_get_admins(setup.account.clone().into(), role, i, 1)
+            .await?;
+        let i = usize::try_from(i).unwrap();
+        let expected = admin_ids[i..i + 1].to_vec();
+        assert_eq!(actual, expected, "Mismatch at position {}", i,);
+    }
+
+    // Retrieve admins with step size 2.
+    let actual = setup
+        .contract
+        .acl_get_admins(setup.account.clone().into(), role, 0, 2)
+        .await?;
+    let expected = admin_ids[0..2].to_vec();
+    assert_eq!(actual, expected);
+    let actual = setup
+        .contract
+        .acl_get_admins(setup.account.clone().into(), role, 2, 2)
+        .await?;
+    let expected = vec![admin_ids[2].clone()];
+    assert_eq!(actual, expected);
+
+    // Retrieve all admins at once.
+    let actual = setup
+        .contract
+        .acl_get_admins(setup.account.clone().into(), role, 0, 3)
+        .await?;
+    assert_eq!(actual, admin_ids);
+
+    // Limit larger than the number of existing admins.
+    let actual = setup
+        .contract
+        .acl_get_admins(setup.account.clone().into(), role, 0, 4)
+        .await?;
+    assert_eq!(actual, admin_ids);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_get_grantees() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let role = "LevelA";
+
+    let grantee_ids = vec![
+        setup.new_account_with_roles(&[role]).await?,
+        setup.new_account_with_roles(&[role]).await?,
+        setup.new_account_with_roles(&[role]).await?,
+    ]
+    .iter()
+    .map(|account| account.id().clone())
+    .collect::<Vec<_>>();
+
+    // Behaves as expected for limit = 0.
+    let actual = setup
+        .contract
+        .acl_get_grantees(setup.account.clone().into(), role, 0, 0)
+        .await?;
+    assert_eq!(actual, vec![],);
+
+    // Skip outside of the number of existing grantees.
+    let n = u64::try_from(grantee_ids.len()).unwrap();
+    let actual = setup
+        .contract
+        .acl_get_grantees(setup.account.clone().into(), role, n, 1)
+        .await?;
+    assert_eq!(actual, vec![],);
+
+    // Retrieve grantees with step size 1.
+    for i in 0..3 {
+        let actual = setup
+            .contract
+            .acl_get_grantees(setup.account.clone().into(), role, i, 1)
+            .await?;
+        let i = usize::try_from(i).unwrap();
+        let expected = grantee_ids[i..i + 1].to_vec();
+        assert_eq!(actual, expected, "Mismatch at position {}", i,);
+    }
+
+    // Retrieve grantees with step size 2.
+    let actual = setup
+        .contract
+        .acl_get_grantees(setup.account.clone().into(), role, 0, 2)
+        .await?;
+    let expected = grantee_ids[0..2].to_vec();
+    assert_eq!(actual, expected);
+    let actual = setup
+        .contract
+        .acl_get_grantees(setup.account.clone().into(), role, 2, 2)
+        .await?;
+    let expected = vec![grantee_ids[2].clone()];
+    assert_eq!(actual, expected);
+
+    // Retrieve all grantees at once.
+    let actual = setup
+        .contract
+        .acl_get_grantees(setup.account.clone().into(), role, 0, 3)
+        .await?;
+    assert_eq!(actual, grantee_ids);
+
+    // Limit larger than the number of existing grantees.
+    let actual = setup
+        .contract
+        .acl_get_grantees(setup.account.clone().into(), role, 0, 4)
+        .await?;
+    assert_eq!(actual, grantee_ids);
+
     Ok(())
 }
 
