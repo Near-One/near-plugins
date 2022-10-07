@@ -107,6 +107,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 }
             }
 
+            /// Makes `account_id` a super-admin __without__ checking any permissions.
+            /// It returns whether `account_id` is a new super-admin.
+            ///
+            /// Note that there may be zero or more super-admins.
             fn add_super_admin_unchecked(&mut self, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
                     .expect(#ERR_PARSE_BITFLAG);
@@ -140,6 +144,8 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 permissions.contains(super_admin)
             }
 
+            /// Revokes super-admin permissions from `account_id` without checking any
+            /// permissions. It returns whether `account_id` was a super-admin.
             fn revoke_super_admin_unchecked(&mut self, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
                     .expect(#ERR_PARSE_BITFLAG);
@@ -168,6 +174,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 Some(self.add_admin_unchecked(role, account_id))
             }
 
+            /// Makes `account_id` an admin for role, __without__ checking any
+            /// permissions. Returns whether `account_id` is a new admin for `role`.
+            ///
+            /// Note that any role may have multiple (or zero) admins.
             fn add_admin_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_admin_permission())
                     .expect(#ERR_PARSE_BITFLAG);
@@ -215,6 +225,8 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 self.revoke_admin_unchecked(role, &::near_sdk::env::predecessor_account_id())
             }
 
+            /// Revokes admin permissions from `account_id` __without__ checking any
+            /// permissions. Returns whether `account_id` was an admin for `role`.
             fn revoke_admin_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_admin_permission())
                     .expect(#ERR_PARSE_BITFLAG);
@@ -237,6 +249,8 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 was_admin
             }
 
+            /// Grants `role` to `account_id` __without__ checking any permissions.
+            /// Returns whether `role` was newly granted to `account_id`.
             fn grant_role_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_permission())
                     .expect(#ERR_PARSE_BITFLAG);
@@ -341,29 +355,13 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 (#storage_prefix).as_bytes()
             }
 
-            #[private]
-            fn acl_add_super_admin_unchecked(&mut self, account_id: ::near_sdk::AccountId) -> bool {
-                self.#acl_field.add_super_admin_unchecked(&account_id)
-            }
-
             fn acl_is_super_admin(&self, account_id: ::near_sdk::AccountId) -> bool {
                 self.#acl_field.is_super_admin(&account_id)
-            }
-
-            #[private]
-            fn acl_revoke_super_admin_unchecked(&mut self, account_id: ::near_sdk::AccountId) -> bool {
-                self.#acl_field.revoke_super_admin_unchecked(&account_id)
             }
 
             fn acl_add_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
                 let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
                 self.#acl_field.add_admin(role, &account_id)
-            }
-
-            #[private]
-            fn acl_add_admin_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
-                self.#acl_field.add_admin_unchecked(role, &account_id)
             }
 
             fn acl_is_admin(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
@@ -379,18 +377,6 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn acl_renounce_admin(&mut self, role: String) -> bool {
                 let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
                 self.#acl_field.renounce_admin(role)
-            }
-
-            #[private]
-            fn acl_revoke_admin_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
-                self.#acl_field.revoke_admin_unchecked(role, &account_id)
-            }
-
-            #[private]
-            fn acl_grant_role_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
-                self.#acl_field.grant_role_unchecked(role, &account_id)
             }
 
             fn acl_has_role(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {

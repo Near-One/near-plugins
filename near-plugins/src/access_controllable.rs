@@ -19,24 +19,8 @@ pub trait AccessControllable {
     /// Returns the storage prefix for collections related to access control.
     fn acl_storage_prefix() -> &'static [u8];
 
-    /// Makes `account_id` a super-admin __without__ checking any permissions.
-    /// It returns whether `account_id` is a new super-admin.
-    ///
-    /// Note that there may be zero or more super-admins.
-    ///
-    /// This method is `#[private]` in the implementation provided by this
-    /// crate.
-    fn acl_add_super_admin_unchecked(&mut self, account_id: AccountId) -> bool;
-
     /// Returns whether `account_id` is a super-admin.
     fn acl_is_super_admin(&self, account_id: AccountId) -> bool;
-
-    /// Revokes super-admin permissions from `account_id` without checking any
-    /// permissions. It returns whether `account_id` was a super-admin.
-    ///
-    /// This method is `#[private]` in the implementation provided by this
-    /// crate.
-    fn acl_revoke_super_admin_unchecked(&mut self, account_id: AccountId) -> bool;
 
     /// Makes `account_id` an admin provided that the predecessor has sufficient
     /// permissions, i.e. is an admin as defined by [`acl_is_admin`].
@@ -47,15 +31,6 @@ pub trait AccessControllable {
     ///
     /// Note that any role may have multiple (or zero) admins.
     fn acl_add_admin(&mut self, role: String, account_id: AccountId) -> Option<bool>;
-
-    /// Makes `account_id` an admin for role, __without__ checking any
-    /// permissions. Returns whether `account_id` is a new admin for `role`.
-    ///
-    /// Note that any role may have multiple (or zero) admins.
-    ///
-    /// This method is `#[private]` in the implementation provided by this
-    /// crate.
-    fn acl_add_admin_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
 
     /// Returns whether `account_id` is an admin for `role`. Super-admins are
     /// admins for _every_ role.
@@ -73,20 +48,6 @@ pub trait AccessControllable {
     /// Revokes admin permissions for `role` from the predecessor. Returns
     /// whether the predecessor was an admin for `role`.
     fn acl_renounce_admin(&mut self, role: String) -> bool;
-
-    /// Revokes admin permissions from `account_id` __without__ checking any
-    /// permissions. Returns whether `account_id` was an admin for `role`.
-    ///
-    /// This method is `#[private]` in the implementation provided by this
-    /// crate.
-    fn acl_revoke_admin_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
-
-    /// Grants `role` to `account_id` __without__ checking any permissions.
-    /// Returns whether `role` was newly granted to `account_id`.
-    ///
-    /// This method is `#[private]` in the implementation provided by this
-    /// crate.
-    fn acl_grant_role_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
 
     /// Returns whether `account_id` has been granted `role`.
     fn acl_has_role(&self, role: String, account_id: AccountId) -> bool;

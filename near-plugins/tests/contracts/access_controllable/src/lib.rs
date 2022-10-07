@@ -1,11 +1,13 @@
 use near_plugins::events::AsEvent;
 use near_plugins::{access_control, access_control_any, AccessControlRole, AccessControllable};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, log, near_bindgen, AccountId};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
-#[derive(AccessControlRole, Copy, Clone)]
+#[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
+#[serde(crate = "near_sdk::serde")]
 pub enum Role {
     LevelA,
     LevelB,
@@ -21,6 +23,26 @@ pub struct StatusMessage {
 
 #[near_bindgen]
 impl StatusMessage {
+    // Initially adding (super-)admins is done via internal methods, for
+    // example:
+    //
+    // ```
+    // self.__acl.add_super_admin_unchecked(account_id);
+    // self.__acl.add_admin_unchecked(role, account_id);
+    // ```
+    //
+    // **Attention**: Contracts should call `__acl.*_unchecked` methods only
+    // from within methods with attribute `#[init]` or `#[private]`.
+    //
+    // Once an account is (super-)admin, it may add other admins and grant
+    // roles.
+    //
+    // If needed, It's also possible to grant a role without checks:
+    //
+    // ```
+    // self.__acl.grant_role_unchecked(role, account_id);
+    // ```
+
     #[payable]
     pub fn set_status(&mut self, message: String) {
         let account_id = env::signer_account_id();
@@ -48,4 +70,33 @@ impl StatusMessage {
     //     }
     // }
     // ```
+}
+
+/// Exposing internal methods to facilitate integration testing.
+#[near_bindgen]
+impl StatusMessage {
+    #[private]
+    pub fn acl_add_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
+        self.__acl.add_super_admin_unchecked(&account_id)
+    }
+
+    #[private]
+    pub fn acl_revoke_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
+        self.__acl.revoke_super_admin_unchecked(&account_id)
+    }
+
+    #[private]
+    pub fn acl_add_admin_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
+        self.__acl.add_admin_unchecked(role, &account_id)
+    }
+
+    #[private]
+    pub fn acl_revoke_admin_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
+        self.__acl.revoke_admin_unchecked(role, &account_id)
+    }
+
+    #[private]
+    pub fn acl_grant_role_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
+        self.__acl.grant_role_unchecked(role, &account_id)
+    }
 }
