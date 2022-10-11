@@ -3,3 +3,35 @@ members = [
     "near-plugins",
     "near-plugins-derive"
 ]
+exclude = ["target"]
+
+[workspace.metadata.workspaces]
+version = "0.15.0"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Aurora Labs <hello@aurora.dev>"]
+rust-version = "1.64.0"
+description = "Ergonomic plugin system to extend NEAR contracts."
+license = "CC0-1.0"
+readme = "README.md"
+repository = "https://github.com/aurora-is-near/near-plugins"
+homepage = "https://github.com/aurora-is-near/near-plugins"
+keywords = ["near", "smart contract", "plugin"]
+
+[workspace.dependencies]
+near-sdk = "4.0.0"
+near-plugins-derive = { path = "near-plugins-derive" }
+serde = "1"
+anyhow = "1.0"
+borsh = "0.9"
+tokio = { version = "1", features = ["full"] }
+# Feature `unstable` is required for compiling contracts during tests.
+workspaces = { version = "0.6", features = ["unstable"] }
+toml = "0.5"
+darling = "0.13.1"
+proc-macro2 = "1.0"
+quote = "1.0.9"
+syn = { version = "1.0.69", features = ["full"] }
+proc-macro-crate = "0.1.5"
