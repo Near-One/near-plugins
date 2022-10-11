@@ -17,7 +17,9 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
     let opts = Opts::from_derive_input(&input).expect("Wrong options");
     let DeriveInput { ident, .. } = input;
 
-    let code_storage_key = opts.code_storage_key.unwrap_or("__CODE__".to_string());
+    let code_storage_key = opts
+        .code_storage_key
+        .unwrap_or_else(|| "__CODE__".to_string());
 
     let output = quote! {
         #[near_bindgen]

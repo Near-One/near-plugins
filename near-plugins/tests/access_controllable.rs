@@ -6,6 +6,7 @@ use common::utils::{
 };
 use near_sdk::serde_json::json;
 use std::convert::TryFrom;
+use std::path::Path;
 use workspaces::network::Sandbox;
 use workspaces::result::ExecutionFinalResult;
 use workspaces::{Account, Contract, Worker};
@@ -28,7 +29,7 @@ struct Setup {
 impl Setup {
     async fn new() -> anyhow::Result<Self> {
         let worker = workspaces::sandbox().await?;
-        let wasm = workspaces::compile_project(PROJECT_PATH).await?;
+        let wasm = common::repo::compile_project(&Path::new(PROJECT_PATH)).await?;
         let contract = AccessControllableContract::new(worker.dev_deploy(&wasm).await?);
         let account = worker.dev_create_account().await?;
 

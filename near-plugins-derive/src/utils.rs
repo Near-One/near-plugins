@@ -57,7 +57,7 @@ pub(crate) fn is_near_bindgen_wrapped_or_marshall(item: &ItemFn) -> bool {
     // relies on debug formatting of `proc_macro2::Span`.
     let condition_2 = {
         let signature_span = item.sig.ident.span();
-        let self_token_span = match item.sig.inputs.iter().nth(0) {
+        let self_token_span = match item.sig.inputs.iter().next() {
             Some(FnArg::Receiver(receiver)) => receiver.self_token.span,
             _ => panic!("Attribute must be used on a method with self receiver"),
         };
@@ -78,8 +78,8 @@ pub(crate) fn is_near_bindgen_wrapped_or_marshall(item: &ItemFn) -> bool {
 fn span_number(span: &Span) -> u64 {
     let formatted = format!("{:#?}", span);
     let mut number_part = formatted
-        .split(" ")
-        .nth(0)
+        .split(' ')
+        .next()
         .expect("Formatting a Span yielded an unexpected pattern")
         .to_string();
     number_part.remove(0); // remove the `#`

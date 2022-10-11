@@ -205,10 +205,10 @@ fn bitflags_idents(names: &[String], span: Span) -> Vec<Ident> {
         .iter()
         .map(|name| format!("{}_ADMIN", name))
         .collect::<Vec<_>>();
-    let mut idents = vec![Ident::new(DEFAULT_SUPER_ADMIN_NAME, span.clone())];
+    let mut idents = vec![Ident::new(DEFAULT_SUPER_ADMIN_NAME, span)];
     for (name, admin_name) in names.iter().zip(admin_names) {
-        idents.push(Ident::new(name.as_ref(), span.clone()));
-        idents.push(Ident::new(admin_name.as_ref(), span.clone()));
+        idents.push(Ident::new(name.as_ref(), span));
+        idents.push(Ident::new(admin_name.as_ref(), span));
     }
     idents
 }
