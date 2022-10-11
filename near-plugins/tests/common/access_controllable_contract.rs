@@ -63,6 +63,21 @@ impl AccessControllableContract {
         assert_eq!(is_super_admin, expected);
     }
 
+    pub async fn acl_init_super_admin(
+        &self,
+        caller: Caller,
+        account_id: &AccountId,
+    ) -> workspaces::Result<ExecutionFinalResult> {
+        self.account(caller)
+            .call(self.contract.id(), "acl_init_super_admin")
+            .args_json(json!({
+                "account_id": account_id,
+            }))
+            .max_gas()
+            .transact()
+            .await
+    }
+
     pub async fn acl_add_super_admin_unchecked(
         &self,
         caller: Caller,

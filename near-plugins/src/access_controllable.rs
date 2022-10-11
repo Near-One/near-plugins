@@ -19,6 +19,18 @@ pub trait AccessControllable {
     /// Returns the storage prefix for collections related to access control.
     fn acl_storage_prefix() -> &'static [u8];
 
+    /// Adds `account_id` as super-admin __without__ checking any permissions in
+    /// case there are no super-admins. This function can be used to add a
+    /// super-admin during contract initialization. Moreover, it may provide a
+    /// recovery mechanism if (mistakenly) all super-admins have been removed.
+    ///
+    /// The return value indicates whether `account_id` was added as
+    /// super-admin.
+    ///
+    /// It is `#[private]` in the implementation provided by this trait, i.e.
+    /// only the contract itself may call this method.
+    fn acl_init_super_admin(&mut self, account_id: AccountId) -> bool;
+
     /// Returns whether `account_id` is a super-admin.
     fn acl_is_super_admin(&self, account_id: AccountId) -> bool;
 

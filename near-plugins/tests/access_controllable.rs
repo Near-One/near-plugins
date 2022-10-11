@@ -194,6 +194,56 @@ async fn test_acl_is_super_admin() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_acl_init_super_admin() -> anyhow::Result<()> {
+    let Setup {
+        worker,
+        contract,
+        account,
+        ..
+    } = Setup::new().await?;
+
+    // Calling `acl_init_super_admin` after initialization adds super-admin.
+    contract
+        .assert_acl_is_super_admin(false, account.id())
+        .await;
+    let res = contract
+        .acl_init_super_admin(Caller::Contract, account.id())
+        .await?;
+    assert_success_with(res, true);
+    contract.assert_acl_is_super_admin(true, account.id()).await;
+
+    // Once there's a super-admin, `acl_init_super_admin` returns `false`.
+    let res = contract
+        .acl_init_super_admin(Caller::Contract, account.id())
+        .await?;
+    assert_success_with(res, false);
+
+    let other_account = worker.dev_create_account().await?;
+    let res = contract
+        .acl_init_super_admin(Caller::Contract, other_account.id())
+        .await?;
+    assert_success_with(res, false);
+    contract
+        .assert_acl_is_super_admin(false, other_account.id())
+        .await;
+
+    // When all super-admins have been removed, it succeeds again.
+    let res = contract
+        .acl_revoke_super_admin_unchecked(Caller::Contract, account.id())
+        .await?;
+    assert_success_with(res, true);
+    let res = contract
+        .acl_init_super_admin(Caller::Contract, other_account.id())
+        .await?;
+    assert_success_with(res, true);
+    contract
+        .assert_acl_is_super_admin(true, other_account.id())
+        .await;
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_acl_add_super_admin_unchecked() -> anyhow::Result<()> {
     let Setup {
         contract, account, ..
@@ -668,6 +718,18 @@ async fn test_attribute_access_control_any() -> anyhow::Result<()> {
         .await?
         .assert_success(expected_result.clone());
 
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_acl_init_super_admin_is_private() -> anyhow::Result<()> {
+    let Setup {
+        contract, account, ..
+    } = Setup::new().await?;
+    let res = contract
+        .acl_init_super_admin(account.clone().into(), account.id())
+        .await?;
+    assert_private_method_failure(res, "acl_init_super_admin");
     Ok(())
 }
 

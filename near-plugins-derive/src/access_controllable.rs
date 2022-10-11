@@ -107,6 +107,23 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 }
             }
 
+            fn init_super_admin(&mut self, account_id: &::near_sdk::AccountId) -> bool {
+                let flag = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                // TODO use self.get_bearers() once the following PR is merged
+                // https://github.com/aurora-is-near/near-plugins/pull/12
+                let number_super_admins = match self.bearers.get(&flag) {
+                    None => 0,
+                    Some(bearers) => bearers.len(),
+                };
+                if number_super_admins > 0 {
+                    return false;
+                }
+                let res = self.add_super_admin_unchecked(account_id);
+                assert!(res, "Failed to init super-admin.");
+                res
+            }
+
             /// Makes `account_id` a super-admin __without__ checking any permissions.
             /// It returns whether `account_id` is a new super-admin.
             ///
@@ -357,6 +374,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
             fn acl_is_super_admin(&self, account_id: ::near_sdk::AccountId) -> bool {
                 self.#acl_field.is_super_admin(&account_id)
+            }
+
+            #[private]
+            fn acl_init_super_admin(&mut self, account_id: ::near_sdk::AccountId) -> bool {
+                self.#acl_field.init_super_admin(&account_id)
             }
 
             fn acl_add_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
