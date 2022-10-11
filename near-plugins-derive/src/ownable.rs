@@ -17,7 +17,9 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
     let opts = Opts::from_derive_input(&input).expect("Wrong options");
     let DeriveInput { ident, .. } = input;
 
-    let owner_storage_key = opts.owner_storage_key.unwrap_or("__OWNER__".to_string());
+    let owner_storage_key = opts
+        .owner_storage_key
+        .unwrap_or_else(|| "__OWNER__".to_string());
 
     let output = quote! {
         #[near_bindgen]

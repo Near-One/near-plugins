@@ -17,7 +17,9 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
     let opts = Opts::from_derive_input(&input).expect("Wrong options");
     let DeriveInput { ident, .. } = input;
 
-    let paused_storage_key = opts.paused_storage_key.unwrap_or("__PAUSE__".to_string());
+    let paused_storage_key = opts
+        .paused_storage_key
+        .unwrap_or_else(|| "__PAUSE__".to_string());
 
     let output = quote! {
         #[near_bindgen]
