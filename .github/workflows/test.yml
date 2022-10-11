@@ -23,6 +23,9 @@ jobs:
         with:
           cache-on-failure: true
 
+      - name: add wasm32-unknown-unknown
+        run: rustup target add wasm32-unknown-unknown
+
       - name: cargo test
         run: cargo test --all --all-features
 
