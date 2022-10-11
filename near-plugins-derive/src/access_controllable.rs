@@ -266,6 +266,13 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 was_admin
             }
 
+            fn grant_role(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> Option<bool> {
+                if !self.is_admin(role, &::near_sdk::env::predecessor_account_id()) {
+                    return None;
+                }
+                Some(self.grant_role_unchecked(role, account_id))
+            }
+
             /// Grants `role` to `account_id` __without__ checking any permissions.
             /// Returns whether `role` was newly granted to `account_id`.
             fn grant_role_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
@@ -288,6 +295,39 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 }
 
                 is_new_grantee
+            }
+
+            fn revoke_role(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> Option<bool> {
+                if !self.is_admin(role, &::near_sdk::env::predecessor_account_id()) {
+                    return None;
+                }
+                Some(self.revoke_role_unchecked(role, account_id))
+            }
+
+            fn renounce_role(&mut self, role: #role_type) -> bool {
+                self.revoke_role_unchecked(role, &::near_sdk::env::predecessor_account_id())
+            }
+
+            fn revoke_role_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
+                let flag = <#bitflags_type>::from_bits(role.acl_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                let mut permissions = self.get_or_init_permissions(account_id);
+
+                let was_grantee = permissions.contains(flag);
+                if was_grantee {
+                    permissions.remove(flag);
+                    self.permissions.insert(account_id, &permissions);
+                    self.remove_bearer(flag, account_id);
+
+                    let event = ::#cratename::access_controllable::events::RoleRevoked {
+                        role: role.into(),
+                        from: account_id.clone(),
+                        by: ::near_sdk::env::predecessor_account_id(),
+                    };
+                    event.emit();
+                }
+
+                was_grantee
             }
 
             fn has_role(&self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
@@ -347,6 +387,23 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 }
             }
 
+            /// Enables paginated retrieval of bearers. Returns up to `limit`
+            /// bearers of `permission`, skipping the first `skip` items.
+            ///
+            /// # Panics
+            ///
+            /// Panics if `skip` or `limit` are outside the range of `usize`.
+            fn get_bearers(&self, permission: #bitflags_type, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
+                let skip = usize::try_from(skip).expect("skip should be in the range of usize");
+                let limit = usize::try_from(limit).expect("limit should be in the range of usize");
+
+                let set = match self.bearers.get(&permission) {
+                    Some(set) => set,
+                    None => return vec![],
+                };
+                set.iter().skip(skip).take(limit).collect()
+            }
+
             /// Removes `account_id` from the set of `permission` bearers.
             fn remove_bearer(&mut self, permission: #bitflags_type, account_id: &::near_sdk::AccountId) {
                 // If `permission` is invalid (more than one active bit), this
@@ -401,9 +458,32 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 self.#acl_field.renounce_admin(role)
             }
 
+            #[private]
+            fn acl_revoke_admin_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.revoke_admin_unchecked(role, &account_id)
+            }
+
+            fn acl_grant_role(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.grant_role(role, &account_id)
+            }
+
+            #[private]
+            fn acl_grant_role_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.grant_role_unchecked(role, &account_id)
+            }
+
             fn acl_has_role(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
                 let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
-                self.#acl_field.has_role(role, &account_id)
+                self.#acl_field.renounce_role(role)
+            }
+
+            #[private]
+            fn acl_revoke_role_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.revoke_role_unchecked(role, &account_id)
             }
 
             fn acl_has_any_role(&self, roles: Vec<String>, account_id: ::near_sdk::AccountId) -> bool {
@@ -412,6 +492,20 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     .map(|role| <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE))
                     .collect();
                 self.#acl_field.has_any_role(roles, &account_id)
+            }
+
+            fn acl_get_admins(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let permission = <#bitflags_type>::from_bits(role.acl_admin_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                self.#acl_field.get_bearers(permission, skip, limit)
+            }
+
+            fn acl_get_grantees(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let permission = <#bitflags_type>::from_bits(role.acl_permission())
+                    .expect(#ERR_PARSE_BITFLAG);
+                self.#acl_field.get_bearers(permission, skip, limit)
             }
         }
     };
