@@ -2,7 +2,7 @@
 name = "near-plugins"
 version = "0.1.0"
 authors = ["Marcelo Fornet <marcelo@aurora.dev>"]
-edition = "2018"
+edition = "2021"
 license = "CC0-1.0"
 readme = "README.md"
 repository = "https://github.com/aurora-is-near/near-plugins"
@@ -22,4 +22,9 @@ near-plugins-derive = { path = "../near-plugins-derive" }
 serde = "1"
 
 [dev-dependencies]
+anyhow = "1.0"
 borsh = "0.9"
+tokio = { version = "1", features = ["full"] }
+# Feature `unstable` is required for compiling contracts during tests.
+workspaces = { version = "0.6", features = ["unstable"] }
+toml = "0.5"
