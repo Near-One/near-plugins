@@ -433,11 +433,6 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 self.#acl_field.is_super_admin(&account_id)
             }
 
-            #[private]
-            fn acl_init_super_admin(&mut self, account_id: ::near_sdk::AccountId) -> bool {
-                self.#acl_field.init_super_admin(&account_id)
-            }
-
             fn acl_add_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
                 let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
                 self.#acl_field.add_admin(role, &account_id)
@@ -458,10 +453,14 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 self.#acl_field.renounce_admin(role)
             }
 
-            #[private]
-            fn acl_revoke_admin_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
+            fn acl_revoke_role(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
                 let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
-                self.#acl_field.revoke_admin_unchecked(role, &account_id)
+                self.#acl_field.revoke_role(role, &account_id)
+            }
+
+            fn acl_renounce_role(&mut self, role: String) -> bool {
+                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                self.#acl_field.renounce_role(role)
             }
 
             fn acl_grant_role(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
@@ -469,21 +468,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 self.#acl_field.grant_role(role, &account_id)
             }
 
-            #[private]
-            fn acl_grant_role_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
-                self.#acl_field.grant_role_unchecked(role, &account_id)
-            }
 
             fn acl_has_role(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
                 let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
-                self.#acl_field.renounce_role(role)
-            }
-
-            #[private]
-            fn acl_revoke_role_unchecked(&mut self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
-                self.#acl_field.revoke_role_unchecked(role, &account_id)
+                self.#acl_field.has_role(role, &account_id)
             }
 
             fn acl_has_any_role(&self, roles: Vec<String>, account_id: ::near_sdk::AccountId) -> bool {

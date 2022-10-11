@@ -19,18 +19,6 @@ pub trait AccessControllable {
     /// Returns the storage prefix for collections related to access control.
     fn acl_storage_prefix() -> &'static [u8];
 
-    /// Adds `account_id` as super-admin __without__ checking any permissions in
-    /// case there are no super-admins. This function can be used to add a
-    /// super-admin during contract initialization. Moreover, it may provide a
-    /// recovery mechanism if (mistakenly) all super-admins have been removed.
-    ///
-    /// The return value indicates whether `account_id` was added as
-    /// super-admin.
-    ///
-    /// It is `#[private]` in the implementation provided by this trait, i.e.
-    /// only the contract itself may call this method.
-    fn acl_init_super_admin(&mut self, account_id: AccountId) -> bool;
-
     /// Returns whether `account_id` is a super-admin.
     fn acl_is_super_admin(&self, account_id: AccountId) -> bool;
 
@@ -61,13 +49,6 @@ pub trait AccessControllable {
     /// whether the predecessor was an admin for `role`.
     fn acl_renounce_admin(&mut self, role: String) -> bool;
 
-    /// Revokes admin permissions from `account_id` __without__ checking any
-    /// permissions. Returns whether `account_id` was an admin for `role`.
-    ///
-    /// This method is `#[private]` in the implementation provided by this
-    /// crate.
-    fn acl_revoke_admin_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
-
     /// Grants `role` to `account_id` provided that the predecessor has
     /// sufficient permissions, i.e. is an admin as defined by [`acl_is_admin`].
     ///
@@ -75,13 +56,6 @@ pub trait AccessControllable {
     /// whether `account_id` is a new grantee of `role`. Without permissions,
     /// `None` is returned and internal state is not modified.
     fn acl_grant_role(&mut self, role: String, account_id: AccountId) -> Option<bool>;
-
-    /// Grants `role` to `account_id` __without__ checking any permissions.
-    /// Returns whether `role` was newly granted to `account_id`.
-    ///
-    /// This method is `#[private]` in the implementation provided by this
-    /// crate.
-    fn acl_grant_role_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
 
     /// Returns whether `account_id` has been granted `role`.
     fn acl_has_role(&self, role: String, account_id: AccountId) -> bool;
@@ -97,13 +71,6 @@ pub trait AccessControllable {
     /// Revokes `role` from the predecessor and returns whether it was a grantee
     /// of `role`.
     fn acl_renounce_role(&mut self, role: String) -> bool;
-
-    /// Revokes `role` from `account_id` __without__ checking any permissions.
-    /// Returns whether `account_id` was a grantee of `role`.
-    ///
-    /// This method is `#[private]` in the implementation provided by this
-    /// crate.
-    fn acl_revoke_role_unchecked(&mut self, role: String, account_id: AccountId) -> bool;
 
     /// Returns whether `account_id` has been granted any of the `roles`.
     fn acl_has_any_role(&self, roles: Vec<String>, account_id: AccountId) -> bool;
