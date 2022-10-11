@@ -17,7 +17,7 @@ crate-type = ["cdylib", "rlib"]
 # proc-macro = true
 
 [dependencies]
-near-sdk = "4.0.0-pre.5"
+near-sdk = "4.0.0"
 near-plugins-derive = { path = "../near-plugins-derive" }
 serde = "1"
 
