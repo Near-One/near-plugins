@@ -1,4 +1,20 @@
+use near_sdk::serde::de::DeserializeOwned;
+use std::cmp::PartialEq;
+use std::fmt::Debug;
 use workspaces::result::ExecutionFinalResult;
+
+/// Asserts execution was successful and returned the `expected` value.
+pub fn assert_success_with<T>(res: ExecutionFinalResult, expected: T)
+where
+    T: DeserializeOwned + PartialEq + Debug,
+{
+    let actual = res
+        .into_result()
+        .expect("Transaction should have succeeded")
+        .json::<T>()
+        .expect("Return value should be deserializable");
+    assert_eq!(actual, expected);
+}
 
 /// Asserts transaction failure due to `method` being `#[private]`.
 pub fn assert_private_method_failure(res: ExecutionFinalResult, method: &str) {
