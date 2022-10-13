@@ -108,8 +108,7 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
 
     let owner_check = match (contains_self, contains_owner) {
         (true, true) => quote! {
-            let __predecessor_account_id = ::near_sdk::env::predecessor_account_id();
-            if self.owner_get() != Some(__predecessor_account_id) {
+            if !self.owner_is() {
                 ::near_sdk::assert_self();
             }
         },
