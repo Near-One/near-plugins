@@ -52,8 +52,9 @@ impl Counter {
 mod tests {
     use workspaces::{Account, Contract};
     use tokio::runtime::Runtime;
-    use serde_json::json;
+    use serde_json::{json, Value};
     use near_sdk::{AccountId, ONE_NEAR};
+    use workspaces::result::{ExecutionResult, ExecutionSuccess, ValueOrReceiptId};
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/ownable_base.wasm";
 
@@ -149,8 +150,7 @@ mod tests {
         assert!(!call_by(&next_owner, &contract, "protected_self"));
         assert!(call_by(&next_owner, &contract, "unprotected"));
 
-        let counter: u64 = serde_json::from_slice(
-            &view(&contract, "get_counter")).unwrap();
+        let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 5);
 
         assert!(call_arg(&contract, "owner_set", &json!({"owner": next_owner.id()})));
@@ -158,5 +158,62 @@ mod tests {
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_ne!(current_owner.clone().unwrap().as_str(), contract_holder.id().as_str());
         assert_eq!(current_owner.unwrap().as_str(), next_owner.id().as_str());
+
+        assert!(call_by(&next_owner, &contract, "protected"));
+        assert!(call_by(&next_owner, &contract, "protected_owner"));
+        assert!(!call_by(&next_owner, &contract, "protected_self"));
+        assert!(call_by(&next_owner, &contract, "unprotected"));
+
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 8);
+
+        assert!(call(&contract, "protected"));
+        assert!(!call(&contract, "protected_owner"));
+        assert!(call(&contract, "protected_self"));
+        assert!(call(&contract, "unprotected"));
+
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 11);
+    }
+
+    #[test]
+    fn null_owner() {
+        let (contract_holder, contract) = get_contract();
+        let rt = Runtime::new().unwrap();
+
+        assert!(call(&contract,"new"));
+
+        assert!(call_arg(&contract, "owner_set", &json!({"owner": Option::<AccountId>::None})));
+
+        let current_owner: Option::<AccountId> = view!(contract, "owner_get");
+        assert_eq!(current_owner, None);
+
+        assert!(call(&contract, "protected"));
+        assert!(!call(&contract, "protected_owner"));
+        assert!(call(&contract, "protected_self"));
+        assert!(call(&contract, "unprotected"));
+
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 3);
+
+        assert!(call_arg(&contract, "owner_set", &json!({"owner": contract.id().as_str()})));
+        assert!(call(&contract, "protected"));
+        assert!(call(&contract, "protected_owner"));
+        assert!(call(&contract, "protected_self"));
+        assert!(call(&contract, "unprotected"));
+
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 7);
+    }
+
+    #[test]
+    fn check_owner_storage_key() {
+        let (contract_holder, contract) = get_contract();
+        let rt = Runtime::new().unwrap();
+
+        assert!(call(&contract,"new"));
+
+        let owner_storage_key: Vec<u8> = view!(contract, "owner_storage_key");
+        assert_eq!(owner_storage_key, "__OWNER__".as_bytes().to_vec());
     }
 }
