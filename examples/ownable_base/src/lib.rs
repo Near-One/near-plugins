@@ -70,31 +70,38 @@ mod tests {
         (owner, contract)
     }
 
-    #[test]
-    fn base_scenario() {
-        let (owner, contract) = get_contract();
+    fn view(contract: &Contract, method_name: &str) -> Vec<u8> {
         let rt = Runtime::new().unwrap();
 
         rt.block_on(
-            contract.call("new")
-            .max_gas()
-            .transact()
-            );
+            contract.view(method_name,
+                          json!({}).to_string().into_bytes())
+        ).unwrap().result
+    }
 
+    fn call(contract: &Contract, method_name: &str) {
+        let rt = Runtime::new().unwrap();
+
+        rt.block_on(
+            contract.call(method_name)
+                .max_gas()
+                .transact()
+        );
+    }
+
+    #[test]
+    fn base_scenario() {
+        let (owner, contract) = get_contract();
+
+        call(&contract,"new");
 
         let current_owner: Option::<AccountId> = serde_json::from_slice(
-            &rt.block_on(
-                contract.view("owner_get", 
-                              json!({}).to_string().into_bytes())
-                         ).unwrap().result).unwrap();
+            &view(&contract, "owner_get")).unwrap();
 
         assert_eq!(current_owner.unwrap().as_str(), owner.id().as_str());
 
         let counter: u64 = serde_json::from_slice(
-            &rt.block_on(
-                contract.view("get_counter", 
-                              json!({}).to_string().into_bytes())
-                ).unwrap().result).unwrap();
+            &view(&contract, "get_counter")).unwrap();
 
         assert_eq!(counter, 0);
     }
