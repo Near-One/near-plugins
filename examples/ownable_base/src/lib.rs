@@ -53,8 +53,7 @@ mod tests {
     use workspaces::{Account, Contract};
     use tokio::runtime::Runtime;
     use serde_json::json;
-    use near_sdk::AccountId;
-    use borsh::BorshDeserialize;
+    use near_sdk::{AccountId, ONE_NEAR};
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/ownable_base.wasm";
 
@@ -79,30 +78,85 @@ mod tests {
         ).unwrap().result
     }
 
-    fn call(contract: &Contract, method_name: &str) {
+    fn call(contract: &Contract, method_name: &str) -> bool {
         let rt = Runtime::new().unwrap();
 
         rt.block_on(
             contract.call(method_name)
                 .max_gas()
                 .transact()
-        );
+        ).unwrap().is_success()
+    }
+
+    fn call_arg(contract: &Contract, method_name: &str, args: &serde_json::Value) -> bool {
+        let rt = Runtime::new().unwrap();
+
+        rt.block_on(
+            contract.call(method_name)
+                .args_json(args)
+                .max_gas()
+                .transact()
+        ).unwrap().is_success()
+    }
+
+    fn call_by(account: &Account, contract: &Contract, method_name: &str) -> bool {
+        let rt = Runtime::new().unwrap();
+
+        rt.block_on(
+            account.call(contract.id(),method_name)
+                .max_gas()
+                .transact()
+        ).unwrap().is_success()
+    }
+
+    fn get_subaccount(account: &Account, new_account_name: &str) -> Account {
+        let rt = Runtime::new().unwrap();
+
+        rt.block_on(account.create_subaccount(new_account_name)
+            .initial_balance(ONE_NEAR)
+            .transact()).unwrap().unwrap()
+    }
+
+    macro_rules! view {
+        ($contract:ident, $method_name:literal) => {
+            serde_json::from_slice(&view(&$contract, $method_name)).unwrap()
+        }
     }
 
     #[test]
     fn base_scenario() {
-        let (owner, contract) = get_contract();
+        let (contract_holder, contract) = get_contract();
 
-        call(&contract,"new");
+        assert!(call(&contract,"new"));
 
-        let current_owner: Option::<AccountId> = serde_json::from_slice(
-            &view(&contract, "owner_get")).unwrap();
+        let current_owner: Option::<AccountId> = view!(contract, "owner_get");
+        assert_eq!(current_owner.unwrap().as_str(), contract_holder.id().as_str());
 
-        assert_eq!(current_owner.unwrap().as_str(), owner.id().as_str());
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 0);
+
+        assert!(call(&contract, "protected"));
+        assert!(call(&contract, "protected_owner"));
+        assert!(call(&contract, "protected_self"));
+        assert!(call(&contract, "unprotected"));
+
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 4);
+
+        let next_owner = get_subaccount(&contract_holder, "next_owner");
+        assert!(!call_by(&next_owner, &contract, "protected"));
+        assert!(!call_by(&next_owner, &contract, "protected_owner"));
+        assert!(!call_by(&next_owner, &contract, "protected_self"));
+        assert!(call_by(&next_owner, &contract, "unprotected"));
 
         let counter: u64 = serde_json::from_slice(
             &view(&contract, "get_counter")).unwrap();
+        assert_eq!(counter, 5);
 
-        assert_eq!(counter, 0);
+        assert!(call_arg(&contract, "owner_set", &json!({"owner": next_owner.id()})));
+
+        let current_owner: Option::<AccountId> = view!(contract, "owner_get");
+        assert_ne!(current_owner.clone().unwrap().as_str(), contract_holder.id().as_str());
+        assert_eq!(current_owner.unwrap().as_str(), next_owner.id().as_str());
     }
 }
