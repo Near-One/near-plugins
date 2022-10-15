@@ -6,6 +6,7 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::parse::Parser;
 use syn::{parse_macro_input, AttributeArgs, ItemFn, ItemStruct};
+use crate::utils;
 
 #[derive(Debug, FromMeta)]
 pub struct MacroArgs {
@@ -535,14 +536,7 @@ pub fn access_control_any(attrs: TokenStream, item: TokenStream) -> TokenStream 
         return item;
     }
 
-    let ItemFn {
-        attrs,
-        vis,
-        sig,
-        block,
-    } = input;
-    let function_name = sig.ident.to_string();
-    let stmts = &block.stmts;
+    let function_name = input.sig.ident.to_string();
 
     let macro_args = match MacroArgsAny::from_list(&attr_args) {
         Ok(args) => args,
@@ -569,12 +563,5 @@ pub fn access_control_any(attrs: TokenStream, item: TokenStream) -> TokenStream 
         }
     };
 
-    // https://stackoverflow.com/a/66851407
-    quote! {
-        #(#attrs)* #vis #sig {
-            #acl_check
-            #(#stmts)*
-        }
-    }
-    .into()
+    utils::add_extra_code_to_fn(&input, acl_check)
 }

@@ -92,3 +92,22 @@ pub(crate) fn cratename() -> Ident {
         Span::call_site(),
     )
 }
+
+pub(crate) fn add_extra_code_to_fn(fn_code: &ItemFn, extra_code: proc_macro2::TokenStream) -> proc_macro::TokenStream {
+    let ItemFn {
+        attrs,
+        vis,
+        sig,
+        block,
+    } = fn_code;
+    let stmts = &block.stmts;
+
+    // https://stackoverflow.com/a/66851407
+    quote::quote! {
+        #(#attrs)* #vis #sig {
+            #extra_code
+            #(#stmts)*
+        }
+    }
+    .into()
+}

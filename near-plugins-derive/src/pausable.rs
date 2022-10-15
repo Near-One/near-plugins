@@ -3,6 +3,7 @@ use darling::{FromDeriveInput, FromMeta};
 use proc_macro::{self, TokenStream};
 use quote::quote;
 use syn::{parse, parse_macro_input, AttributeArgs, DeriveInput, ItemFn};
+use crate::utils;
 
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(pausable), forward_attrs(allow, doc, cfg))]
@@ -120,15 +121,7 @@ pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let attr_args = parse_macro_input!(attrs as AttributeArgs);
     let args = PauseArgs::from_list(&attr_args).expect("Invalid arguments");
 
-    let ItemFn {
-        attrs,
-        vis,
-        sig,
-        block,
-    } = input;
-    let stmts = &block.stmts;
-
-    let fn_name = args.name.unwrap_or_else(|| sig.ident.to_string());
+    let fn_name = args.name.unwrap_or_else(|| input.sig.ident.to_string());
 
     let self_condition = if args.except._self {
         quote!(
@@ -163,15 +156,7 @@ pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
         }
     );
 
-    // https://stackoverflow.com/a/66851407
-    let result = quote! {
-        #(#attrs)* #vis #sig {
-            #check_pause
-            #(#stmts)*
-        }
-    };
-
-    result.into()
+    utils::add_extra_code_to_fn(&input, check_pause)
 }
 
 #[derive(Debug, FromMeta)]
@@ -190,14 +175,6 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
 
     let attr_args = parse_macro_input!(attrs as AttributeArgs);
     let args = IfPausedArgs::from_list(&attr_args).expect("Invalid arguments");
-
-    let ItemFn {
-        attrs,
-        vis,
-        sig,
-        block,
-    } = input;
-    let stmts = &block.stmts;
 
     let fn_name = args.name;
 
@@ -234,13 +211,5 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
         }
     );
 
-    // https://stackoverflow.com/a/66851407
-    let result = quote! {
-        #(#attrs)* #vis #sig {
-            #check_pause
-            #(#stmts)*
-        }
-    };
-
-    result.into()
+    utils::add_extra_code_to_fn(&input, check_pause)
 }

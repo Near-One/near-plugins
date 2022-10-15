@@ -3,6 +3,7 @@ use darling::FromDeriveInput;
 use proc_macro::{self, TokenStream};
 use quote::quote;
 use syn::{parse, parse_macro_input, DeriveInput, ItemFn};
+use crate::utils;
 
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(ownable), forward_attrs(allow, doc, cfg))]
@@ -98,14 +99,6 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
-    let ItemFn {
-        attrs,
-        vis,
-        sig,
-        block,
-    } = input;
-    let stmts = &block.stmts;
-
     let owner_check = match (contains_self, contains_owner) {
         (true, true) => quote! {
             if !self.owner_is() {
@@ -123,12 +116,5 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    // https://stackoverflow.com/a/66851407
-    quote! {
-        #(#attrs)* #vis #sig {
-            #owner_check
-            #(#stmts)*
-        }
-    }
-    .into()
+    utils::add_extra_code_to_fn(&input, owner_check)
 }
