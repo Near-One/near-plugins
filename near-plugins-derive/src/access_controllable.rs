@@ -7,6 +7,7 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::parse::Parser;
 use syn::{parse_macro_input, AttributeArgs, ItemFn, ItemStruct};
+use crate::utils;
 
 #[derive(Debug, FromMeta)]
 pub struct MacroArgs {
