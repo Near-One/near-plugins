@@ -170,5 +170,17 @@ mod tests {
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 2);
+
+
+        let bob = get_subaccount(&contract_holder, "bob");
+        assert!(call_arg(&contract, "acl_add_admin", &json!({"role": String::from(Positions::LevelA), "account_id": bob.id()})));
+
+        let bob_is_admin: bool = view!(contract, "acl_is_admin", &json!({"role": String::from(Positions::LevelA), "account_id": bob.id()}));
+        assert!(bob_is_admin);
+
+        assert!(!call_by(&bob, &contract, "level_a_incr"));
+
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 2);
     }
 }
