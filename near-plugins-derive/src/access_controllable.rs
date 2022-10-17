@@ -143,7 +143,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                         account: account_id.clone(),
                         by: ::near_sdk::env::predecessor_account_id(),
                     };
-                    event.emit();
+                    ::#cratename::events::AsEvent::emit(&event);
                 }
 
                 is_new_super_admin
@@ -178,7 +178,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                         account: account_id.clone(),
                         by: ::near_sdk::env::predecessor_account_id(),
                     };
-                    event.emit();
+                    ::#cratename::events::AsEvent::emit(&event);
                 }
 
                 was_super_admin
@@ -211,7 +211,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                         account: account_id.clone(),
                         by: ::near_sdk::env::predecessor_account_id(),
                     };
-                    event.emit();
+                    ::#cratename::events::AsEvent::emit(&event);
                 }
 
                 is_new_admin
@@ -260,7 +260,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                         account: account_id.clone(),
                         by: ::near_sdk::env::predecessor_account_id(),
                     };
-                    event.emit();
+                    ::#cratename::events::AsEvent::emit(&event);
                 }
 
                 was_admin
@@ -291,7 +291,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                         by: ::near_sdk::env::predecessor_account_id(),
                         to: account_id.clone(),
                     };
-                    event.emit();
+                    ::#cratename::events::AsEvent::emit(&event);
                 }
 
                 is_new_grantee
@@ -324,7 +324,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                         from: account_id.clone(),
                         by: ::near_sdk::env::predecessor_account_id(),
                     };
-                    event.emit();
+                    ::#cratename::events::AsEvent::emit(&event);
                 }
 
                 was_grantee

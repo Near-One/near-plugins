@@ -1,4 +1,3 @@
-use near_plugins::events::AsEvent;
 use near_plugins::{access_control, access_control_any, AccessControlRole, AccessControllable};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
