@@ -44,6 +44,11 @@ impl Counter {
         self.counter += 1;
     }
 
+    #[access_control_any(roles(Positions::LevelA, Positions::LevelB))]
+    pub fn level_ab_incr(&mut self) {
+        self.counter += 1;
+    }
+
     pub fn get_counter(&self) -> u64 {
         self.counter
     }
@@ -182,5 +187,22 @@ mod tests {
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 2);
+
+        assert!(call_by(&alice, &contract, "level_ab_incr"));
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 3);
+
+        assert!(!call_by(&bob, &contract, "level_ab_incr"));
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 3);
+
+        assert!(call_arg(&contract, "acl_grant_role", &json!({"role": String::from(Positions::LevelB), "account_id": bob.id()})));
+        assert!(call_by(&bob, &contract, "level_ab_incr"));
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 4);
+
+        assert!(!call_by(&bob, &contract, "level_a_incr"));
+        let counter: u64 = view!(contract, "get_counter");
+        assert_eq!(counter, 4);
     }
 }
