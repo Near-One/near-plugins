@@ -394,9 +394,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             ///
             /// Panics if `skip` or `limit` are outside the range of `usize`.
             fn get_bearers(&self, permission: #bitflags_type, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
-                let skip = usize::try_from(skip).expect("skip should be in the range of usize");
-                let limit = usize::try_from(limit).expect("limit should be in the range of usize");
-
+                let skip: usize = ::std::convert::TryFrom::try_from(skip)
+                    .expect("skip should be in the range of usize");
+                let limit: usize = ::std::convert::TryFrom::try_from(limit)
+                    .expect("limit should be in the range of usize");
                 let set = match self.bearers.get(&permission) {
                     Some(set) => set,
                     None => return vec![],
@@ -434,63 +435,75 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             fn acl_add_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
+                    .expect(#ERR_PARSE_ROLE);
                 self.#acl_field.add_admin(role, &account_id)
             }
 
             fn acl_is_admin(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
+                    .expect(#ERR_PARSE_ROLE);
                 self.#acl_field.is_admin(role, &account_id)
             }
 
             fn acl_revoke_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
+                    .expect(#ERR_PARSE_ROLE);
                 self.#acl_field.revoke_admin(role, &account_id)
             }
 
             fn acl_renounce_admin(&mut self, role: String) -> bool {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
+                    .expect(#ERR_PARSE_ROLE);
                 self.#acl_field.renounce_admin(role)
             }
 
             fn acl_revoke_role(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
+                    .expect(#ERR_PARSE_ROLE);
                 self.#acl_field.revoke_role(role, &account_id)
             }
 
             fn acl_renounce_role(&mut self, role: String) -> bool {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
+                    .expect(#ERR_PARSE_ROLE);
                 self.#acl_field.renounce_role(role)
             }
 
             fn acl_grant_role(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
+                    .expect(#ERR_PARSE_ROLE);
                 self.#acl_field.grant_role(role, &account_id)
             }
 
 
             fn acl_has_role(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
+                    .expect(#ERR_PARSE_ROLE);
                 self.#acl_field.has_role(role, &account_id)
             }
 
             fn acl_has_any_role(&self, roles: Vec<String>, account_id: ::near_sdk::AccountId) -> bool {
                 let roles: Vec<#role_type> = roles
                     .iter()
-                    .map(|role| <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE))
+                    .map(|role| {
+                        ::std::convert::TryFrom::try_from(role.as_str()).expect(#ERR_PARSE_ROLE)
+                    })
                     .collect();
                 self.#acl_field.has_any_role(roles, &account_id)
             }
 
             fn acl_get_admins(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
+                    .expect(#ERR_PARSE_ROLE);
                 let permission = <#bitflags_type>::from_bits(role.acl_admin_permission())
                     .expect(#ERR_PARSE_BITFLAG);
                 self.#acl_field.get_bearers(permission, skip, limit)
             }
 
             fn acl_get_grantees(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
-                let role = <#role_type>::try_from(role.as_str()).expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
+                    .expect(#ERR_PARSE_ROLE);
                 let permission = <#bitflags_type>::from_bits(role.acl_permission())
                     .expect(#ERR_PARSE_BITFLAG);
                 self.#acl_field.get_bearers(permission, skip, limit)

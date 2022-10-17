@@ -4,7 +4,6 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, log, near_bindgen, AccountId};
 use std::collections::HashMap;
-use std::convert::TryFrom;
 
 #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
 #[serde(crate = "near_sdk::serde")]
