@@ -23,25 +23,22 @@ pub struct StatusMessage {
 
 #[near_bindgen]
 impl StatusMessage {
-    // Initially adding (super-)admins is done via internal methods, for
-    // example:
-    //
-    // ```
-    // self.__acl.add_super_admin_unchecked(account_id);
-    // self.__acl.add_admin_unchecked(role, account_id);
-    // ```
-    //
-    // **Attention**: Contracts should call `__acl.*_unchecked` methods only
-    // from within methods with attribute `#[init]` or `#[private]`.
+    // Adding an initial super-admin can be done via trait method
+    // `AccessControllable::acl_init_super_admin`, which is automatically
+    // implemented and exported for the contract by `#[access_controllable]`.
     //
     // Once an account is (super-)admin, it may add other admins and grant
     // roles.
     //
-    // If needed, It's also possible to grant a role without checks:
+    // In addition, there are internal `*_unchecked` methods for example:
     //
     // ```
+    // self.__acl.add_admin_unchecked(role, account_id);
     // self.__acl.grant_role_unchecked(role, account_id);
     // ```
+    //
+    // **Attention**: Contracts should call `__acl.*_unchecked` methods only
+    // from within methods with attribute `#[init]` or `#[private]`.
 
     #[payable]
     pub fn set_status(&mut self, message: String) {
@@ -75,11 +72,6 @@ impl StatusMessage {
 /// Exposing internal methods to facilitate integration testing.
 #[near_bindgen]
 impl StatusMessage {
-    #[private]
-    pub fn acl_init_super_admin(&mut self, account_id: ::near_sdk::AccountId) -> bool {
-        self.__acl.init_super_admin(&account_id)
-    }
-
     #[private]
     pub fn acl_add_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
         self.__acl.add_super_admin_unchecked(&account_id)
