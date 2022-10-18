@@ -3,6 +3,11 @@
 Basic access control mechanism that allows only an authorized account id to call certain methods. Note this account id can belong either to a regular user, or it could be a contract (a DAO for example).
 
 ```Rust
+use near_plugins::Ownable;
+use near_sdk::near_bindgen;
+use near_plugins_derive::only;
+use borsh::{BorshSerialize, BorshDeserialize};
+
 #[near_bindgen]
 #[derive(Ownable, Default, BorshSerialize, BorshDeserialize)]
 struct Counter {
@@ -55,14 +60,16 @@ In that document we are providing some example of using contract with ownable pl
 ### Preparation steps for demonstration
 1. **Creating an account on testnet**
 
-   For demonstration, we should create a few accounts on NEAR testnet. Let's say we will create two accounts on NEAR testnet: (1) <CONTRACT_ACCOUNT>.<MASTER_ACCOUNT>.testnet, (2) <OWNER_ACCOUNT>.<MASTER_ACCOUNT>.testnet. You should pick some unique names for accounts.
+   For demonstration, we should create a few accounts on NEAR testnet. Let's say we will create two accounts on NEAR testnet: (1) <CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet, (2) <OWNER_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet. You should pick some unique names for accounts.
 
    The instruction of creating an accounts on NEAR testnet: https://docs.near.org/tools/near-cli#near-create-account
    
    ```shell
-   $ near create-account <CONTRACT_ACCOUNT>.<MASTER_ACCOUNT>.testnet --masterAccount <MASTER_ACCOUNT> --initialBalance 10
-   $ near create-account <OWNER_ACCOUNT>.<MASTER_ACCOUNT>.testnet --masterAccount <MASTER_ACCOUNT> --initialBalance 10
+   $ near create-account <CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME> --initialBalance 10
+   $ near create-account <OWNER_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME> --initialBalance 10
    ```
+
+   In the next section we will refer to the `<CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<CONTRACT_ACCOUNT>` and to the `<OWNER_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<OWNER_ACCOUNT>` for simplicity. 
 
 2. **Compile Contract to wasm file**
    For compiling the contract just run the `build.sh` script. The target file with compiled contract will be `./target/wasm32-unknown-unknown/release/ownable_base.wasm`
@@ -73,10 +80,97 @@ In that document we are providing some example of using contract with ownable pl
 
 3. **Deploy and init a contract**
    ```shell
-   $ near deploy --accountId <CONTRACT_ACCOUNT>.<MASTER_ACCOUNT>.testnet --wasmFile ./target/wasm32-unknown-unknown/release/ownable_base.wasm --initFunction new --initArgs '{}'
+   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ./target/wasm32-unknown-unknown/release/ownable_base.wasm --initFunction new --initArgs '{}'
    ```
 
+### Contract with owner plugin usage
+#### Self is owner
+After initialization the `<CONTRACT_ACCOUNT>` is the owner of this contract. So this account both the `self` and the `owner` of the contract and can call of the contract method. 
 
+```shell
+$ near call <CONTRACT_ACCOUNT> protected '{}' --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> protected_owner '{}' --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> protected_self '{}' --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> unprotected '{}' --accountId <CONTRACT_ACCOUNT>
+```
+
+We can check that we succeeded in calling all this function by calling `get_counter` view method and check that counter is 4.
+
+```shell
+$ near view <CONTRACT_ACCOUNT> get_counter '{}' 
+View call: <CONTRACT_ACCOUNT>.get_counter({})
+4
+```
+
+#### Limitation for another accounts
+Currently, the `<OWNER_ACCOUNT>` doesn't connected to the contract. So, we can check that we can only succeed in calling `unprotected` method and will fail on calling all other protected methods.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> protected '{}' --accountId <OWNER_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> protected_owner '{}' --accountId <OWNER_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> protected_self '{}' --accountId <OWNER_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> get_counter '{}' 
+View call: <CONTRACT_ACCOUNT>.get_counter({})
+4
+$ near call <CONTRACT_ACCOUNT> unprotected '{}' --accountId <OWNER_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> get_counter '{}' 
+View call: <CONTRACT_ACCOUNT>.get_counter({})
+5
+```
+
+#### Change the contract owner
+Let's change the contract owner from `<CONTRACT_ACCOUNT>` to the `<OWNER_ACCOUNT>`. Only the current owner of the contract can change the owner. 
+
+We can check the owner of the contract by callint `owner_get` view method.
+```shell
+$ near view <CONTRACT_ACCOUNT> owner_get '{}'
+View call: <CONTRACT_ACCOUNT>.owner_get({})
+'<CONTRACT_ACCOUNT>'
+```
+
+In this case the owner is `<CONTRACT_ACCOUNT>`. And we can change the contract owner by running `owner_set`.
+```shell
+$ near call <CONTRACT_ACCOUNT> owner_set '{"owner": <OWNER_ACCOUNT>}' --accountId <CONTRACT_ACCOUNT>
+```
+
+And we can chack the contract owner one more time for making sure, that it is changed. 
+```shell
+$ near view <CONTRACT_ACCOUNT> owner_get '{}'
+View call: <CONTRACT_ACCOUNT>.owner_get({})
+'<OWNER_ACCOUNT>'
+```
+
+#### Self is not a contract owner anymore
+So, now `<CONTRACT_ACCOUNT>` is not an owner of out contract anymore. So, the `<CONTRACT_ACCOUNT>` can run the `unprotected`, `proteced_self`, `protected` and can't use the methods `protected_owner`.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> protected '{}' --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> unprotected '{}' --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> protected_self '{}' --accountId <CONTRACT_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> get_counter '{}' 
+View call: <CONTRACT_ACCOUNT>.get_counter({})
+8
+$ near call <CONTRACT_ACCOUNT> protected_owner '{}' --accountId <CONTRACT_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> get_counter '{}' 
+View call: <CONTRACT_ACCOUNT>.get_counter({})
+8
+```
+
+#### Owner run the functions
+And the owner of the contract(`<OWNER_ACCOUNT>`) can use the functions `protected`, `protected_owner` and `unprotected` and can not run the `protected_self` method.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> protected '{}' --accountId <OWNER_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> unprotected '{}' --accountId <OWNER_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> protected_owner '{}' --accountId <OWNER_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> get_counter '{}' 
+View call: <CONTRACT_ACCOUNT>.get_counter({})
+11
+$ near call <CONTRACT_ACCOUNT> protected_self '{}' --accountId <OWNER_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> get_counter '{}' 
+View call: <CONTRACT_ACCOUNT>.get_counter({})
+11
+```
 
 ### Test running instruction
 Tests in `src/lib.rs` contain examples of interaction with a contract. 
