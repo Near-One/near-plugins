@@ -12,7 +12,7 @@ use syn::{parse_macro_input, AttributeArgs, ItemFn, ItemStruct};
 pub struct MacroArgs {
     #[darling(default)]
     storage_prefix: Option<String>,
-    role_type: syn::Path,
+    role_type: darling::util::PathList,
 }
 
 const DEFAULT_STORAGE_PREFIX: &str = "__acl";
@@ -43,7 +43,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
     let storage_prefix = macro_args
         .storage_prefix
         .unwrap_or_else(|| DEFAULT_STORAGE_PREFIX.to_string());
-    let role_type = macro_args.role_type;
+    assert!(
+        macro_args.role_type.len() == 1,
+        "role_type should be exactly one path"
+    );
+    let role_type = &macro_args.role_type[0];
 
     let output = quote! {
         #input
