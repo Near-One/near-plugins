@@ -51,6 +51,7 @@ impl Counter {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
     use near_plugins_test_utils::*;
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/ownable_change_storage_key.wasm";
@@ -58,7 +59,7 @@ mod tests {
     #[test]
     fn check_owner_storage_key() {
         let (_, contract) = get_contract(WASM_FILEPATH);
-        assert!(call(&contract,"new"));
+        assert!(call!(contract,"new"));
 
         let owner_storage_key: Vec<u8> = view!(contract, "owner_storage_key");
         assert_eq!(owner_storage_key, "new_storage_key".as_bytes().to_vec());

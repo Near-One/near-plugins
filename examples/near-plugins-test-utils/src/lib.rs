@@ -23,14 +23,6 @@ pub fn view(contract: &Contract, method_name: &str, args: &serde_json::Value) ->
     ).unwrap().result
 }
 
-pub fn call(contract: &Contract, method_name: &str) -> bool {
-    let rt = Runtime::new().unwrap();
-
-    rt.block_on(contract.call(method_name).max_gas().transact())
-        .unwrap()
-        .is_success()
-}
-
 pub fn call_arg(contract: &Contract, method_name: &str, args: &serde_json::Value) -> bool {
     let rt = Runtime::new().unwrap();
 
@@ -38,19 +30,6 @@ pub fn call_arg(contract: &Contract, method_name: &str, args: &serde_json::Value
         contract
             .call(method_name)
             .args_json(args)
-            .max_gas()
-            .transact(),
-    )
-    .unwrap()
-    .is_success()
-}
-
-pub fn call_by(account: &Account, contract: &Contract, method_name: &str) -> bool {
-    let rt = Runtime::new().unwrap();
-
-    rt.block_on(
-        account
-            .call(contract.id(), method_name)
             .max_gas()
             .transact(),
     )
@@ -101,5 +80,21 @@ macro_rules! view {
     };
     ($contract:ident, $method_name:literal, $args:expr) => {
             serde_json::from_slice(&view(&$contract, $method_name, $args)).unwrap()
+    };
+}
+
+#[macro_export]
+macro_rules! call {
+    ($contract:ident, $method_name:literal) => {
+        call_arg(&$contract, $method_name, &json!({}))
+    };
+    ($contract:ident, $method_name:literal, $args:expr) => {
+        call_arg(&$contract, $method_name, $args)
+    };
+    ($account:expr, $contract:ident, $method_name:literal) => {
+        call_by_with_arg($account, &$contract, $method_name, &json!({}))
+    };
+    ($account:expr, $contract:ident, $method_name:literal, $args:expr) => {
+        call_by_with_arg($account, &$contract, $method_name, $args)
     };
 }

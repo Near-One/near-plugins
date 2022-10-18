@@ -80,36 +80,36 @@ mod tests {
     fn base_scenario() {
         let (contract_holder, contract) = get_contract(WASM_FILEPATH);
 
-        assert!(call(&contract,"new"));
+        assert!(call!(contract,"new"));
 
         let next_owner = get_subaccount(&contract_holder, "next_owner");
-        assert!(call_arg(&contract, "owner_set", &json!({"owner": next_owner.id()})));
+        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})));
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_eq!(current_owner.unwrap().as_str(), next_owner.id().as_str());
 
         let alice = get_subaccount(&contract_holder, "alice");
 
-        assert!(call_by(&alice, &contract, "increase_1"));
+        assert!(call!(&alice, contract, "increase_1"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
 
-        assert!(!call_by_with_arg(&alice, &contract, "pa_pause_feature", &json!({"key": "increase_1"})));
-        assert!(call_by_with_arg(&next_owner, &contract, "pa_pause_feature", &json!({"key": "increase_1"})));
+        assert!(!call!(&alice, contract, "pa_pause_feature", &json!({"key": "increase_1"})));
+        assert!(call!(&next_owner, contract, "pa_pause_feature", &json!({"key": "increase_1"})));
 
-        assert!(!call_by(&alice, &contract, "increase_1"));
+        assert!(!call!(&alice, contract, "increase_1"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
 
-        assert!(!call_by(&next_owner, &contract, "increase_1"));
+        assert!(!call!(&next_owner, contract, "increase_1"));
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
 
-        assert!(!call_by_with_arg(&contract_holder, &contract, "pa_unpause_feature", &json!({"key": "increase_1"})));
-        assert!(call_by_with_arg(&next_owner, &contract, "pa_unpause_feature", &json!({"key": "increase_1"})));
+        assert!(!call!(&contract_holder, contract, "pa_unpause_feature", &json!({"key": "increase_1"})));
+        assert!(call!(&next_owner, contract, "pa_unpause_feature", &json!({"key": "increase_1"})));
 
-        assert!(call_by(&alice, &contract, "increase_1"));
+        assert!(call!(&alice, contract, "increase_1"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 2);

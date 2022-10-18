@@ -43,26 +43,26 @@ mod tests {
     fn base_scenario() {
         let (mut contract_holder, contract) = get_contract_testnet(WASM_FILEPATH);
 
-        assert!(call(&contract,"new"));
+        assert!(call!(contract,"new"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 0);
 
         let next_owner = get_subaccount(&contract_holder, "next_owner");
-        assert!(call_arg(&contract, "owner_set", &json!({"owner": next_owner.id()})));
+        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})));
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_eq!(current_owner.unwrap().as_str(), next_owner.id().as_str());
 
-        assert!(call_by(&contract_holder, &contract, "protected_self"));
+        assert!(call!(&contract_holder, contract, "protected_self"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
 
         contract_holder.set_secret_key(next_owner.secret_key().clone());
 
-        assert!(call_by_with_arg(&next_owner, &contract, "attach_full_access_key",  &json!({"public_key": next_owner.secret_key().public_key()})));
+        assert!(call!(&next_owner, contract, "attach_full_access_key",  &json!({"public_key": next_owner.secret_key().public_key()})));
 
-        assert!(call(&contract, "protected_self"));
+        assert!(call!(contract, "protected_self"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 2);
@@ -73,13 +73,13 @@ mod tests {
     fn base_panic_on_wrong_key() {
         let (mut contract_holder, contract) = get_contract_testnet(WASM_FILEPATH);
 
-        assert!(call(&contract,"new"));
+        assert!(call!(contract, "new"));
         let next_owner = get_subaccount(&contract_holder, "next_owner");
-        assert!(call_arg(&contract, "owner_set", &json!({"owner": next_owner.id()})));
+        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})));
 
-        assert!(call_by(&contract_holder, &contract, "protected_self"));
+        assert!(call!(&contract_holder, contract, "protected_self"));
         contract_holder.set_secret_key(next_owner.secret_key().clone());
 
-        call_by(&contract_holder, &contract, "protected_self");
+        call!(&contract_holder, contract, "protected_self");
     }
 }

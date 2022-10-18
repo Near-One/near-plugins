@@ -60,7 +60,7 @@ mod tests {
     fn base_scenario() {
         let (contract_holder, contract) = get_contract(WASM_FILEPATH);
 
-        assert!(call(&contract,"new"));
+        assert!(call!(contract, "new"));
 
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_eq!(current_owner.unwrap().as_str(), contract_holder.id().as_str());
@@ -68,19 +68,19 @@ mod tests {
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 0);
 
-        assert!(call(&contract, "protected"));
-        assert!(call(&contract, "protected_owner"));
-        assert!(call(&contract, "protected_self"));
-        assert!(call(&contract, "unprotected"));
+        assert!(call!(contract, "protected"));
+        assert!(call!(contract, "protected_owner"));
+        assert!(call!(contract, "protected_self"));
+        assert!(call!(contract, "unprotected"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 4);
 
         let next_owner = get_subaccount(&contract_holder, "next_owner");
-        assert!(!call_by(&next_owner, &contract, "protected"));
-        assert!(!call_by(&next_owner, &contract, "protected_owner"));
-        assert!(!call_by(&next_owner, &contract, "protected_self"));
-        assert!(call_by(&next_owner, &contract, "unprotected"));
+        assert!(!call!(&next_owner, contract, "protected"));
+        assert!(!call!(&next_owner, contract, "protected_owner"));
+        assert!(!call!(&next_owner, contract, "protected_self"));
+        assert!(call!(&next_owner, contract, "unprotected"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 5);
@@ -91,18 +91,18 @@ mod tests {
         assert_ne!(current_owner.clone().unwrap().as_str(), contract_holder.id().as_str());
         assert_eq!(current_owner.unwrap().as_str(), next_owner.id().as_str());
 
-        assert!(call_by(&next_owner, &contract, "protected"));
-        assert!(call_by(&next_owner, &contract, "protected_owner"));
-        assert!(!call_by(&next_owner, &contract, "protected_self"));
-        assert!(call_by(&next_owner, &contract, "unprotected"));
+        assert!(call!(&next_owner, contract, "protected"));
+        assert!(call!(&next_owner, contract, "protected_owner"));
+        assert!(!call!(&next_owner, contract, "protected_self"));
+        assert!(call!(&next_owner, contract, "unprotected"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 8);
 
-        assert!(call(&contract, "protected"));
-        assert!(!call(&contract, "protected_owner"));
-        assert!(call(&contract, "protected_self"));
-        assert!(call(&contract, "unprotected"));
+        assert!(call!(contract, "protected"));
+        assert!(!call!(contract, "protected_owner"));
+        assert!(call!(contract, "protected_self"));
+        assert!(call!(contract, "unprotected"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 11);
@@ -111,26 +111,26 @@ mod tests {
     #[test]
     fn null_owner() {
         let (_, contract) = get_contract(WASM_FILEPATH);
-        assert!(call(&contract,"new"));
+        assert!(call!(contract,"new"));
 
-        assert!(call_arg(&contract, "owner_set", &json!({"owner": Option::<AccountId>::None})));
+        assert!(call!(contract, "owner_set", &json!({"owner": Option::<AccountId>::None})));
 
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_eq!(current_owner, None);
 
-        assert!(call(&contract, "protected"));
-        assert!(!call(&contract, "protected_owner"));
-        assert!(call(&contract, "protected_self"));
-        assert!(call(&contract, "unprotected"));
+        assert!(call!(contract, "protected"));
+        assert!(!call!(contract, "protected_owner"));
+        assert!(call!(contract, "protected_self"));
+        assert!(call!(contract, "unprotected"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 3);
 
-        assert!(call_arg(&contract, "owner_set", &json!({"owner": contract.id().as_str()})));
-        assert!(call(&contract, "protected"));
-        assert!(call(&contract, "protected_owner"));
-        assert!(call(&contract, "protected_self"));
-        assert!(call(&contract, "unprotected"));
+        assert!(call!(contract, "owner_set", &json!({"owner": contract.id().as_str()})));
+        assert!(call!(contract, "protected"));
+        assert!(call!(contract, "protected_owner"));
+        assert!(call!(contract, "protected_self"));
+        assert!(call!(contract, "unprotected"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 7);
@@ -139,7 +139,7 @@ mod tests {
     #[test]
     fn check_owner_storage_key() {
         let (_, contract) = get_contract(WASM_FILEPATH);
-        assert!(call(&contract,"new"));
+        assert!(call!(contract,"new"));
 
         let owner_storage_key: Vec<u8> = view!(contract, "owner_storage_key");
         assert_eq!(owner_storage_key, "__OWNER__".as_bytes().to_vec());

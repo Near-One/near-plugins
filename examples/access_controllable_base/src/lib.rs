@@ -66,12 +66,12 @@ mod tests {
     #[test]
     fn base_scenario() {
         let (contract_holder, contract) = get_contract(WASM_FILEPATH);
-        assert!(call(&contract,"new"));
+        assert!(call!(contract,"new"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 0);
 
-        assert!(call(&contract, "unprotected"));
+        assert!(call!(contract, "unprotected"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
@@ -81,46 +81,46 @@ mod tests {
         let is_super_admin: bool = view!(contract, "acl_is_super_admin", &json!({"account_id": alice.id()}));
         assert!(!is_super_admin);
 
-        assert!(!call_by(&alice, &contract, "level_a_incr"));
+        assert!(!call!(&alice, contract, "level_a_incr"));
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
 
-        assert!(call_arg(&contract, "acl_grant_role", &json!({"role": String::from(Positions::LevelA), "account_id": alice.id()})));
+        assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(Positions::LevelA), "account_id": alice.id()})));
 
         let alice_has_role: bool = view!(contract, "acl_has_role", &json!({"role": String::from(Positions::LevelA), "account_id": alice.id()}));
         assert!(alice_has_role);
 
-        assert!(call_by(&alice, &contract, "level_a_incr"));
+        assert!(call!(&alice, contract, "level_a_incr"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 2);
 
 
         let bob = get_subaccount(&contract_holder, "bob");
-        assert!(call_arg(&contract, "acl_add_admin", &json!({"role": String::from(Positions::LevelA), "account_id": bob.id()})));
+        assert!(call!(contract, "acl_add_admin", &json!({"role": String::from(Positions::LevelA), "account_id": bob.id()})));
 
         let bob_is_admin: bool = view!(contract, "acl_is_admin", &json!({"role": String::from(Positions::LevelA), "account_id": bob.id()}));
         assert!(bob_is_admin);
 
-        assert!(!call_by(&bob, &contract, "level_a_incr"));
+        assert!(!call!(&bob, contract, "level_a_incr"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 2);
 
-        assert!(call_by(&alice, &contract, "level_ab_incr"));
+        assert!(call!(&alice, contract, "level_ab_incr"));
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 3);
 
-        assert!(!call_by(&bob, &contract, "level_ab_incr"));
+        assert!(!call!(&bob, contract, "level_ab_incr"));
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 3);
 
-        assert!(call_arg(&contract, "acl_grant_role", &json!({"role": String::from(Positions::LevelB), "account_id": bob.id()})));
-        assert!(call_by(&bob, &contract, "level_ab_incr"));
+        assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(Positions::LevelB), "account_id": bob.id()})));
+        assert!(call!(&bob, contract, "level_ab_incr"));
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 4);
 
-        assert!(!call_by(&bob, &contract, "level_a_incr"));
+        assert!(!call!(&bob, contract, "level_a_incr"));
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 4);
     }

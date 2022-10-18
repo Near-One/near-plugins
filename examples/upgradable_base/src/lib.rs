@@ -30,6 +30,7 @@ impl Counter1 {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
     use workspaces::{Account, Contract};
     use tokio::runtime::Runtime;
     use near_plugins_test_utils::*;
@@ -64,30 +65,30 @@ mod tests {
     #[test]
     fn base_scenario() {
         let (_, contract) = get_contract();
-        assert!(call(&contract,"new"));
+        assert!(call!(contract,"new"));
 
-        assert!(call(&contract, "inc1"));
+        assert!(call!(contract, "inc1"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
 
-        assert!(!call(&contract, "inc2"));
+        assert!(!call!(contract, "inc2"));
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
 
         let wasm = std::fs::read(WASM_FILEPATH_SECOND).unwrap();
 
         assert!(call_borsh_arg(&contract, "up_stage_code", wasm));
-        assert!(call(&contract, "up_deploy_code"));
+        assert!(call!(contract, "up_deploy_code"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
 
-        assert!(!call(&contract, "inc1"));
+        assert!(!call!(contract, "inc1"));
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
 
-        assert!(call(&contract, "inc2"));
+        assert!(call!(contract, "inc2"));
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 3);
     }

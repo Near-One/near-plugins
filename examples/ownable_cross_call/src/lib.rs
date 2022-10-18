@@ -87,25 +87,25 @@ mod tests {
     fn base_scenario() {
         let (contract_holder, contract) = get_contract(WASM_FILEPATH);
 
-        assert!(call(&contract,"new"));
+        assert!(call!(contract,"new"));
         let next_owner = get_subaccount(&contract_holder, "next_owner");
-        assert!(call_arg(&contract, "owner_set", &json!({"owner": next_owner.id()})));
+        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})));
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_ne!(current_owner.clone().unwrap().as_str(), contract_holder.id().as_str());
         assert_eq!(current_owner.unwrap().as_str(), next_owner.id().as_str());
 
-        assert!(call_by(&next_owner, &contract, "cross_call_owner_self"));
-        assert!(call_by(&next_owner, &contract, "cross_call_owner_owner"));
-        assert!(!call_by(&next_owner, &contract, "cross_call_self_self"));
-        assert!(!call_by(&next_owner, &contract, "cross_call_self_owner"));
+        assert!(call!(&next_owner, contract, "cross_call_owner_self"));
+        assert!(call!(&next_owner, contract, "cross_call_owner_owner"));
+        assert!(!call!(&next_owner, contract, "cross_call_self_self"));
+        assert!(!call!(&next_owner, contract, "cross_call_self_owner"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 1);
 
-        assert!(!call(&contract, "cross_call_owner_self"));
-        assert!(!call(&contract, "cross_call_owner_owner"));
-        assert!(call(&contract, "cross_call_self_self"));
-        assert!(call(&contract, "cross_call_self_owner"));
+        assert!(!call!(contract, "cross_call_owner_self"));
+        assert!(!call!(contract, "cross_call_owner_owner"));
+        assert!(call!(contract, "cross_call_self_self"));
+        assert!(call!(contract, "cross_call_self_owner"));
 
         let counter: u64 = view!(contract, "get_counter");
         assert_eq!(counter, 2);
