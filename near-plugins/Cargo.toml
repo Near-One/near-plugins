@@ -9,6 +9,7 @@ version.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+bitflags.workspace = true
 near-sdk.workspace = true
 near-plugins-derive.workspace = true
 serde.workspace = true
