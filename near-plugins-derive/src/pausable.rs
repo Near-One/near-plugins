@@ -38,7 +38,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
             fn pa_all_paused(&self) -> Option<std::collections::HashSet<String>> {
                 ::near_sdk::env::storage_read(self.pa_storage_key().as_ref()).map(|value| {
                     std::collections::HashSet::try_from_slice(value.as_ref())
-                        .expect("Pausable: Invalid format for paused keys")
+                        .unwrap_or_else(|_| ::near_sdk::env::panic_str("Pausable: Invalid format for paused keys"))
                 })
             }
 
@@ -58,7 +58,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                     self.pa_storage_key().as_ref(),
                     paused_keys
                         .try_to_vec()
-                        .expect("Pausable: Unexpected error serializing keys")
+                        .unwrap_or_else(|_| ::near_sdk::env::panic_str("Pausable: Unexpected error serializing keys"))
                         .as_ref(),
                 );
             }
@@ -82,7 +82,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                         self.pa_storage_key().as_ref(),
                         paused_keys
                             .try_to_vec()
-                            .expect("Pausable: Unexpected error serializing keys")
+                            .unwrap_or_else(|_| ::near_sdk::env::panic_str("Pausable: Unexpected error serializing keys"))
                             .as_ref(),
                     );
                 }
@@ -129,7 +129,7 @@ pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
         let mut check_paused = true;
         #bypass_condition
         if check_paused {
-            assert!(!self.pa_is_paused(#fn_name.to_string()), "Pausable: Method is paused");
+            ::near_sdk::require!(!self.pa_is_paused(#fn_name.to_string()), "Pausable: Method is paused");
         }
     );
 
@@ -161,7 +161,7 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
         let mut check_paused = true;
         #bypass_condition
         if check_paused {
-            assert!(self.pa_is_paused(#fn_name.to_string()), "Pausable: Method must be paused");
+            ::near_sdk::require!(self.pa_is_paused(#fn_name.to_string()), "Pausable: Method must be paused");
         }
     );
 

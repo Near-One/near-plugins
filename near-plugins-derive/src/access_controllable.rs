@@ -94,7 +94,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         fn __acl_storage_prefix(base: &[u8], specifier: __AclStorageKey) -> Vec<u8> {
             let specifier = specifier
                 .try_to_vec()
-                .expect("Storage key should be serializable");
+                .unwrap_or_else(|_| ::near_sdk::env::panic_str("Storage key should be serializable"));
             [base, specifier.as_slice()].concat()
         }
 
@@ -114,7 +114,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
             fn init_super_admin(&mut self, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 // TODO use self.get_bearers() once the following PR is merged
                 // https://github.com/aurora-is-near/near-plugins/pull/12
                 let number_super_admins = match self.bearers.get(&flag) {
@@ -125,7 +125,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     return false;
                 }
                 let res = self.add_super_admin_unchecked(account_id);
-                assert!(res, "Failed to init super-admin.");
+                ::near_sdk::require!(res, "Failed to init super-admin.");
                 res
             }
 
@@ -135,7 +135,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             /// Note that there may be zero or more super-admins.
             fn add_super_admin_unchecked(&mut self, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 let mut permissions = self.get_or_init_permissions(account_id);
 
                 let is_new_super_admin = !permissions.contains(flag);
@@ -162,7 +162,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     }
                 };
                 let super_admin = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 permissions.contains(super_admin)
             }
 
@@ -170,7 +170,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             /// permissions. It returns whether `account_id` was a super-admin.
             fn revoke_super_admin_unchecked(&mut self, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 let mut permissions = self.get_or_init_permissions(account_id);
 
                 let was_super_admin = permissions.contains(flag);
@@ -202,7 +202,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             /// Note that any role may have multiple (or zero) admins.
             fn add_admin_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_admin_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 let mut permissions = self.get_or_init_permissions(account_id);
 
                 let is_new_admin = !permissions.contains(flag);
@@ -230,9 +230,9 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     }
                 };
                 let super_admin = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 let role_admin = <#bitflags_type>::from_bits(role.acl_admin_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 permissions.contains(super_admin) || permissions.contains(role_admin)
             }
 
@@ -251,7 +251,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             /// permissions. Returns whether `account_id` was an admin for `role`.
             fn revoke_admin_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_admin_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 let mut permissions = self.get_or_init_permissions(account_id);
 
                 let was_admin = permissions.contains(flag);
@@ -282,7 +282,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             /// Returns whether `role` was newly granted to `account_id`.
             fn grant_role_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 let mut permissions = self.get_or_init_permissions(account_id);
 
                 let is_new_grantee = !permissions.contains(flag);
@@ -315,7 +315,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
             fn revoke_role_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 let mut permissions = self.get_or_init_permissions(account_id);
 
                 let was_grantee = permissions.contains(flag);
@@ -339,7 +339,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 match self.permissions.get(account_id) {
                     Some(permissions) => {
                         let flag = <#bitflags_type>::from_bits(role.acl_permission())
-                            .expect(#ERR_PARSE_BITFLAG);
+                            .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                         permissions.contains(flag)
                     }
                     None => false,
@@ -355,7 +355,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     .iter()
                     .map(|role| {
                         <#bitflags_type>::from_bits(role.acl_permission())
-                            .expect(#ERR_PARSE_BITFLAG)
+                            .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG))
                     })
                     .fold(
                         <#bitflags_type>::empty(),
@@ -379,7 +379,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             /// multiple active bits. In that case, the panic prevents polluting
             /// state.
             fn add_bearer(&mut self, permission: #bitflags_type, account_id: &::near_sdk::AccountId) {
-                assert!(
+                ::near_sdk::require!(
                     permission.bits().is_power_of_two(),
                     "Adding a bearer is allowed only for permissions with exactly one active bit"
                 );
@@ -399,10 +399,8 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             ///
             /// Panics if `skip` or `limit` are outside the range of `usize`.
             fn get_bearers(&self, permission: #bitflags_type, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
-                let skip: usize = ::std::convert::TryFrom::try_from(skip)
-                    .expect("skip should be in the range of usize");
-                let limit: usize = ::std::convert::TryFrom::try_from(limit)
-                    .expect("limit should be in the range of usize");
+                let skip: usize = ::std::convert::TryFrom::try_from(skip).unwrap_or_else(|_| ::near_sdk::env::panic_str("skip should be in the range of usize"));
+                let limit: usize = ::std::convert::TryFrom::try_from(limit).unwrap_or_else(|_| ::near_sdk::env::panic_str("limit should be in the range of usize"));
                 let set = match self.bearers.get(&permission) {
                     Some(set) => set,
                     None => return vec![],
@@ -445,51 +443,43 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             fn acl_add_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
-                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
-                    .expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 self.#acl_field.add_admin(role, &account_id)
             }
 
             fn acl_is_admin(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
-                    .expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 self.#acl_field.is_admin(role, &account_id)
             }
 
             fn acl_revoke_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
-                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
-                    .expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 self.#acl_field.revoke_admin(role, &account_id)
             }
 
             fn acl_renounce_admin(&mut self, role: String) -> bool {
-                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
-                    .expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 self.#acl_field.renounce_admin(role)
             }
 
             fn acl_revoke_role(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
-                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
-                    .expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 self.#acl_field.revoke_role(role, &account_id)
             }
 
             fn acl_renounce_role(&mut self, role: String) -> bool {
-                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
-                    .expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 self.#acl_field.renounce_role(role)
             }
 
             fn acl_grant_role(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
-                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
-                    .expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 self.#acl_field.grant_role(role, &account_id)
             }
 
 
             fn acl_has_role(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
-                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
-                    .expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 self.#acl_field.has_role(role, &account_id)
             }
 
@@ -497,25 +487,23 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 let roles: Vec<#role_type> = roles
                     .iter()
                     .map(|role| {
-                        ::std::convert::TryFrom::try_from(role.as_str()).expect(#ERR_PARSE_ROLE)
+                        ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE))
                     })
                     .collect();
                 self.#acl_field.has_any_role(roles, &account_id)
             }
 
             fn acl_get_admins(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
-                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
-                    .expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 let permission = <#bitflags_type>::from_bits(role.acl_admin_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 self.#acl_field.get_bearers(permission, skip, limit)
             }
 
             fn acl_get_grantees(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
-                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str())
-                    .expect(#ERR_PARSE_ROLE);
+                let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 let permission = <#bitflags_type>::from_bits(role.acl_permission())
-                    .expect(#ERR_PARSE_BITFLAG);
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 self.#acl_field.get_bearers(permission, skip, limit)
             }
         }
