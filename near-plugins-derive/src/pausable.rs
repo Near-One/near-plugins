@@ -1,3 +1,4 @@
+use crate::utils;
 use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
 use darling::{FromDeriveInput, FromMeta};
 use proc_macro::{self, TokenStream};
@@ -120,40 +121,9 @@ pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let attr_args = parse_macro_input!(attrs as AttributeArgs);
     let args = PauseArgs::from_list(&attr_args).expect("Invalid arguments");
 
-    let ItemFn {
-        attrs,
-        vis,
-        sig,
-        block,
-    } = input;
-    let stmts = &block.stmts;
+    let fn_name = args.name.unwrap_or_else(|| input.sig.ident.to_string());
 
-    let fn_name = args.name.unwrap_or_else(|| sig.ident.to_string());
-
-    let self_condition = if args.except._self {
-        quote!(
-            if ::near_sdk::env::predecessor_account_id() == ::near_sdk::env::current_account_id() {
-                check_paused = false;
-            }
-        )
-    } else {
-        quote!()
-    };
-
-    let owner_condition = if args.except.owner {
-        quote!(
-            if Some(::near_sdk::env::predecessor_account_id()) == self.owner_get() {
-                check_paused = false;
-            }
-        )
-    } else {
-        quote!()
-    };
-
-    let bypass_condition = quote!(
-        #self_condition
-        #owner_condition
-    );
+    let bypass_condition = get_bypass_condition(&args.except);
 
     let check_pause = quote!(
         let mut check_paused = true;
@@ -163,15 +133,7 @@ pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
         }
     );
 
-    // https://stackoverflow.com/a/66851407
-    let result = quote! {
-        #(#attrs)* #vis #sig {
-            #check_pause
-            #(#stmts)*
-        }
-    };
-
-    result.into()
+    utils::add_extra_code_to_fn(&input, check_pause)
 }
 
 #[derive(Debug, FromMeta)]
@@ -191,40 +153,9 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let attr_args = parse_macro_input!(attrs as AttributeArgs);
     let args = IfPausedArgs::from_list(&attr_args).expect("Invalid arguments");
 
-    let ItemFn {
-        attrs,
-        vis,
-        sig,
-        block,
-    } = input;
-    let stmts = &block.stmts;
-
     let fn_name = args.name;
 
-    let self_condition = if args.except._self {
-        quote!(
-            if ::near_sdk::env::predecessor_account_id() == ::near_sdk::env::current_account_id() {
-                check_paused = false;
-            }
-        )
-    } else {
-        quote!()
-    };
-
-    let owner_condition = if args.except.owner {
-        quote!(
-            if Some(::near_sdk::env::predecessor_account_id()) == self.owner_get() {
-                check_paused = false;
-            }
-        )
-    } else {
-        quote!()
-    };
-
-    let bypass_condition = quote!(
-        #self_condition
-        #owner_condition
-    );
+    let bypass_condition = get_bypass_condition(&args.except);
 
     let check_pause = quote!(
         let mut check_paused = true;
@@ -234,13 +165,32 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
         }
     );
 
-    // https://stackoverflow.com/a/66851407
-    let result = quote! {
-        #(#attrs)* #vis #sig {
-            #check_pause
-            #(#stmts)*
-        }
+    utils::add_extra_code_to_fn(&input, check_pause)
+}
+
+fn get_bypass_condition(args: &ExceptSubArgs) -> proc_macro2::TokenStream {
+    let self_condition = if args._self {
+        quote!(
+            if ::near_sdk::env::predecessor_account_id() == ::near_sdk::env::current_account_id() {
+                check_paused = false;
+            }
+        )
+    } else {
+        quote!()
     };
 
-    result.into()
+    let owner_condition = if args.owner {
+        quote!(
+            if Some(::near_sdk::env::predecessor_account_id()) == self.owner_get() {
+                check_paused = false;
+            }
+        )
+    } else {
+        quote!()
+    };
+
+    quote!(
+        #self_condition
+        #owner_condition
+    )
 }

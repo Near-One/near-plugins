@@ -1,3 +1,4 @@
+use crate::utils;
 use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
 use darling::FromDeriveInput;
 use proc_macro::{self, TokenStream};
@@ -98,18 +99,9 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
-    let ItemFn {
-        attrs,
-        vis,
-        sig,
-        block,
-    } = input;
-    let stmts = &block.stmts;
-
     let owner_check = match (contains_self, contains_owner) {
         (true, true) => quote! {
-            let __predecessor_account_id = ::near_sdk::env::predecessor_account_id();
-            if self.owner_get() != Some(__predecessor_account_id) {
+            if !self.owner_is() {
                 ::near_sdk::assert_self();
             }
         },
@@ -124,12 +116,5 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    // https://stackoverflow.com/a/66851407
-    quote! {
-        #(#attrs)* #vis #sig {
-            #owner_check
-            #(#stmts)*
-        }
-    }
-    .into()
+    utils::add_extra_code_to_fn(&input, owner_check)
 }
