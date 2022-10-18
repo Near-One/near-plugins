@@ -1,5 +1,4 @@
 use near_sdk::ONE_NEAR;
-use serde_json::json;
 use tokio::runtime::Runtime;
 use workspaces::{Account, Contract};
 
@@ -15,15 +14,7 @@ pub fn get_contract(wasm_path: &str) -> (Account, Contract) {
     (owner, contract)
 }
 
-pub fn view(contract: &Contract, method_name: &str) -> Vec<u8> {
-    let rt = Runtime::new().unwrap();
-
-    rt.block_on(contract.view(method_name, json!({}).to_string().into_bytes()))
-        .unwrap()
-        .result
-}
-
-pub fn view_args(contract: &Contract, method_name: &str, args: &serde_json::Value) -> Vec<u8> {
+pub fn view(contract: &Contract, method_name: &str, args: &serde_json::Value) -> Vec<u8> {
     let rt = Runtime::new().unwrap();
 
     rt.block_on(
@@ -106,9 +97,9 @@ pub fn get_contract_testnet(wasm_file: &str) -> (Account, Contract) {
 #[macro_export]
 macro_rules! view {
     ($contract:ident, $method_name:literal) => {
-        serde_json::from_slice(&view(&$contract, $method_name)).unwrap()
+        serde_json::from_slice(&view(&$contract, $method_name, &json!({}))).unwrap()
     };
     ($contract:ident, $method_name:literal, $args:expr) => {
-            serde_json::from_slice(&view_args(&$contract, $method_name, $args)).unwrap()
+            serde_json::from_slice(&view(&$contract, $method_name, $args)).unwrap()
     };
 }
