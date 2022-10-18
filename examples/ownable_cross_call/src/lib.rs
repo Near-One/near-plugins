@@ -99,15 +99,13 @@ mod tests {
         assert!(!call!(&next_owner, contract, "cross_call_self_self"));
         assert!(!call!(&next_owner, contract, "cross_call_self_owner"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         assert!(!call!(contract, "cross_call_owner_self"));
         assert!(!call!(contract, "cross_call_owner_owner"));
         assert!(call!(contract, "cross_call_self_self"));
         assert!(call!(contract, "cross_call_self_owner"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 2);
+        check_counter(&contract, 2);
     }
 }

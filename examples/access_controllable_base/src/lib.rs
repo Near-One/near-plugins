@@ -68,13 +68,11 @@ mod tests {
         let (contract_holder, contract) = get_contract(WASM_FILEPATH);
         assert!(call!(contract,"new"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 0);
+        check_counter(&contract, 0);
 
         assert!(call!(contract, "unprotected"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         let alice = get_subaccount(&contract_holder, "alice");
 
@@ -82,8 +80,7 @@ mod tests {
         assert!(!is_super_admin);
 
         assert!(!call!(&alice, contract, "level_a_incr"));
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(Positions::LevelA), "account_id": alice.id()})));
 
@@ -92,9 +89,7 @@ mod tests {
 
         assert!(call!(&alice, contract, "level_a_incr"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 2);
-
+        check_counter(&contract, 2);
 
         let bob = get_subaccount(&contract_holder, "bob");
         assert!(call!(contract, "acl_add_admin", &json!({"role": String::from(Positions::LevelA), "account_id": bob.id()})));
@@ -104,24 +99,19 @@ mod tests {
 
         assert!(!call!(&bob, contract, "level_a_incr"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 2);
+        check_counter(&contract, 2);
 
         assert!(call!(&alice, contract, "level_ab_incr"));
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 3);
+        check_counter(&contract, 3);
 
         assert!(!call!(&bob, contract, "level_ab_incr"));
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 3);
+        check_counter(&contract, 3);
 
         assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(Positions::LevelB), "account_id": bob.id()})));
         assert!(call!(&bob, contract, "level_ab_incr"));
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 4);
+        check_counter(&contract, 4);
 
         assert!(!call!(&bob, contract, "level_a_incr"));
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 4);
+        check_counter(&contract, 4);
     }
 }

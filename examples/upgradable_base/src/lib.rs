@@ -68,28 +68,21 @@ mod tests {
         assert!(call!(contract,"new"));
 
         assert!(call!(contract, "inc1"));
-
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         assert!(!call!(contract, "inc2"));
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         let wasm = std::fs::read(WASM_FILEPATH_SECOND).unwrap();
 
         assert!(call_borsh_arg(&contract, "up_stage_code", wasm));
         assert!(call!(contract, "up_deploy_code"));
-
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         assert!(!call!(contract, "inc1"));
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         assert!(call!(contract, "inc2"));
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 3);
+        check_counter(&contract, 3);
     }
 }

@@ -65,16 +65,14 @@ mod tests {
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_eq!(current_owner.unwrap().as_str(), contract_holder.id().as_str());
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 0);
+        check_counter(&contract, 0);
 
         assert!(call!(contract, "protected"));
         assert!(call!(contract, "protected_owner"));
         assert!(call!(contract, "protected_self"));
         assert!(call!(contract, "unprotected"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 4);
+        check_counter(&contract, 4);
 
         let next_owner = get_subaccount(&contract_holder, "next_owner");
         assert!(!call!(&next_owner, contract, "protected"));
@@ -82,8 +80,7 @@ mod tests {
         assert!(!call!(&next_owner, contract, "protected_self"));
         assert!(call!(&next_owner, contract, "unprotected"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 5);
+        check_counter(&contract, 5);
 
         assert!(call_arg(&contract, "owner_set", &json!({"owner": next_owner.id()})));
 
@@ -96,16 +93,14 @@ mod tests {
         assert!(!call!(&next_owner, contract, "protected_self"));
         assert!(call!(&next_owner, contract, "unprotected"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 8);
+        check_counter(&contract, 8);
 
         assert!(call!(contract, "protected"));
         assert!(!call!(contract, "protected_owner"));
         assert!(call!(contract, "protected_self"));
         assert!(call!(contract, "unprotected"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 11);
+        check_counter(&contract, 11);
     }
 
     #[test]
@@ -123,8 +118,7 @@ mod tests {
         assert!(call!(contract, "protected_self"));
         assert!(call!(contract, "unprotected"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 3);
+        check_counter(&contract, 3);
 
         assert!(call!(contract, "owner_set", &json!({"owner": contract.id().as_str()})));
         assert!(call!(contract, "protected"));
@@ -132,8 +126,7 @@ mod tests {
         assert!(call!(contract, "protected_self"));
         assert!(call!(contract, "unprotected"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 7);
+        check_counter(&contract, 7);
     }
 
     #[test]

@@ -45,8 +45,7 @@ mod tests {
 
         assert!(call!(contract,"new"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 0);
+        check_counter(&contract, 0);
 
         let next_owner = get_subaccount(&contract_holder, "next_owner");
         assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})));
@@ -55,8 +54,7 @@ mod tests {
 
         assert!(call!(&contract_holder, contract, "protected_self"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         contract_holder.set_secret_key(next_owner.secret_key().clone());
 
@@ -64,8 +62,7 @@ mod tests {
 
         assert!(call!(contract, "protected_self"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 2);
+        check_counter(&contract, 2);
     }
 
     #[test]

@@ -90,28 +90,22 @@ mod tests {
         let alice = get_subaccount(&contract_holder, "alice");
 
         assert!(call!(&alice, contract, "increase_1"));
-
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         assert!(!call!(&alice, contract, "pa_pause_feature", &json!({"key": "increase_1"})));
         assert!(call!(&next_owner, contract, "pa_pause_feature", &json!({"key": "increase_1"})));
 
         assert!(!call!(&alice, contract, "increase_1"));
-
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         assert!(!call!(&next_owner, contract, "increase_1"));
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 1);
+        check_counter(&contract, 1);
 
         assert!(!call!(&contract_holder, contract, "pa_unpause_feature", &json!({"key": "increase_1"})));
         assert!(call!(&next_owner, contract, "pa_unpause_feature", &json!({"key": "increase_1"})));
 
         assert!(call!(&alice, contract, "increase_1"));
 
-        let counter: u64 = view!(contract, "get_counter");
-        assert_eq!(counter, 2);
+        check_counter(&contract, 2);
     }
 }

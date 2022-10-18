@@ -1,3 +1,4 @@
+use serde_json::json;
 use near_sdk::ONE_NEAR;
 use tokio::runtime::Runtime;
 use workspaces::{Account, Contract};
@@ -79,7 +80,7 @@ macro_rules! view {
         serde_json::from_slice(&view(&$contract, $method_name, &json!({}))).unwrap()
     };
     ($contract:ident, $method_name:literal, $args:expr) => {
-            serde_json::from_slice(&view(&$contract, $method_name, $args)).unwrap()
+        serde_json::from_slice(&view(&$contract, $method_name, $args)).unwrap()
     };
 }
 
@@ -97,4 +98,9 @@ macro_rules! call {
     ($account:expr, $contract:ident, $method_name:literal, $args:expr) => {
         call_by_with_arg($account, &$contract, $method_name, $args)
     };
+}
+
+pub fn check_counter(contract: &Contract, expect_counter: u64) {
+    let counter: u64 = view!(contract, "get_counter");
+    assert_eq!(counter, expect_counter);
 }
