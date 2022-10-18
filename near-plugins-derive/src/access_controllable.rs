@@ -1,4 +1,5 @@
 use crate::access_control_role::new_bitflags_type_ident;
+use crate::utils;
 use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
 use darling::FromMeta;
 use proc_macro::TokenStream;
@@ -6,7 +7,6 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::parse::Parser;
 use syn::{parse_macro_input, AttributeArgs, ItemFn, ItemStruct};
-use crate::utils;
 
 #[derive(Debug, FromMeta)]
 pub struct MacroArgs {

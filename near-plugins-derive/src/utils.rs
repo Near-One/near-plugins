@@ -93,7 +93,10 @@ pub(crate) fn cratename() -> Ident {
     )
 }
 
-pub(crate) fn add_extra_code_to_fn(fn_code: &ItemFn, extra_code: proc_macro2::TokenStream) -> proc_macro::TokenStream {
+pub(crate) fn add_extra_code_to_fn(
+    fn_code: &ItemFn,
+    extra_code: proc_macro2::TokenStream,
+) -> proc_macro::TokenStream {
     let ItemFn {
         attrs,
         vis,

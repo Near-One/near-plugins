@@ -1,9 +1,9 @@
+use crate::utils;
 use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
 use darling::{FromDeriveInput, FromMeta};
 use proc_macro::{self, TokenStream};
 use quote::quote;
 use syn::{parse, parse_macro_input, AttributeArgs, DeriveInput, ItemFn};
-use crate::utils;
 
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(pausable), forward_attrs(allow, doc, cfg))]
