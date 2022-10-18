@@ -32,9 +32,7 @@ impl Counter1 {
 mod tests {
     use workspaces::{Account, Contract};
     use tokio::runtime::Runtime;
-    use serde_json::{json, Value};
-    use near_sdk::{AccountId, ONE_NEAR};
-    use workspaces::result::{ExecutionResult, ExecutionSuccess, ValueOrReceiptId};
+    use near_plugins_test_utils::*;
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/upgradable_base.wasm";
     const WASM_FILEPATH_SECOND: &str = "../upgradable_base_second/target/wasm32-unknown-unknown/release/upgradable_base_second.wasm";
@@ -51,26 +49,7 @@ mod tests {
         (owner, contract)
     }
 
-    fn view(contract: &Contract, method_name: &str) -> Vec<u8> {
-        let rt = Runtime::new().unwrap();
-
-        rt.block_on(
-            contract.view(method_name,
-                          json!({}).to_string().into_bytes())
-        ).unwrap().result
-    }
-
-    fn call(contract: &Contract, method_name: &str) -> bool {
-        let rt = Runtime::new().unwrap();
-
-        rt.block_on(
-            contract.call(method_name)
-                .max_gas()
-                .transact()
-        ).unwrap().is_success()
-    }
-
-    fn call_arg(contract: &Contract, method_name: &str, args: Vec<u8>) -> bool {
+    fn call_borsh_arg(contract: &Contract, method_name: &str, args: Vec<u8>) -> bool {
         let rt = Runtime::new().unwrap();
 
         rt.block_on(
@@ -81,16 +60,10 @@ mod tests {
         ).unwrap().is_success()
     }
 
-    macro_rules! view {
-        ($contract:ident, $method_name:literal) => {
-            serde_json::from_slice(&view(&$contract, $method_name)).unwrap()
-        }
-    }
-
     //https://docs.near.org/sdk/rust/promises/deploy-contract
     #[test]
     fn base_scenario() {
-        let (contract_holder, contract) = get_contract();
+        let (_, contract) = get_contract();
         assert!(call(&contract,"new"));
 
         assert!(call(&contract, "inc1"));
@@ -104,7 +77,7 @@ mod tests {
 
         let wasm = std::fs::read(WASM_FILEPATH_SECOND).unwrap();
 
-        assert!(call_arg(&contract, "up_stage_code", wasm));
+        assert!(call_borsh_arg(&contract, "up_stage_code", wasm));
         assert!(call(&contract, "up_deploy_code"));
 
         let counter: u64 = view!(contract, "get_counter");

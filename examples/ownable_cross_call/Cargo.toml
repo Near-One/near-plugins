@@ -19,5 +19,5 @@ near-primitives = "0.14.0"
 workspaces = "0.6"
 tokio = { version = "1.1", features = ["rt", "macros"] }
 serde_json = "1.0.74"
-
+near-plugins-test-utils = { path = "../near-plugins-test-utils" }
 

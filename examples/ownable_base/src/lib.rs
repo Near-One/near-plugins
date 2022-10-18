@@ -50,83 +50,15 @@ impl Counter {
 
 #[cfg(test)]
 mod tests {
-    use workspaces::{Account, Contract};
-    use tokio::runtime::Runtime;
-    use serde_json::{json, Value};
-    use near_sdk::{AccountId, ONE_NEAR};
-    use workspaces::result::{ExecutionResult, ExecutionSuccess, ValueOrReceiptId};
+    use serde_json::json;
+    use near_sdk::AccountId;
+    use near_plugins_test_utils::*;
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/ownable_base.wasm";
 
-    fn get_contract() -> (Account, Contract) {
-        let rt = Runtime::new().unwrap();
-        let worker = rt.block_on(workspaces::sandbox()).unwrap();
-
-        let owner = worker.root_account().unwrap();
-
-        let wasm = std::fs::read(WASM_FILEPATH).unwrap();
-        let contract = rt.block_on(owner.deploy(&wasm)).unwrap().unwrap();
-
-        (owner, contract)
-    }
-
-    fn view(contract: &Contract, method_name: &str) -> Vec<u8> {
-        let rt = Runtime::new().unwrap();
-
-        rt.block_on(
-            contract.view(method_name,
-                          json!({}).to_string().into_bytes())
-        ).unwrap().result
-    }
-
-    fn call(contract: &Contract, method_name: &str) -> bool {
-        let rt = Runtime::new().unwrap();
-
-        rt.block_on(
-            contract.call(method_name)
-                .max_gas()
-                .transact()
-        ).unwrap().is_success()
-    }
-
-    fn call_arg(contract: &Contract, method_name: &str, args: &serde_json::Value) -> bool {
-        let rt = Runtime::new().unwrap();
-
-        rt.block_on(
-            contract.call(method_name)
-                .args_json(args)
-                .max_gas()
-                .transact()
-        ).unwrap().is_success()
-    }
-
-    fn call_by(account: &Account, contract: &Contract, method_name: &str) -> bool {
-        let rt = Runtime::new().unwrap();
-
-        rt.block_on(
-            account.call(contract.id(),method_name)
-                .max_gas()
-                .transact()
-        ).unwrap().is_success()
-    }
-
-    fn get_subaccount(account: &Account, new_account_name: &str) -> Account {
-        let rt = Runtime::new().unwrap();
-
-        rt.block_on(account.create_subaccount(new_account_name)
-            .initial_balance(ONE_NEAR)
-            .transact()).unwrap().unwrap()
-    }
-
-    macro_rules! view {
-        ($contract:ident, $method_name:literal) => {
-            serde_json::from_slice(&view(&$contract, $method_name)).unwrap()
-        }
-    }
-
     #[test]
     fn base_scenario() {
-        let (contract_holder, contract) = get_contract();
+        let (contract_holder, contract) = get_contract(WASM_FILEPATH);
 
         assert!(call(&contract,"new"));
 
@@ -178,9 +110,7 @@ mod tests {
 
     #[test]
     fn null_owner() {
-        let (contract_holder, contract) = get_contract();
-        let rt = Runtime::new().unwrap();
-
+        let (_, contract) = get_contract(WASM_FILEPATH);
         assert!(call(&contract,"new"));
 
         assert!(call_arg(&contract, "owner_set", &json!({"owner": Option::<AccountId>::None})));
@@ -208,9 +138,7 @@ mod tests {
 
     #[test]
     fn check_owner_storage_key() {
-        let (contract_holder, contract) = get_contract();
-        let rt = Runtime::new().unwrap();
-
+        let (_, contract) = get_contract(WASM_FILEPATH);
         assert!(call(&contract,"new"));
 
         let owner_storage_key: Vec<u8> = view!(contract, "owner_storage_key");
