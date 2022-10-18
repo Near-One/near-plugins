@@ -18,3 +18,15 @@ pub use near_plugins_derive::{
 pub use ownable::Ownable;
 pub use pausable::Pausable;
 pub use upgradable::Upgradable;
+
+// Re-exporting these dependencies avoids requiring contracts to depend on them.
+// For example, without re-exporting `bitflags` a contract using the access
+// control plugin would require:
+//
+// ```toml
+// # Cargo.toml
+// [dependencies]
+// bitflags = "x.y"
+// ```
+#[doc(hidden)]
+pub use bitflags;

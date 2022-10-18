@@ -39,6 +39,7 @@
 //! The last property aims to facilitate migrations which add or remove enum
 //! variants.
 
+use crate::utils::cratename;
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
@@ -51,6 +52,7 @@ const DEFAULT_BOUNDCHECKER_TYPE_NAME: &str = "__AclBoundchecker";
 
 pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
     // This derive doesn't take attributes, so no need to use `darling`.
+    let cratename = cratename();
     let input: ItemEnum = parse_macro_input!(input);
     let ItemEnum {
         ident, variants, ..
@@ -175,7 +177,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             }
         }
 
-        ::bitflags::bitflags! {
+        ::#cratename::bitflags::bitflags! {
             /// Encodes permissions for roles and admins.
             #[derive(BorshDeserialize, BorshSerialize, Default)]
             struct #bitflags_type_ident: u128 {

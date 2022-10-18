@@ -21,6 +21,7 @@ homepage = "https://github.com/aurora-is-near/near-plugins"
 keywords = ["near", "smart contract", "plugin"]
 
 [workspace.dependencies]
+bitflags = "1.3"
 near-sdk = "4.0.0"
 near-plugins-derive = { path = "near-plugins-derive" }
 serde = "1"
