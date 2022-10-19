@@ -69,9 +69,24 @@ impl Counter {
 
 ## The contract methods description
 ### acl_storage_prefix
+`acl_storage_prefix` - a method which show the common prefix of keys for storage the members and the admins of groups. 
+`__acl` by default. 
+
+```shell
+$ near call <CONTRACT_ACCOUNT> acl_storage_prefix --accountId acl.olga24912_3.testnet
+Scheduling a call: <CONTRACT_ACCOUNT>.acl_storage_prefix()
+Doing account.functionCall()
+Transaction Id <TRANSACTION_ID>
+To see the transaction in the transaction explorer, please open this url in your browser
+https://explorer.testnet.near.org/transactions/<TRANSACTION_ID>
+[ 95, 95, 97, 99, 108 ]
+$ python3
+>>> print(' '.join(str(b) for b in bytes("__acl", 'utf8')))
+95 95 97 99 108
+```
 
 ### acl_is_super_admin
-`acl_is_super_admin` is a _view_ method which checks that account have a super admin rights. 
+`acl_is_super_admin` - a _view_ method which checks that account have a super admin rights. 
 Super admin can control the members list of each group and control the admins list for each group.
 
 ```shell
@@ -155,14 +170,26 @@ true
 ```
 
 ### acl_get_admins
+`acl_get_admins` - a _view_ method which shows some group admins. It will skip first `skip` admins and return maximum `limit` number of admins.
 
+```shell
+$ near view <CONTRACT_ACCOUNT> acl_get_admins '{"role": "GroupA", "skip": 0, "limit": 2}'
+View call: <CONTRACT_ACCOUNT>.acl_get_admins({"role": "GroupA", "skip": 0, "limit": 2})
+[ '<ALICE_ACCOUNT>' ]
+```
 
 ### acl_get_grantees
+`acl_get_grantess` - a _view_ method which shows some members of the group. It will skip first `skip` members and return maximum `limit` number of members.
 
-## Example of using contract with access control plugin
+```shell
+$ near view <CONTRACT_ACCOUNT> acl_get_grantess '{"role": "GroupA", "skip": 0, "limit": 2}'
+View call: <CONTRACT_ACCOUNT>.acl_get_grantess({"role": "GroupA", "skip": 0, "limit": 2})
+[ '<ALICE_ACCOUNT>' ]
+```
+
+## Preparation steps for demonstration
 In that document we are providing some example of using contract with access control plugin. You also can explore the usage examples in the tests in `./src/lib.rs`. For running a tests please take a look to the **Test running instruction** section.
 
-### Preparation steps for demonstration
 1. **Creating an account on testnet**
    For demonstration let's create 3 accounts: `<CONTRACT_ACCOUNT>`, `<ALICE_ACCOUNT>`, `<BOB_ACCOUNT>`
    ```shell
@@ -186,8 +213,9 @@ In that document we are providing some example of using contract with access con
    $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ./target/wasm32-unknown-unknown/release/access_controllable_base.wasm --initFunction new --initArgs '{}'
    ```
 
+## Example of using the contract with access control plugin
 
-### Tests running instruction
+## Tests running instruction
 Tests in `src/lib.rs` contain examples of interaction with a contract.
 
 For running test:
