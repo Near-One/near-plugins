@@ -74,3 +74,14 @@ impl Counter {
     }
 }
 ```
+
+## The contract methods description
+### pa_storage_key
+
+### pa_is_paused
+
+### pa_all_paused
+
+### pa_pause_feature
+
+### pa_unpause_feature

@@ -37,3 +37,6 @@ impl Counter {
   }
 }
 ```
+
+## The contract methods description
+### attach_full_access_key

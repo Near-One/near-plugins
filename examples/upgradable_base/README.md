@@ -69,3 +69,14 @@ impl Counter2 {
 ```
 
 To upgrade the contract first call up_stage_code passing the binary as first argument serialized as borsh. Then call up_deploy_code. This functions must be called from the owner.
+
+## The contract methods description
+### up_storage_key
+
+### up_stage_code
+
+### up_staged_code
+
+### up_staged_code_hash
+
+### up_deploy_code
