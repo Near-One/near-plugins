@@ -214,6 +214,45 @@ In that document we are providing some example of using contract with access con
    ```
 
 ## Example of using the contract with access control plugin
+### Calling the access control methods
+For using the method `level_a_incr` you should be a memeber of the GroupA.  Alice not a member of any group, so she cann't use this method.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> level_a_incr --accountId <ALICE_ACCOUNT>
+$ near view get_counter
+0
+```
+
+Let's make the Alice the member of the GroupA. 
+```shell
+$ near call <CONTRACT_ACCOUNT> acl_grant_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
+```
+
+Now Alice the member of GroupA and call the level_a_incr method
+```shell
+$ near call <CONTRACT_ACCOUNT> level_a_incr --accountId <ALICE_ACCOUNT>
+$ near view get_counter
+1
+```
+
+As well as `level_ab_incr` which aloud for both GroupA and GroupB members.
+```shell
+$ near call <CONTRACT_ACCOUNT> level_ab_incr --accountId <ALICE_ACCOUNT>
+$ near view get_counter
+2
+```
+
+### Admin of the group not a member of the group
+Note the admin of the group may not be a member of this group. For example, the `<CONTRACT_ACCOUNT>` is a super admin, but he
+cann't execute the `level_a_incr` method. 
+
+```shell
+$ near view get_counter
+2
+$ near call <CONTRACT_ACCOUNT> level_a_incr --accountId <CONTRACT_ACCOUNT>
+$ near view get_counter
+2
+```
 
 ## Tests running instruction
 Tests in `src/lib.rs` contain examples of interaction with a contract.
