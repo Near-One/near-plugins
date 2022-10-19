@@ -93,8 +93,8 @@ $ near call <CONTRACT_ACCOUNT> acl_add_admin '{"role": "GroupA", "account_id": "
 `acl_is_admin` is a _view_ method which checks if the account have an admin right for specified group. For super admin it will return true.
 
 ```shell
-$ near view <CONTRACT_ACCOUNT> acl_is_admin '{"role": "GroupA", "account_id": <ALICE_ACCOUNT>}'
-View call: <CONTRACT_ACCOUNT>.acl_is_admin({"role": "GroupA", "account_id": <ALICE_ACCOUNT>})
+$ near view <CONTRACT_ACCOUNT> acl_is_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}'
+View call: <CONTRACT_ACCOUNT>.acl_is_admin({"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"})
 true
 ```
 
@@ -102,7 +102,7 @@ true
 `acl_revoke_admin` - remove the group admin right for specific account. Can be executed by admin of this group or by super admin.
 
 ```shell
-$ near call <CONTRACT_ACCOUNT> acl_revoke_admin '{"role": "GroupA", "account_id": <ALICE_ACCOUNT>}' --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> acl_revoke_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
 ```
 
 ### acl_renounce_admin
@@ -115,16 +115,47 @@ $ near call <CONTRACT_ACCOUNT> acl_renounce_admin '{"role": "GroupA"}' --account
 After calling that method Alice will not have the admin right for GroupA anymore. 
 
 ### acl_revoke_role
+`acl_revoke_role` - remove the specified account from the list of the group member. 
+Only the group admin or super admin can execute this function.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> acl_revoke_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
+```
 
 ### acl_renounce_role
+`acl_renounce_role` - remove the caller account from the member list of the group. Can be called by anyone.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> acl_renounce_role '{"role": "GroupA"}' --accountId <ALICE_ACCOUNT>
+```
 
 ### acl_grant_role
+`acl_grant_role` - add the account to the group member list. Can be executed only by the group admin or by super admin.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> acl_grant_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
+```
 
 ### acl_has_role
+`acl_has_role` - a _view_ method for check if the account is a member of specified group.
+
+```shell
+$ near view <CONTRACT_ACCOUNT> acl_has_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}'
+View call: <CONTRACT_ACCOUNT>.acl_has_role({"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"})
+true
+```
 
 ### acl_has_any_role
+`acl_has_any_role` - a _view_ method to check if an account a member of at least one of specified groups.
+
+```shell
+$ near view <CONTRACT_ACCOUNT> acl_has_any_role '{"roles": ["GroupA", "GroupB"], "account_id": "<ALICE_ACCOUNT>"}'
+View call: <CONTRACT_ACCOUNT>.acl_has_any_role({"roles": ["GroupA", "GroupB"], "account_id": "<ALICE_ACCOUNT>"})
+true
+```
 
 ### acl_get_admins
+
 
 ### acl_get_grantees
 
