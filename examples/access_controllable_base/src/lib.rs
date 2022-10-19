@@ -89,9 +89,9 @@ mod tests {
         assert!(!call!(&alice, contract, "level_a_incr"));
         check_counter(&contract, 1);
 
-        assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(Positions::LevelA), "account_id": alice.id()})));
+        assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(UsersGroups::GroupA), "account_id": alice.id()})));
 
-        let alice_has_role: bool = view!(contract, "acl_has_role", &json!({"role": String::from(Positions::LevelA), "account_id": alice.id()}));
+        let alice_has_role: bool = view!(contract, "acl_has_role", &json!({"role": String::from(UsersGroups::GroupA), "account_id": alice.id()}));
         assert!(alice_has_role);
 
         assert!(call!(&alice, contract, "level_a_incr"));
@@ -99,9 +99,9 @@ mod tests {
         check_counter(&contract, 2);
 
         let bob = get_subaccount(&contract_holder, "bob");
-        assert!(call!(contract, "acl_add_admin", &json!({"role": String::from(Positions::LevelA), "account_id": bob.id()})));
+        assert!(call!(contract, "acl_add_admin", &json!({"role": String::from(UsersGroups::GroupA), "account_id": bob.id()})));
 
-        let bob_is_admin: bool = view!(contract, "acl_is_admin", &json!({"role": String::from(Positions::LevelA), "account_id": bob.id()}));
+        let bob_is_admin: bool = view!(contract, "acl_is_admin", &json!({"role": String::from(UsersGroups::GroupA), "account_id": bob.id()}));
         assert!(bob_is_admin);
 
         assert!(!call!(&bob, contract, "level_a_incr"));
@@ -114,7 +114,7 @@ mod tests {
         assert!(!call!(&bob, contract, "level_ab_incr"));
         check_counter(&contract, 3);
 
-        assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(Positions::LevelB), "account_id": bob.id()})));
+        assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(UsersGroups::GroupB), "account_id": bob.id()})));
         assert!(call!(&bob, contract, "level_ab_incr"));
         check_counter(&contract, 4);
 
