@@ -1,4 +1,4 @@
-# Example using Ownable plugin
+# Example of using Ownable plugin
 
 Basic access control mechanism that allows only an authorized account id to call certain methods. Note this account id can belong either to a regular user, or it could be a contract (a DAO for example).
 
