@@ -53,6 +53,8 @@ impl Counter {
     }
 }
 ```
+## The contract methods description
+
 
 ## Example of using contract with ownable plugin
 In that document we are providing some example of using contract with ownable plugin. You also can explore the usage examples in the tests in `./src/lib.rs`. For running a tests please take a look to the **Test running instruction** section.
@@ -83,8 +85,8 @@ In that document we are providing some example of using contract with ownable pl
    $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ./target/wasm32-unknown-unknown/release/ownable_base.wasm --initFunction new --initArgs '{}'
    ```
 
-### Contract with owner plugin usage
-#### Self is owner
+### Contract with owner plugin usage examples
+#### When self is owner we can call all methods
 After initialization the `<CONTRACT_ACCOUNT>` is the owner of this contract. So this account both the `self` and the `owner` of the contract and can call of the contract method. 
 
 ```shell
@@ -102,7 +104,7 @@ View call: <CONTRACT_ACCOUNT>.get_counter({})
 4
 ```
 
-#### Limitation for another accounts
+#### The stranger accounts can use only unprotected functions
 Currently, the `<OWNER_ACCOUNT>` doesn't connected to the contract. So, we can check that we can only succeed in calling `unprotected` method and will fail on calling all other protected methods.
 
 ```shell
@@ -118,7 +120,7 @@ View call: <CONTRACT_ACCOUNT>.get_counter({})
 5
 ```
 
-#### Change the contract owner
+#### Check and Change the contract owner
 Let's change the contract owner from `<CONTRACT_ACCOUNT>` to the `<OWNER_ACCOUNT>`. Only the current owner of the contract can change the owner. 
 
 We can check the owner of the contract by callint `owner_get` view method.
@@ -140,7 +142,7 @@ View call: <CONTRACT_ACCOUNT>.owner_get({})
 '<OWNER_ACCOUNT>'
 ```
 
-#### Self is not a contract owner anymore
+#### When self is not owner it can't run the only(owner) functions
 So, now `<CONTRACT_ACCOUNT>` is not an owner of out contract anymore. So, the `<CONTRACT_ACCOUNT>` can run the `unprotected`, `proteced_self`, `protected` and can't use the methods `protected_owner`.
 
 ```shell
@@ -156,7 +158,7 @@ View call: <CONTRACT_ACCOUNT>.get_counter({})
 8
 ```
 
-#### Owner run the functions
+#### Owner can't run the only(self) functions
 And the owner of the contract(`<OWNER_ACCOUNT>`) can use the functions `protected`, `protected_owner` and `unprotected` and can not run the `protected_self` method.
 
 ```shell
@@ -171,8 +173,55 @@ $ near view <CONTRACT_ACCOUNT> get_counter '{}'
 View call: <CONTRACT_ACCOUNT>.get_counter({})
 11
 ```
+#### Only owner can change the contract ownership
+When the contract have an owner only the owner can change the ownership. All other account, include self, cann't.
 
-### Test running instruction
+```shell
+$ near view <CONTRACT_ACCOUNT> owner_get '{}'
+View call: <CONTRACT_ACCOUNT>.owner_get({})
+'<OWNER_ACCOUNT>'
+$ near call <CONTRACT_ACCOUNT> owner_set '{"owner": <CONTRACT_ACCOUNT>}' --accountId <CONTRACT_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> owner_get '{}'
+View call: <CONTRACT_ACCOUNT>.owner_get({})
+'<OWNER_ACCOUNT>'
+
+```
+
+#### Removing the owner of contract
+We can remove the owner of the contract by set owner Null
+```shell
+$ near call <CONTRACT_ACCOUNT> owner_set '{"owner": null}' --accountId <OWNER_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> owner_get '{}'
+View call: <CONTRACT_ACCOUNT>.owner_get({})
+null
+```
+
+#### The self cann't run the only(owner) function if contract doesn't have an owner
+When contract doesn't have an owner no one can use only(owner) functions include self.
+
+```shell
+$ near view <CONTRACT_ACCOUNT> get_counter '{}' 
+View call: <CONTRACT_ACCOUNT>.get_counter({})
+11
+$ near call <CONTRACT_ACCOUNT> protected_owner '{}' --accountId <CONTRACT_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> get_counter '{}' 
+View call: <CONTRACT_ACCOUNT>.get_counter({})
+11
+```
+
+#### When the contract doesn't have owner the self can setup a new one
+When the contract doesn't have the owner, the self can setup a new owner.
+```shell
+$ near view <CONTRACT_ACCOUNT> owner_get '{}'
+View call: <CONTRACT_ACCOUNT>.owner_get({})
+null
+$ near call <CONTRACT_ACCOUNT> owner_set '{"owner": <OWNER_ACCOUNT>}' --accountId <CONTRACT_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> owner_get '{}'
+View call: <CONTRACT_ACCOUNT>.owner_get({})
+'<OWNER_ACCOUNT>'
+```
+
+### Tests running instruction
 Tests in `src/lib.rs` contain examples of interaction with a contract. 
 
 For running test: 
