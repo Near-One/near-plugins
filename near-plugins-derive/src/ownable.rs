@@ -32,8 +32,8 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
             fn owner_get(&self) -> Option<::near_sdk::AccountId> {
                 ::near_sdk::env::storage_read(&self.owner_storage_key()).map(|owner_bytes| {
                     let owner_raw =
-                        String::from_utf8(owner_bytes).expect("Ownable: Invalid string format");
-                    std::convert::TryInto::try_into(owner_raw).expect("Ownable: Invalid account id")
+                        String::from_utf8(owner_bytes).unwrap_or_else(|_| ::near_sdk::env::panic_str("Ownable: Invalid string format"));
+                    std::convert::TryInto::try_into(owner_raw).unwrap_or_else(|_| ::near_sdk::env::panic_str("Ownable: Invalid account id"))
                 })
             }
 
@@ -90,7 +90,7 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
     }
     let mut contains_self = false;
     let mut contains_owner = false;
-    // TODO: Use darling for this
+    // TODO: Use darling
     for attr in attrs {
         match attr.to_string().as_str() {
             "self" => contains_self = true,
@@ -109,7 +109,7 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
             ::near_sdk::assert_self();
         },
         (false, true) => quote! {
-            assert!(self.owner_is(), "Ownable: Method must be called from owner");
+            ::near_sdk::require!(self.owner_is(), "Ownable: Method must be called from owner");
         },
         (false, false) => {
             panic!("Ownable::only macro target not specified. Select at least one in [self, owner]")

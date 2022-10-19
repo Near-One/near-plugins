@@ -50,7 +50,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             #[#cratename::only(owner)]
             fn up_deploy_code(&mut self) -> near_sdk::Promise {
                 near_sdk::Promise::new(near_sdk::env::current_account_id())
-                    .deploy_contract(self.up_staged_code().expect("Upgradable: No staged code"))
+                    .deploy_contract(self.up_staged_code().unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged code")))
             }
         }
     };
