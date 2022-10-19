@@ -55,6 +55,51 @@ impl Counter {
 ```
 ## The contract methods description
 
+### owner_set
+`owner_set` - the method which sets the new owner of the contract. Only the current owner of the contract can set a new one. 
+If the contract doesn't have any owner the self can set one. 
+
+```shell
+$ near call <CONTRACT_ACCOUNT> owner_set '{"owner": <NEW_OWNER_ACCOUNT>}' --accountId <OWNER_ACCOUNT>
+```
+
+### owner_get
+`owner_get` - the _view_ method which returns the current contract owner
+
+```shell
+$ near view <CONTRACT_ACCOUNT> owner_get '{}'
+View call: <CONTRACT_ACCOUNT>.owner_get({})
+'<OWNER_ACCOUNT>'
+```
+
+### owner_storage_key
+`owner_storage_key` - the _view_ method which returns the key for storage the owner account id. 
+The `__OWNER__` by default. Can be changed by using the `ownable` attribute. See example `ownable_change_storage_key`.
+
+```shell
+$ near view <CONTRACT_ACCOUNT> owner_storage_key
+View call: <CONTRACT_ACCOUNT>.owner_storage_key()
+[
+  95, 95, 79, 87, 78,
+  69, 82, 95, 95
+]
+$ python3
+>>> print(' '.join(str(b) for b in bytes("__OWNER__", 'utf8')))
+95 95 79 87 78 69 82 95 95
+```
+
+### owner_is
+`owner_is` - the methods checks if the caller is the owner of the contract
+```shell
+$ near call <CONTRACT_ACCOUNT> owner_is --accountId <OWNER_ACCOUNT>
+Scheduling a call: <CONTRACT_ACCOUNT>.testnet.owner_is()
+Doing account.functionCall()
+Transaction Id <TRANSACTION_ID>
+To see the transaction in the transaction explorer, please open this url in your browser
+https://explorer.testnet.near.org/transactions/<TRANSACTION_ID>
+true
+```
+
 
 ## Example of using contract with ownable plugin
 In that document we are providing some example of using contract with ownable plugin. You also can explore the usage examples in the tests in `./src/lib.rs`. For running a tests please take a look to the **Test running instruction** section.
