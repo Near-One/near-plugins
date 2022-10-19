@@ -112,8 +112,8 @@ In that document we are providing some example of using contract with ownable pl
    The instruction of creating an accounts on NEAR testnet: https://docs.near.org/tools/near-cli#near-create-account
    
    ```shell
-   $ near create-account <CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME> --initialBalance 10
-   $ near create-account <OWNER_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME> --initialBalance 10
+   $ near create-account <CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
+   $ near create-account <OWNER_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
    ```
 
    In the next section we will refer to the `<CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<CONTRACT_ACCOUNT>` and to the `<OWNER_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<OWNER_ACCOUNT>` for simplicity. 

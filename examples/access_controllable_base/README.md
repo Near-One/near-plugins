@@ -67,3 +67,106 @@ impl Counter {
 }
 ```
 
+## The contract methods description
+### acl_storage_prefix
+
+### acl_is_super_admin
+`acl_is_super_admin` is a _view_ method which checks that account have a super admin rights. 
+Super admin can control the members list of each group and control the admins list for each group.
+
+```shell
+$ near view <CONTRACT_ACCOUNT> acl_is_super_admin '{"account_id": "<CONTRACT_ACCOUNT>" }' 
+View call: <CONTRACT_ACCOUNT>.acl_is_super_admin({"account_id": "<CONTRACT_ACCOUNT>"})
+true
+```
+
+### acl_add_admin
+`acl_add_admin` - add a new admin for a specific group. 
+Admins right doesn't aloud to run group specific functions, but group admins can control the group member list.
+This method can be run by the admin of specific group or by the super admin. 
+
+```shell
+$ near call <CONTRACT_ACCOUNT> acl_add_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
+```
+
+### acl_is_admin
+`acl_is_admin` is a _view_ method which checks if the account have an admin right for specified group. For super admin it will return true.
+
+```shell
+$ near view <CONTRACT_ACCOUNT> acl_is_admin '{"role": "GroupA", "account_id": <ALICE_ACCOUNT>}'
+View call: <CONTRACT_ACCOUNT>.acl_is_admin({"role": "GroupA", "account_id": <ALICE_ACCOUNT>})
+true
+```
+
+### acl_revoke_admin
+`acl_revoke_admin` - remove the group admin right for specific account. Can be executed by admin of this group or by super admin.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> acl_revoke_admin '{"role": "GroupA", "account_id": <ALICE_ACCOUNT>}' --accountId <CONTRACT_ACCOUNT>
+```
+
+### acl_renounce_admin
+`acl_renounce_admin` - remove the group admin right for called account. 
+
+```shell
+$ near call <CONTRACT_ACCOUNT> acl_renounce_admin '{"role": "GroupA"}' --accountId <ALICE_ACCOUNT>
+```
+
+After calling that method Alice will not have the admin right for GroupA anymore. 
+
+### acl_revoke_role
+
+### acl_renounce_role
+
+### acl_grant_role
+
+### acl_has_role
+
+### acl_has_any_role
+
+### acl_get_admins
+
+### acl_get_grantees
+
+## Example of using contract with access control plugin
+In that document we are providing some example of using contract with access control plugin. You also can explore the usage examples in the tests in `./src/lib.rs`. For running a tests please take a look to the **Test running instruction** section.
+
+### Preparation steps for demonstration
+1. **Creating an account on testnet**
+   For demonstration let's create 3 accounts: `<CONTRACT_ACCOUNT>`, `<ALICE_ACCOUNT>`, `<BOB_ACCOUNT>`
+   ```shell
+   $ near create-account <CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
+   $ near create-account <ALICE_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
+   $ near create-account <BOB_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
+   ```
+
+   In the next section we will refer to the `<CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<CONTRACT_ACCOUNT>`, 
+   to the `<ALICE_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<ALICE_ACCOUNT>`, and to the `<BOB_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<BOB_ACCOUNT>` for simplicity.
+
+2. **Compile Contract to wasm file**
+   For compiling the contract just run the `build.sh` script. The target file with compiled contract will be `./target/wasm32-unknown-unknown/release/access_controllable_base.wasm`
+
+   ```shell
+   $ ./build.sh
+   ```
+
+3. **Deploy and init a contract**
+   ```shell
+   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ./target/wasm32-unknown-unknown/release/access_controllable_base.wasm --initFunction new --initArgs '{}'
+   ```
+
+
+### Tests running instruction
+Tests in `src/lib.rs` contain examples of interaction with a contract.
+
+For running test:
+1. Generate `wasm` file by running `build.sh` script. The target file will be `target/wasm32-unknown-unknown/release/access_controllable_base.wasm`
+2. Run tests `cargo test`
+
+```shell
+$ ./build.sh
+$ cargo test
+```
+
+For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate
+contract_account.
