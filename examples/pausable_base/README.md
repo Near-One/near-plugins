@@ -77,8 +77,33 @@ impl Counter {
 
 ## The contract methods description
 ### pa_storage_key
+`pa_storage_key` is a _view_ method which returns the key of storage slot with list of paused features.
+By default `b"__PAUSED__"` is used. For changing the attribute `pausable` can be used.
+
+```shell
+$ near view <CONTRACT_ACCOUNT> owner_storage_key
+View call: <CONTRACT_ACCOUNT>.owner_storage_key()
+[
+  95, 95, 80, 65, 85,
+  83, 69, 68, 95, 95
+]
+$ python3
+>>> print(' '.join(str(b) for b in bytes("__PAUSED__", 'utf8')))
+95 95 80 65 85 83 69 68 95 95
+```
+
+Example of changing paused storage key:
+```rust
+#[near_bindgen]
+#[derive(Ownable, Pausable, Default, BorshSerialize, BorshDeserialize)]
+#[pausable(paused_storage_key="OTHER_PAUSED_STORAGE_KEY")]
+struct Counter {
+  counter: u64,
+}
+```
 
 ### pa_is_paused
+
 
 ### pa_all_paused
 
