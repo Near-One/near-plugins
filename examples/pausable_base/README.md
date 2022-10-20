@@ -81,8 +81,8 @@ impl Counter {
 By default `b"__PAUSED__"` is used. For changing the attribute `pausable` can be used.
 
 ```shell
-$ near view <CONTRACT_ACCOUNT> owner_storage_key
-View call: <CONTRACT_ACCOUNT>.owner_storage_key()
+$ near view <CONTRACT_ACCOUNT> pa_storage_key
+View call: <CONTRACT_ACCOUNT>.pa_storage_key()
 [
   95, 95, 80, 65, 85,
   83, 69, 68, 95, 95
@@ -103,7 +103,13 @@ struct Counter {
 ```
 
 ### pa_is_paused
+`pa_is_paused` is a _view_ which returns if a feature is paused.
 
+```shell
+$ near view <CONTRACT_ACCOUNT> pa_is_paused '{"key": "increase_1"}'
+View call: <CONTRACT_ACCOUNT>.pa_is_paused({"key": "increase_1"})
+false
+```
 
 ### pa_all_paused
 
