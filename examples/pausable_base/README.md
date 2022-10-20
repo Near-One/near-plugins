@@ -103,16 +103,34 @@ struct Counter {
 ```
 
 ### pa_is_paused
-`pa_is_paused` is a _view_ which returns if a feature is paused.
+`pa_is_paused` is a _view_ method which returns if a feature is paused.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> pa_is_paused '{"key": "increase_1"}'
 View call: <CONTRACT_ACCOUNT>.pa_is_paused({"key": "increase_1"})
-false
+true
 ```
 
 ### pa_all_paused
+`pa_all_paused` is a _view_ method which return the list of the all paused features.
+
+```shell
+$ near view <CONTRACT_ACCOUNT> pa_all_paused
+View call: <CONTRACT_ACCOUNT>.pa_all_paused()
+[ 'increase_1', 'increase_2' ]
+```
+
 
 ### pa_pause_feature
+`pa_pause_feature` is a method for pause specified feature. Can be run only by owner or self.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> pa_pause_feature '{"key": "increase_1"}' --accountId <OWNER_ACCOUNT>
+```
 
 ### pa_unpause_feature
+`pa_unpause_feature` is a method for unpause specified feature. Can be run only by owner or self.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> pa_unpause_feature '{"key": "increase_1"}' --accountId <OWNER_ACCOUNT>
+```
