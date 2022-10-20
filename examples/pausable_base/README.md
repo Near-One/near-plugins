@@ -134,3 +134,106 @@ $ near call <CONTRACT_ACCOUNT> pa_pause_feature '{"key": "increase_1"}' --accoun
 ```shell
 $ near call <CONTRACT_ACCOUNT> pa_unpause_feature '{"key": "increase_1"}' --accountId <OWNER_ACCOUNT>
 ```
+
+## Preparation steps for demonstration
+In that document we are providing some example of using contract with access control plugin. You also can explore the usage examples in the tests in `./src/lib.rs`. For running a tests please take a look to the **Test running instruction** section.
+
+1. **Creating an account on testnet**
+   For demonstration let's create 2 accounts: `<CONTRACT_ACCOUNT>`, `<ALICE_ACCOUNT>`
+   ```shell
+   $ near create-account <CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
+   $ near create-account <ALICE_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
+   ```
+
+   In the next section we will refer to the `<CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<CONTRACT_ACCOUNT>`,
+   to the `<ALICE_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<ALICE_ACCOUNT>`.
+
+2. **Compile Contract to wasm file**
+   For compiling the contract just run the `build.sh` script. The target file with compiled contract will be `./target/wasm32-unknown-unknown/release/pausable_base.wasm`
+
+   ```shell
+   $ ./build.sh
+   ```
+
+3. **Deploy and init a contract**
+   ```shell
+   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ./target/wasm32-unknown-unknown/release/pausable_base.wasm --initFunction new --initArgs '{}'
+   ```
+   
+## Example of using the contract with pausable plugin
+### Simple pause and unpause function without name specification
+At the beginning the `<CONTRACT_ACCOUNT>` both the self and the owner. 
+`<ALICE_ACCOUNT>` doesn't have any specific rights. 
+
+No features on pause:
+```shell
+$ near view <CONTRACT_ACCOUNT> pa_all_paused
+View call: <CONTRACT_ACCOUNT>.pa_all_paused()
+null
+```
+
+Alice can call `increase_1` function:
+```shell
+$ near call <CONTRACT_ACCOUNT> increase_1 --accountId <ALICE_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> get_counter
+1
+```
+
+#### Pause function
+Self(or owner) pause function:
+```shell
+$ near call <CONTRACT_ACCOUNT> pa_pause_feature '{"key": "increase_1"}' --accountId <CONTRACT_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> pa_all_paused
+View call: <CONTRACT_ACCOUNT>.pa_all_paused()
+[ 'increase_1' ]
+$ near view <CONTRACT_ACCOUNT> pa_is_paused '{"key": "increase_1"}'
+View call: <CONTRACT_ACCOUNT>.pa_is_paused({"key": "increase_1"})
+true
+```
+
+Now Alice or even self cann't run `increase_1` function
+```shell
+$ near view <CONTRACT_ACCOUNT> get_counter
+1
+$ near call <CONTRACT_ACCOUNT> increase_1 --accountId <ALICE_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> increase_1 --accountId <CONTRACT_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> get_counter
+1
+```
+
+#### Unpause function
+Self(or owner) can unpause feature:
+```shell
+$ near call <CONTRACT_ACCOUNT> pa_unpause_feature '{"key": "increase_1"}' --accountId <CONTRACT_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> pa_all_paused
+View call: <CONTRACT_ACCOUNT>.pa_all_paused()
+null
+$ near view <CONTRACT_ACCOUNT> pa_is_paused '{"key": "increase_1"}'
+View call: <CONTRACT_ACCOUNT>.pa_is_paused({"key": "increase_1"})
+false
+```
+
+Now Alice can continue use the `increase_1` function
+```shell
+$ near view <CONTRACT_ACCOUNT> get_counter
+1
+$ near call <CONTRACT_ACCOUNT> increase_1 --accountId <ALICE_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> increase_1 --accountId <CONTRACT_ACCOUNT>
+$ near view <CONTRACT_ACCOUNT> get_counter
+3
+```
+
+## Tests running instruction
+Tests in `src/lib.rs` contain examples of interaction with a contract.
+
+For running test:
+1. Generate `wasm` file by running `build.sh` script. The target file will be `target/wasm32-unknown-unknown/release/pausable_base.wasm`
+2. Run tests `cargo test`
+
+```shell
+$ ./build.sh
+$ cargo test
+```
+
+For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate
+contract_account.
