@@ -126,9 +126,9 @@ pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let bypass_condition = get_bypass_condition(&args.except);
 
     let check_pause = quote!(
-        let mut check_paused = true;
+        let mut __check_paused = true;
         #bypass_condition
-        if check_paused {
+        if __check_paused {
             ::near_sdk::require!(!self.pa_is_paused(#fn_name.to_string()), "Pausable: Method is paused");
         }
     );
@@ -172,7 +172,7 @@ fn get_bypass_condition(args: &ExceptSubArgs) -> proc_macro2::TokenStream {
     let self_condition = if args._self {
         quote!(
             if ::near_sdk::env::predecessor_account_id() == ::near_sdk::env::current_account_id() {
-                check_paused = false;
+                __check_paused = false;
             }
         )
     } else {
@@ -182,7 +182,7 @@ fn get_bypass_condition(args: &ExceptSubArgs) -> proc_macro2::TokenStream {
     let owner_condition = if args.owner {
         quote!(
             if Some(::near_sdk::env::predecessor_account_id()) == self.owner_get() {
-                check_paused = false;
+                __check_paused = false;
             }
         )
     } else {
