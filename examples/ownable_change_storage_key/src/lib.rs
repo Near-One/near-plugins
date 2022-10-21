@@ -56,10 +56,10 @@ mod tests {
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/ownable_change_storage_key.wasm";
 
-    #[test]
-    fn check_owner_storage_key() {
-        let (_, contract) = get_contract(WASM_FILEPATH);
-        assert!(call!(contract,"new"));
+    #[tokio::test]
+    async fn check_owner_storage_key() {
+        let (_, contract) = get_contract(WASM_FILEPATH).await;
+        assert!(call!(contract,"new").await);
 
         let owner_storage_key: Vec<u8> = view!(contract, "owner_storage_key");
         assert_eq!(owner_storage_key, "new_storage_key".as_bytes().to_vec());

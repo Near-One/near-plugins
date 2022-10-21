@@ -32,57 +32,52 @@ impl Counter1 {
 mod tests {
     use serde_json::json;
     use workspaces::{Account, Contract};
-    use tokio::runtime::Runtime;
     use near_plugins_test_utils::*;
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/upgradable_base.wasm";
     const WASM_FILEPATH_SECOND: &str = "../upgradable_base_second/target/wasm32-unknown-unknown/release/upgradable_base_second.wasm";
 
-    fn get_contract() -> (Account, Contract) {
-        let rt = Runtime::new().unwrap();
-        let worker = rt.block_on(workspaces::testnet()).unwrap();
+    async fn get_contract() -> (Account, Contract) {
+        let worker = workspaces::testnet().await.unwrap();
 
-        let owner = rt.block_on(worker.dev_create_account()).unwrap();
+        let owner = worker.dev_create_account().await.unwrap();
 
         let wasm = std::fs::read(WASM_FILEPATH).unwrap();
-        let contract = rt.block_on(owner.deploy(&wasm)).unwrap().unwrap();
+        let contract = owner.deploy(&wasm).await.unwrap().unwrap();
 
         (owner, contract)
     }
 
-    fn call_borsh_arg(contract: &Contract, method_name: &str, args: Vec<u8>) -> bool {
-        let rt = Runtime::new().unwrap();
-
-        rt.block_on(
-            contract.call(method_name)
+    async fn call_borsh_arg(contract: &Contract, method_name: &str, args: Vec<u8>) -> bool {
+        contract.call(method_name)
                 .args_borsh(args)
                 .max_gas()
                 .transact()
-        ).unwrap().is_success()
+        .await.unwrap().is_success()
     }
 
     //https://docs.near.org/sdk/rust/promises/deploy-contract
-    #[test]
-    fn base_scenario() {
-        let (_, contract) = get_contract();
-        assert!(call!(contract,"new"));
+    #[tokio::test]
+    async fn base_scenario() {
+        let (_, contract) = get_contract().await;
+        assert!(call!(contract,"new").await);
 
-        assert!(call!(contract, "inc1"));
-        check_counter(&contract, 1);
+        assert!(call!(contract, "inc1").await);
+        check_counter(&contract, 1).await;
 
-        assert!(!call!(contract, "inc2"));
-        check_counter(&contract, 1);
+        assert!(!call!(contract, "inc2").await);
+        check_counter(&contract, 1).await;
 
         let wasm = std::fs::read(WASM_FILEPATH_SECOND).unwrap();
 
-        assert!(call_borsh_arg(&contract, "up_stage_code", wasm));
-        assert!(call!(contract, "up_deploy_code"));
-        check_counter(&contract, 1);
+        assert!(call_borsh_arg(&contract, "up_stage_code", wasm).await);
+        assert!(call!(contract, "up_deploy_code").await);
+        check_counter(&contract, 1).await;
 
-        assert!(!call!(contract, "inc1"));
-        check_counter(&contract, 1);
+        assert!(!call!(contract, "inc1").await);
+        check_counter(&contract, 1).await;
 
-        assert!(call!(contract, "inc2"));
-        check_counter(&contract, 3);
+        assert!(call!(contract, "inc2").await);
+        check_counter(&contract, 3).await;
     }
 }

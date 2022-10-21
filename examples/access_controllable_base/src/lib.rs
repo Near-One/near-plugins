@@ -70,55 +70,55 @@ mod tests {
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/access_controllable_base.wasm";
 
-    #[test]
-    fn base_scenario() {
-        let (contract_holder, contract) = get_contract(WASM_FILEPATH);
-        assert!(call!(contract,"new"));
+    #[tokio::test]
+    async fn base_scenario() {
+        let (contract_holder, contract) = get_contract(WASM_FILEPATH).await;
+        assert!(call!(contract,"new").await);
 
-        check_counter(&contract, 0);
+        check_counter(&contract, 0).await;
 
-        assert!(call!(contract, "unprotected"));
+        assert!(call!(contract, "unprotected").await);
 
-        check_counter(&contract, 1);
+        check_counter(&contract, 1).await;
 
-        let alice = get_subaccount(&contract_holder, "alice");
+        let alice = get_subaccount(&contract_holder, "alice").await;
 
         let is_super_admin: bool = view!(contract, "acl_is_super_admin", &json!({"account_id": alice.id()}));
         assert!(!is_super_admin);
 
-        assert!(!call!(&alice, contract, "level_a_incr"));
-        check_counter(&contract, 1);
+        assert!(!call!(&alice, contract, "level_a_incr").await);
+        check_counter(&contract, 1).await;
 
-        assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(UsersGroups::GroupA), "account_id": alice.id()})));
+        assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(UsersGroups::GroupA), "account_id": alice.id()})).await);
 
         let alice_has_role: bool = view!(contract, "acl_has_role", &json!({"role": String::from(UsersGroups::GroupA), "account_id": alice.id()}));
         assert!(alice_has_role);
 
-        assert!(call!(&alice, contract, "level_a_incr"));
+        assert!(call!(&alice, contract, "level_a_incr").await);
 
-        check_counter(&contract, 2);
+        check_counter(&contract, 2).await;
 
-        let bob = get_subaccount(&contract_holder, "bob");
-        assert!(call!(contract, "acl_add_admin", &json!({"role": String::from(UsersGroups::GroupA), "account_id": bob.id()})));
+        let bob = get_subaccount(&contract_holder, "bob").await;
+        assert!(call!(contract, "acl_add_admin", &json!({"role": String::from(UsersGroups::GroupA), "account_id": bob.id()})).await);
 
         let bob_is_admin: bool = view!(contract, "acl_is_admin", &json!({"role": String::from(UsersGroups::GroupA), "account_id": bob.id()}));
         assert!(bob_is_admin);
 
-        assert!(!call!(&bob, contract, "level_a_incr"));
+        assert!(!call!(&bob, contract, "level_a_incr").await);
 
-        check_counter(&contract, 2);
+        check_counter(&contract, 2).await;
 
-        assert!(call!(&alice, contract, "level_ab_incr"));
-        check_counter(&contract, 3);
+        assert!(call!(&alice, contract, "level_ab_incr").await);
+        check_counter(&contract, 3).await;
 
-        assert!(!call!(&bob, contract, "level_ab_incr"));
-        check_counter(&contract, 3);
+        assert!(!call!(&bob, contract, "level_ab_incr").await);
+        check_counter(&contract, 3).await;
 
-        assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(UsersGroups::GroupB), "account_id": bob.id()})));
-        assert!(call!(&bob, contract, "level_ab_incr"));
-        check_counter(&contract, 4);
+        assert!(call!(contract, "acl_grant_role", &json!({"role": String::from(UsersGroups::GroupB), "account_id": bob.id()})).await);
+        assert!(call!(&bob, contract, "level_ab_incr").await);
+        check_counter(&contract, 4).await;
 
-        assert!(!call!(&bob, contract, "level_a_incr"));
-        check_counter(&contract, 4);
+        assert!(!call!(&bob, contract, "level_a_incr").await);
+        check_counter(&contract, 4).await;
     }
 }

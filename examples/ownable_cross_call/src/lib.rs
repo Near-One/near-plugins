@@ -83,29 +83,29 @@ mod tests {
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/ownable_cross_call.wasm";
 
-    #[test]
-    fn base_scenario() {
-        let (contract_holder, contract) = get_contract(WASM_FILEPATH);
+    #[tokio::test]
+    async fn base_scenario() {
+        let (contract_holder, contract) = get_contract(WASM_FILEPATH).await;
 
-        assert!(call!(contract,"new"));
-        let next_owner = get_subaccount(&contract_holder, "next_owner");
-        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})));
+        assert!(call!(contract,"new").await);
+        let next_owner = get_subaccount(&contract_holder, "next_owner").await;
+        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})).await);
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_ne!(current_owner.clone().unwrap().as_str(), contract_holder.id().as_str());
         assert_eq!(current_owner.unwrap().as_str(), next_owner.id().as_str());
 
-        assert!(call!(&next_owner, contract, "cross_call_owner_self"));
-        assert!(call!(&next_owner, contract, "cross_call_owner_owner"));
-        assert!(!call!(&next_owner, contract, "cross_call_self_self"));
-        assert!(!call!(&next_owner, contract, "cross_call_self_owner"));
+        assert!(call!(&next_owner, contract, "cross_call_owner_self").await);
+        assert!(call!(&next_owner, contract, "cross_call_owner_owner").await);
+        assert!(!call!(&next_owner, contract, "cross_call_self_self").await);
+        assert!(!call!(&next_owner, contract, "cross_call_self_owner").await);
 
-        check_counter(&contract, 1);
+        check_counter(&contract, 1).await;
 
-        assert!(!call!(contract, "cross_call_owner_self"));
-        assert!(!call!(contract, "cross_call_owner_owner"));
-        assert!(call!(contract, "cross_call_self_self"));
-        assert!(call!(contract, "cross_call_self_owner"));
+        assert!(!call!(contract, "cross_call_owner_self").await);
+        assert!(!call!(contract, "cross_call_owner_owner").await);
+        assert!(call!(contract, "cross_call_self_self").await);
+        assert!(call!(contract, "cross_call_self_owner").await);
 
-        check_counter(&contract, 2);
+        check_counter(&contract, 2).await;
     }
 }

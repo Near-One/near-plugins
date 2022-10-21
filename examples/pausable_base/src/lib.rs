@@ -76,36 +76,36 @@ mod tests {
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/pausable_base.wasm";
 
-    #[test]
-    fn base_scenario() {
-        let (contract_holder, contract) = get_contract(WASM_FILEPATH);
+    #[tokio::test]
+    async fn base_scenario() {
+        let (contract_holder, contract) = get_contract(WASM_FILEPATH).await;
 
-        assert!(call!(contract,"new"));
+        assert!(call!(contract,"new").await);
 
-        let next_owner = get_subaccount(&contract_holder, "next_owner");
-        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})));
+        let next_owner = get_subaccount(&contract_holder, "next_owner").await;
+        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})).await);
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_eq!(current_owner.unwrap().as_str(), next_owner.id().as_str());
 
-        let alice = get_subaccount(&contract_holder, "alice");
+        let alice = get_subaccount(&contract_holder, "alice").await;
 
-        assert!(call!(&alice, contract, "increase_1"));
-        check_counter(&contract, 1);
+        assert!(call!(&alice, contract, "increase_1").await);
+        check_counter(&contract, 1).await;
 
-        assert!(!call!(&alice, contract, "pa_pause_feature", &json!({"key": "increase_1"})));
-        assert!(call!(&next_owner, contract, "pa_pause_feature", &json!({"key": "increase_1"})));
+        assert!(!call!(&alice, contract, "pa_pause_feature", &json!({"key": "increase_1"})).await);
+        assert!(call!(&next_owner, contract, "pa_pause_feature", &json!({"key": "increase_1"})).await);
 
-        assert!(!call!(&alice, contract, "increase_1"));
-        check_counter(&contract, 1);
+        assert!(!call!(&alice, contract, "increase_1").await);
+        check_counter(&contract, 1).await;
 
-        assert!(!call!(&next_owner, contract, "increase_1"));
-        check_counter(&contract, 1);
+        assert!(!call!(&next_owner, contract, "increase_1").await);
+        check_counter(&contract, 1).await;
 
-        assert!(!call!(&contract_holder, contract, "pa_unpause_feature", &json!({"key": "increase_1"})));
-        assert!(call!(&next_owner, contract, "pa_unpause_feature", &json!({"key": "increase_1"})));
+        assert!(!call!(&contract_holder, contract, "pa_unpause_feature", &json!({"key": "increase_1"})).await);
+        assert!(call!(&next_owner, contract, "pa_unpause_feature", &json!({"key": "increase_1"})).await);
 
-        assert!(call!(&alice, contract, "increase_1"));
+        assert!(call!(&alice, contract, "increase_1").await);
 
-        check_counter(&contract, 2);
+        check_counter(&contract, 2).await;
     }
 }

@@ -39,44 +39,44 @@ mod tests {
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/full_access_key_fallback_base.wasm";
 
-    #[test]
-    fn base_scenario() {
-        let (mut contract_holder, contract) = get_contract_testnet(WASM_FILEPATH);
+    #[tokio::test]
+    async fn base_scenario() {
+        let (mut contract_holder, contract) = get_contract_testnet(WASM_FILEPATH).await;
 
-        assert!(call!(contract,"new"));
+        assert!(call!(contract,"new").await);
 
-        check_counter(&contract, 0);
+        check_counter(&contract, 0).await;
 
-        let next_owner = get_subaccount(&contract_holder, "next_owner");
-        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})));
+        let next_owner = get_subaccount(&contract_holder, "next_owner").await;
+        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})).await);
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_eq!(current_owner.unwrap().as_str(), next_owner.id().as_str());
 
-        assert!(call!(&contract_holder, contract, "protected_self"));
+        assert!(call!(&contract_holder, contract, "protected_self").await);
 
-        check_counter(&contract, 1);
+        check_counter(&contract, 1).await;
 
         contract_holder.set_secret_key(next_owner.secret_key().clone());
 
-        assert!(call!(&next_owner, contract, "attach_full_access_key",  &json!({"public_key": next_owner.secret_key().public_key()})));
+        assert!(call!(&next_owner, contract, "attach_full_access_key",  &json!({"public_key": next_owner.secret_key().public_key()})).await);
 
-        assert!(call!(contract, "protected_self"));
+        assert!(call!(contract, "protected_self").await);
 
-        check_counter(&contract, 2);
+        check_counter(&contract, 2).await;
     }
 
-    #[test]
+    #[tokio::test]
     #[should_panic(expected = "AccessKeyNotFound")]
-    fn base_panic_on_wrong_key() {
-        let (mut contract_holder, contract) = get_contract_testnet(WASM_FILEPATH);
+    async fn base_panic_on_wrong_key() {
+        let (mut contract_holder, contract) = get_contract_testnet(WASM_FILEPATH).await;
 
-        assert!(call!(contract, "new"));
-        let next_owner = get_subaccount(&contract_holder, "next_owner");
-        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})));
+        assert!(call!(contract, "new").await);
+        let next_owner = get_subaccount(&contract_holder, "next_owner").await;
+        assert!(call!(contract, "owner_set", &json!({"owner": next_owner.id()})).await);
 
-        assert!(call!(&contract_holder, contract, "protected_self"));
+        assert!(call!(&contract_holder, contract, "protected_self").await);
         contract_holder.set_secret_key(next_owner.secret_key().clone());
 
-        call!(&contract_holder, contract, "protected_self");
+        call!(&contract_holder, contract, "protected_self").await;
     }
 }

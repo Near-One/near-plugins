@@ -1,73 +1,57 @@
 use serde_json::json;
 use near_sdk::ONE_NEAR;
-use tokio::runtime::Runtime;
 use workspaces::{Account, Contract};
 
-pub fn get_contract(wasm_path: &str) -> (Account, Contract) {
-    let rt = Runtime::new().unwrap();
-    let worker = rt.block_on(workspaces::sandbox()).unwrap();
+pub async fn get_contract(wasm_path: &str) -> (Account, Contract) {
+    let worker = workspaces::sandbox().await.unwrap();
 
     let owner = worker.root_account().unwrap();
 
     let wasm = std::fs::read(wasm_path).unwrap();
-    let contract = rt.block_on(owner.deploy(&wasm)).unwrap().unwrap();
+    let contract = owner.deploy(&wasm).await.unwrap().unwrap();
 
     (owner, contract)
 }
 
-pub fn view(contract: &Contract, method_name: &str, args: &serde_json::Value) -> Vec<u8> {
-    let rt = Runtime::new().unwrap();
-
-    rt.block_on(
-        contract.view(method_name,
-                      args.to_string().into_bytes())
-    ).unwrap().result
+pub async fn view(contract: &Contract, method_name: &str, args: &serde_json::Value) -> Vec<u8> {
+    contract.view(method_name,
+                      args.to_string().into_bytes()).await.unwrap().result
 }
 
-pub fn call_arg(contract: &Contract, method_name: &str, args: &serde_json::Value) -> bool {
-    let rt = Runtime::new().unwrap();
-
-    rt.block_on(
-        contract
-            .call(method_name)
-            .args_json(args)
-            .max_gas()
-            .transact(),
-    )
-    .unwrap()
-    .is_success()
+pub async fn call_arg(contract: &Contract, method_name: &str, args: &serde_json::Value) -> bool {
+    contract
+        .call(method_name)
+        .args_json(args)
+        .max_gas()
+        .transact()
+        .await
+        .unwrap()
+        .is_success()
 }
 
-pub fn call_by_with_arg(account: &Account, contract: &Contract, method_name: &str, args: &serde_json::Value) -> bool {
-    let rt = Runtime::new().unwrap();
-
-    rt.block_on(
-        account.call(contract.id(), method_name)
-            .args_json(args)
-            .max_gas()
-            .transact()
-    ).unwrap().is_success()
+pub async fn call_by_with_arg(account: &Account, contract: &Contract, method_name: &str, args: &serde_json::Value) -> bool {
+    account.call(contract.id(), method_name)
+        .args_json(args)
+        .max_gas()
+        .transact()
+        .await.unwrap().is_success()
 }
 
-pub fn get_subaccount(account: &Account, new_account_name: &str) -> Account {
-    let rt = Runtime::new().unwrap();
-
-    rt.block_on(
-        account
-            .create_subaccount(new_account_name)
-            .initial_balance(ONE_NEAR)
-            .transact(),
-    )
-    .unwrap()
-    .unwrap()
+pub async fn get_subaccount(account: &Account, new_account_name: &str) -> Account {
+    account
+        .create_subaccount(new_account_name)
+        .initial_balance(ONE_NEAR)
+        .transact()
+        .await
+        .unwrap()
+        .unwrap()
 }
 
-pub fn get_contract_testnet(wasm_file: &str) -> (Account, Contract) {
-    let rt = Runtime::new().unwrap();
-    let worker = rt.block_on(workspaces::testnet()).unwrap();
+pub async fn get_contract_testnet(wasm_file: &str) -> (Account, Contract) {
+    let worker = workspaces::testnet().await.unwrap();
 
     let wasm = std::fs::read(wasm_file).unwrap();
-    let contract: Contract = rt.block_on(worker.dev_deploy(&wasm)).unwrap();
+    let contract: Contract = worker.dev_deploy(&wasm).await.unwrap();
 
     let owner = contract.as_account();
 
@@ -77,10 +61,10 @@ pub fn get_contract_testnet(wasm_file: &str) -> (Account, Contract) {
 #[macro_export]
 macro_rules! view {
     ($contract:ident, $method_name:literal) => {
-        serde_json::from_slice(&view(&$contract, $method_name, &json!({}))).unwrap()
+        serde_json::from_slice(&view(&$contract, $method_name, &json!({})).await).unwrap()
     };
     ($contract:ident, $method_name:literal, $args:expr) => {
-        serde_json::from_slice(&view(&$contract, $method_name, $args)).unwrap()
+        serde_json::from_slice(&view(&$contract, $method_name, $args).await).unwrap()
     };
 }
 
@@ -100,7 +84,7 @@ macro_rules! call {
     };
 }
 
-pub fn check_counter(contract: &Contract, expect_counter: u64) {
+pub async fn check_counter(contract: &Contract, expect_counter: u64) {
     let counter: u64 = view!(contract, "get_counter");
     assert_eq!(counter, expect_counter);
 }

@@ -57,83 +57,83 @@ mod tests {
 
     const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/ownable_base.wasm";
 
-    #[test]
-    fn base_scenario() {
-        let (contract_holder, contract) = get_contract(WASM_FILEPATH);
+    #[tokio::test]
+    async fn base_scenario() {
+        let (contract_holder, contract) = get_contract(WASM_FILEPATH).await;
 
-        assert!(call!(contract, "new"));
+        assert!(call!(contract, "new").await);
 
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_eq!(current_owner.unwrap().as_str(), contract_holder.id().as_str());
 
-        check_counter(&contract, 0);
+        check_counter(&contract, 0).await;
 
-        assert!(call!(contract, "protected"));
-        assert!(call!(contract, "protected_owner"));
-        assert!(call!(contract, "protected_self"));
-        assert!(call!(contract, "unprotected"));
+        assert!(call!(contract, "protected").await);
+        assert!(call!(contract, "protected_owner").await);
+        assert!(call!(contract, "protected_self").await);
+        assert!(call!(contract, "unprotected").await);
 
-        check_counter(&contract, 4);
+        check_counter(&contract, 4).await;
 
-        let next_owner = get_subaccount(&contract_holder, "next_owner");
-        assert!(!call!(&next_owner, contract, "protected"));
-        assert!(!call!(&next_owner, contract, "protected_owner"));
-        assert!(!call!(&next_owner, contract, "protected_self"));
-        assert!(call!(&next_owner, contract, "unprotected"));
+        let next_owner = get_subaccount(&contract_holder, "next_owner").await;
+        assert!(!call!(&next_owner, contract, "protected").await);
+        assert!(!call!(&next_owner, contract, "protected_owner").await);
+        assert!(!call!(&next_owner, contract, "protected_self").await);
+        assert!(call!(&next_owner, contract, "unprotected").await);
 
-        check_counter(&contract, 5);
+        check_counter(&contract, 5).await;
 
-        assert!(call_arg(&contract, "owner_set", &json!({"owner": next_owner.id()})));
+        assert!(call_arg(&contract, "owner_set", &json!({"owner": next_owner.id()})).await);
 
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_ne!(current_owner.clone().unwrap().as_str(), contract_holder.id().as_str());
         assert_eq!(current_owner.unwrap().as_str(), next_owner.id().as_str());
 
-        assert!(call!(&next_owner, contract, "protected"));
-        assert!(call!(&next_owner, contract, "protected_owner"));
-        assert!(!call!(&next_owner, contract, "protected_self"));
-        assert!(call!(&next_owner, contract, "unprotected"));
+        assert!(call!(&next_owner, contract, "protected").await);
+        assert!(call!(&next_owner, contract, "protected_owner").await);
+        assert!(!call!(&next_owner, contract, "protected_self").await);
+        assert!(call!(&next_owner, contract, "unprotected").await);
 
-        check_counter(&contract, 8);
+        check_counter(&contract, 8).await;
 
-        assert!(call!(contract, "protected"));
-        assert!(!call!(contract, "protected_owner"));
-        assert!(call!(contract, "protected_self"));
-        assert!(call!(contract, "unprotected"));
+        assert!(call!(contract, "protected").await);
+        assert!(!call!(contract, "protected_owner").await);
+        assert!(call!(contract, "protected_self").await);
+        assert!(call!(contract, "unprotected").await);
 
         check_counter(&contract, 11);
     }
 
-    #[test]
-    fn null_owner() {
-        let (_, contract) = get_contract(WASM_FILEPATH);
-        assert!(call!(contract,"new"));
+    #[tokio::test]
+    async fn null_owner() {
+        let (_, contract) = get_contract(WASM_FILEPATH).await;
+        assert!(call!(contract,"new").await);
 
-        assert!(call!(contract, "owner_set", &json!({"owner": Option::<AccountId>::None})));
+        assert!(call!(contract, "owner_set", &json!({"owner": Option::<AccountId>::None})).await);
 
         let current_owner: Option::<AccountId> = view!(contract, "owner_get");
         assert_eq!(current_owner, None);
 
-        assert!(call!(contract, "protected"));
-        assert!(!call!(contract, "protected_owner"));
-        assert!(call!(contract, "protected_self"));
-        assert!(call!(contract, "unprotected"));
+        assert!(call!(contract, "protected").await);
+        assert!(!call!(contract, "protected_owner").await);
+        assert!(call!(contract, "protected_self").await);
+        assert!(call!(contract, "unprotected").await);
 
-        check_counter(&contract, 3);
+        check_counter(&contract, 3).await;
 
-        assert!(call!(contract, "owner_set", &json!({"owner": contract.id().as_str()})));
-        assert!(call!(contract, "protected"));
-        assert!(call!(contract, "protected_owner"));
-        assert!(call!(contract, "protected_self"));
-        assert!(call!(contract, "unprotected"));
+        assert!(call!(contract, "owner_set", &json!({"owner": contract.id().as_str()})).await);
+        assert!(call!(contract, "protected").await);
+        assert!(call!(contract, "protected_owner").await);
+        assert!(call!(contract, "protected_self").await);
+        assert!(call!(contract, "unprotected").await);
 
-        check_counter(&contract, 7);
+        check_counter(&contract, 7).await;
     }
 
-    #[test]
-    fn check_owner_storage_key() {
-        let (_, contract) = get_contract(WASM_FILEPATH);
-        assert!(call!(contract,"new"));
+    #[tokio::test]
+    async fn check_owner_storage_key() {
+        let (_, contract) = get_contract(WASM_FILEPATH).await;
+        assert!(call!(contract,"new").await);
 
         let owner_storage_key: Vec<u8> = view!(contract, "owner_storage_key");
         assert_eq!(owner_storage_key, "__OWNER__".as_bytes().to_vec());
