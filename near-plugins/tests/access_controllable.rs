@@ -919,6 +919,76 @@ async fn test_acl_init_super_admin_is_private() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_acl_get_super_admins() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+
+    let super_admin_ids = vec![
+        setup.new_super_admin_account().await?,
+        setup.new_super_admin_account().await?,
+        setup.new_super_admin_account().await?,
+    ]
+    .iter()
+    .map(|account| account.id().clone())
+    .collect::<Vec<_>>();
+
+    // Behaves as expected for limit = 0.
+    let actual = setup
+        .contract
+        .acl_get_super_admins(setup.account.clone().into(), 0, 0)
+        .await?;
+    assert_eq!(actual, vec![],);
+
+    // Skip outside of the number of existing super-admins.
+    let n = u64::try_from(super_admin_ids.len()).unwrap();
+    let actual = setup
+        .contract
+        .acl_get_super_admins(setup.account.clone().into(), n, 1)
+        .await?;
+    assert_eq!(actual, vec![],);
+
+    // Retrieve super-admins with step size 1.
+    for i in 0..3 {
+        let actual = setup
+            .contract
+            .acl_get_super_admins(setup.account.clone().into(), i, 1)
+            .await?;
+        let i = usize::try_from(i).unwrap();
+        let expected = super_admin_ids[i..i + 1].to_vec();
+        assert_eq!(actual, expected, "Mismatch at position {}", i,);
+    }
+
+    // Retrieve super-admins with step size 2.
+    let actual = setup
+        .contract
+        .acl_get_super_admins(setup.account.clone().into(), 0, 2)
+        .await?;
+    let expected = super_admin_ids[0..2].to_vec();
+    assert_eq!(actual, expected);
+    let actual = setup
+        .contract
+        .acl_get_super_admins(setup.account.clone().into(), 2, 2)
+        .await?;
+    let expected = vec![super_admin_ids[2].clone()];
+    assert_eq!(actual, expected);
+
+    // Retrieve all super-admins at once.
+    let actual = setup
+        .contract
+        .acl_get_super_admins(setup.account.clone().into(), 0, 3)
+        .await?;
+    assert_eq!(actual, super_admin_ids);
+
+    // Limit larger than the number of existing super-admins.
+    let actual = setup
+        .contract
+        .acl_get_super_admins(setup.account.clone().into(), 0, 4)
+        .await?;
+    assert_eq!(actual, super_admin_ids);
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_acl_get_admins() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
     let role = "LevelB";

@@ -342,6 +342,27 @@ impl AccessControllableContract {
             .await
     }
 
+    pub async fn acl_get_super_admins(
+        &self,
+        caller: Caller,
+        skip: u64,
+        limit: u64,
+    ) -> anyhow::Result<Vec<AccountId>> {
+        let res = self
+            .account(caller)
+            .call(self.contract.id(), "acl_get_super_admins")
+            .args_json(json!({
+                "skip": skip,
+                "limit": limit,
+            }))
+            .max_gas()
+            .transact()
+            .await?
+            .into_result()?
+            .json::<Vec<AccountId>>()?;
+        Ok(res)
+    }
+
     pub async fn acl_get_admins(
         &self,
         caller: Caller,
