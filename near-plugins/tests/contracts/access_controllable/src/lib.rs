@@ -4,11 +4,15 @@ use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, log, near_bindgen, AccountId};
 use std::collections::HashMap;
 
+/// Roles are represented by enum variants.
 #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub enum Role {
+    /// Represents LevelA.
     LevelA,
+    /// Represents LevelB.
     LevelB,
+    /// Represents LevelC.
     LevelC,
 }
 

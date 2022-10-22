@@ -58,10 +58,10 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         ident, variants, ..
     } = input;
 
-    let variants = variants.into_iter().collect::<Vec<_>>();
+    let variant_idents = variants.into_iter().map(|v| v.ident).collect::<Vec<_>>();
     let variant_idxs: Vec<_> =
-        (0..u8::try_from(variants.len()).expect("Too many enum variants")).collect();
-    let variant_names: Vec<_> = variants.iter().map(|v| format!("{}", v.ident)).collect();
+        (0..u8::try_from(variant_idents.len()).expect("Too many enum variants")).collect();
+    let variant_names: Vec<_> = variant_idents.iter().map(|v| format!("{}", v)).collect();
 
     let boundchecker_type = Ident::new(DEFAULT_BOUNDCHECKER_TYPE_NAME, ident.span());
     let bitflags_type_ident = new_bitflags_type_ident(Span::call_site());
@@ -95,7 +95,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             fn from(value: #ident) -> Self {
                 match value {
                     #(
-                        #ident::#variants => #variant_idxs,
+                        #ident::#variant_idents => #variant_idxs,
                     )*
                 }
             }
@@ -107,7 +107,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             fn try_from(value: u8) -> Result<Self, Self::Error> {
                 match value {
                     #(
-                        #variant_idxs => Ok(#ident::#variants),
+                        #variant_idxs => Ok(#ident::#variant_idents),
                     )*
                     _ => Err("Value does not correspond to a variant"),
                 }
@@ -118,7 +118,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             fn from(value: #ident) -> Self {
                 match value {
                     #(
-                        #ident::#variants => #variant_names,
+                        #ident::#variant_idents => #variant_names,
                     )*
                 }
             }
@@ -128,7 +128,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             fn from(value: #ident) -> Self {
                 match value {
                     #(
-                        #ident::#variants => #variant_names.to_string(),
+                        #ident::#variant_idents => #variant_names.to_string(),
                     )*
                 }
             }
@@ -140,7 +140,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             fn try_from(value: &str) -> Result<#ident, Self::Error> {
                 match value {
                     #(
-                        #variant_names => Ok(#ident::#variants),
+                        #variant_names => Ok(#ident::#variant_idents),
                     )*
                     _ => Err("Value does not correspond to a variant"),
                 }
