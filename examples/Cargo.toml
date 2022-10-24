@@ -10,6 +10,5 @@ members = [
     "ownable-examples/ownable_cross_call",
     "pausable-examples/pausable_base",
     "upgradable-examples/upgradable_base",
-    "upgradable-examples/upgradable_base_second",
     "upgradable-examples/up_stage_code"
 ]

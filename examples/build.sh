@@ -12,7 +12,8 @@ do
 		cd $dir
 		./build.sh
 		cd ../..
-                # Copy wasm file
-		cp $dir/target/wasm32-unknown-unknown/release/*.wasm ./res/
 	fi
 done
+
+# Copy wasm fils
+cp ./target/wasm32-unknown-unknown/release/*.wasm ./res/
