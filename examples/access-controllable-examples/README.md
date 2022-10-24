@@ -1,6 +1,6 @@
-# Example of using Access Control plugin
+# Example of using the Access Control plugin
 
-An access control mechanism that allows you to specify which groups of users can have access to certain functions.
+An access control mechanism that allows you to specify which groups of users can access certain functions.
 
 ```rust
 use near_plugins::AccessControllable;
@@ -69,11 +69,11 @@ impl Counter {
 
 ## The contract methods description
 ### acl_storage_prefix
-`acl_storage_prefix` - a method which show the common prefix of keys for storage the members and the admins of groups. 
-`__acl` by default. 
+`acl_storage_prefix` is a method that returns the common prefix of keys for storing the members and the admins of groups.
+`__acl` by default.
 
 ```shell
-$ near call <CONTRACT_ACCOUNT> acl_storage_prefix --accountId acl.olga24912_3.testnet
+$ near call <CONTRACT_ACCOUNT> acl_storage_prefix --accountId <ALICE_ACCOUNT>
 Scheduling a call: <CONTRACT_ACCOUNT>.acl_storage_prefix()
 Doing account.functionCall()
 Transaction Id <TRANSACTION_ID>
@@ -86,26 +86,26 @@ $ python3
 ```
 
 ### acl_is_super_admin
-`acl_is_super_admin` - a _view_ method which checks that account have a super admin rights. 
-Super admin can control the members list of each group and control the admins list for each group.
+`acl_is_super_admin` is a _view_ method that checks that account has super admin rights.
+Super admin can control the member list of each group and control the admin list for each group.
 
 ```shell
-$ near view <CONTRACT_ACCOUNT> acl_is_super_admin '{"account_id": "<CONTRACT_ACCOUNT>" }' 
-View call: <CONTRACT_ACCOUNT>.acl_is_super_admin({"account_id": "<CONTRACT_ACCOUNT>"})
+$ near view <CONTRACT_ACCOUNT> acl_is_super_admin '{"account_id": "<SUPER_ADMIN_ACCOUNT>" }' 
+View call: <CONTRACT_ACCOUNT>.acl_is_super_admin({"account_id": "<SUPER_ADMIN_ACCOUNT>"})
 true
 ```
 
 ### acl_add_admin
-`acl_add_admin` - add a new admin for a specific group. 
-Admins right doesn't aloud to run group specific functions, but group admins can control the group member list.
-This method can be run by the admin of specific group or by the super admin. 
+`acl_add_admin` is a method that adds a new admin for a specific group.
+Admins' rights don't allow running group-specific functions, but group admins can control the group member list.
+This method can be run by the admin of a specific group or by the super admin.
 
 ```shell
-$ near call <CONTRACT_ACCOUNT> acl_add_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> acl_add_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
 ```
 
 ### acl_is_admin
-`acl_is_admin` is a _view_ method which checks if the account have an admin right for specified group. For super admin it will return true.
+`acl_is_admin` is a _view_ method that checks if the account has an admin right for the specified group. For super admin, it will return true.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> acl_is_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}'
@@ -114,45 +114,45 @@ true
 ```
 
 ### acl_revoke_admin
-`acl_revoke_admin` - remove the group admin right for specific account. Can be executed by admin of this group or by super admin.
+`acl_revoke_admin` is a method that removes the group admin right for a specific account. Can be executed by the admin of this group or by the super admin.
 
 ```shell
-$ near call <CONTRACT_ACCOUNT> acl_revoke_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> acl_revoke_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
 ```
 
 ### acl_renounce_admin
-`acl_renounce_admin` - remove the group admin right for called account. 
+`acl_renounce_admin` is a method that removes the group admin right for an account that calls the method.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_renounce_admin '{"role": "GroupA"}' --accountId <ALICE_ACCOUNT>
 ```
 
-After calling that method Alice will not have the admin right for GroupA anymore. 
+After calling that method, Alice will not have the admin right for GroupA anymore.
 
 ### acl_revoke_role
-`acl_revoke_role` - remove the specified account from the list of the group member. 
+`acl_revoke_role` is a method that removes the specified account from the list of the group member.
 Only the group admin or super admin can execute this function.
 
 ```shell
-$ near call <CONTRACT_ACCOUNT> acl_revoke_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> acl_revoke_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
 ```
 
 ### acl_renounce_role
-`acl_renounce_role` - remove the caller account from the member list of the group. Can be called by anyone.
+`acl_renounce_role` is a method that removes the caller account from the member list of the group. Can be called by anyone.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_renounce_role '{"role": "GroupA"}' --accountId <ALICE_ACCOUNT>
 ```
 
 ### acl_grant_role
-`acl_grant_role` - add the account to the group member list. Can be executed only by the group admin or by super admin.
+`acl_grant_role` is a method that adds the account to the group member list. Can be executed only by the group admin or by the super admin.
 
 ```shell
-$ near call <CONTRACT_ACCOUNT> acl_grant_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> acl_grant_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
 ```
 
 ### acl_has_role
-`acl_has_role` - a _view_ method for check if the account is a member of specified group.
+`acl_has_role` is a _view_ method for checking if the account is a member of the specified group.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> acl_has_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}'
@@ -161,7 +161,7 @@ true
 ```
 
 ### acl_has_any_role
-`acl_has_any_role` - a _view_ method to check if an account a member of at least one of specified groups.
+`acl_has_any_role` is a _view_ method for checking if an account is a member of at least one of the specified groups.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> acl_has_any_role '{"roles": ["GroupA", "GroupB"], "account_id": "<ALICE_ACCOUNT>"}'
@@ -170,7 +170,7 @@ true
 ```
 
 ### acl_get_admins
-`acl_get_admins` - a _view_ method which shows some group admins. It will skip first `skip` admins and return maximum `limit` number of admins.
+`acl_get_admins` is a _view_ method that shows some admins of the group. It will skip first `skip` admins and return not more than `limit` number of admins.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> acl_get_admins '{"role": "GroupA", "skip": 0, "limit": 2}'
@@ -179,7 +179,7 @@ View call: <CONTRACT_ACCOUNT>.acl_get_admins({"role": "GroupA", "skip": 0, "limi
 ```
 
 ### acl_get_grantees
-`acl_get_grantess` - a _view_ method which shows some members of the group. It will skip first `skip` members and return maximum `limit` number of members.
+`acl_get_grantess` is a _view_ method that shows some members of the group. It will skip the first `skip` members and return not more than  `limit` number of members.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> acl_get_grantess '{"role": "GroupA", "skip": 0, "limit": 2}'
@@ -188,7 +188,7 @@ View call: <CONTRACT_ACCOUNT>.acl_get_grantess({"role": "GroupA", "skip": 0, "li
 ```
 
 ## Preparation steps for demonstration
-In that document we are providing some example of using contract with access control plugin. You also can explore the usage examples in the tests in `./src/lib.rs`. For running a tests please take a look to the **Test running instruction** section.
+In that document, we are providing some examples of using a contract with an access control plugin. You also can explore the usage examples in the tests in `./access_controllable_base/src/lib.rs` and in `./access_control_role_base/src/lib.rs`. For running tests, please take a look at the **Test running instruction** section.
 
 1. **Creating an account on testnet**
    For demonstration let's create 3 accounts: `<CONTRACT_ACCOUNT>`, `<ALICE_ACCOUNT>`, `<BOB_ACCOUNT>`
@@ -198,44 +198,47 @@ In that document we are providing some example of using contract with access con
    $ near create-account <BOB_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
    ```
 
-   In the next section we will refer to the `<CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<CONTRACT_ACCOUNT>`, 
+   In the next sections, we will refer to the `<CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<CONTRACT_ACCOUNT>`, 
    to the `<ALICE_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<ALICE_ACCOUNT>`, and to the `<BOB_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<BOB_ACCOUNT>` for simplicity.
 
 2. **Compile Contract to wasm file**
-   For compiling the contract just run the `build.sh` script. The target file with compiled contract will be `./target/wasm32-unknown-unknown/release/access_controllable_base.wasm`
+   For compiling the contract, just run the `access_controllable_base/build.sh` script. The target file with compiled contract will be `../target/wasm32-unknown-unknown/release/access_controllable_base.wasm`
 
    ```shell
+   $ cd access_controllable_base
    $ ./build.sh
+   $ cd ..
    ```
 
 3. **Deploy and init a contract**
    ```shell
-   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ./target/wasm32-unknown-unknown/release/access_controllable_base.wasm --initFunction new --initArgs '{}'
+   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ../target/wasm32-unknown-unknown/release/access_controllable_base.wasm --initFunction new --initArgs '{}'
    ```
 
 ## Example of using the contract with access control plugin
-### Calling the access control methods
-For using the method `level_a_incr` you should be a memeber of the GroupA.  Alice not a member of any group, so she cann't use this method.
+### Calling the methods with access control
+For using the method, `level_a_incr` you should be a member of GroupA.  Alice is not a member of any group, so she can't use this method.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> level_a_incr --accountId <ALICE_ACCOUNT>
+ERROR
 $ near view get_counter
 0
 ```
 
-Let's make the Alice the member of the GroupA. 
+Let's make Alice a member of GroupA.
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_grant_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
 ```
 
-Now Alice the member of GroupA and call the level_a_incr method
+Now Alice is a member of GroupA and can call the `level_a_incr` method
 ```shell
 $ near call <CONTRACT_ACCOUNT> level_a_incr --accountId <ALICE_ACCOUNT>
 $ near view get_counter
 1
 ```
 
-As well as `level_ab_incr` which aloud for both GroupA and GroupB members.
+As well as calls the `level_ab_incr` method, which allowed for both GroupA and GroupB members.
 ```shell
 $ near call <CONTRACT_ACCOUNT> level_ab_incr --accountId <ALICE_ACCOUNT>
 $ near view get_counter
@@ -243,28 +246,29 @@ $ near view get_counter
 ```
 
 ### Admin of the group not a member of the group
-Note the admin of the group may not be a member of this group. For example, the `<CONTRACT_ACCOUNT>` is a super admin, but he
-cann't execute the `level_a_incr` method. 
+Note, the admin of the group may not be a member of this group. For example, the `<CONTRACT_ACCOUNT>` is a super admin, but he
+can't execute the `level_a_incr` method. 
 
 ```shell
 $ near view get_counter
 2
 $ near call <CONTRACT_ACCOUNT> level_a_incr --accountId <CONTRACT_ACCOUNT>
+ERROR
 $ near view get_counter
 2
 ```
 
 ## Tests running instruction
-Tests in `src/lib.rs` contain examples of interaction with a contract.
+Tests in `access_controllable_base/src/lib.rs` contain examples of interaction with a contract.
 
 For running test:
-1. Generate `wasm` file by running `build.sh` script. The target file will be `target/wasm32-unknown-unknown/release/access_controllable_base.wasm`
+1. Generate `wasm` file by running `access_controllable_base/build.sh` script. The target file will be `../target/wasm32-unknown-unknown/release/access_controllable_base.wasm`
 2. Run tests `cargo test`
 
 ```shell
+$ cd access_controllable_base
 $ ./build.sh
 $ cargo test
 ```
 
-For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate
-contract_account.
+For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate.
