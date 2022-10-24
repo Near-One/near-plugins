@@ -16,8 +16,8 @@ fn main() {
 
     println!("{}", rt.block_on(
         contract.call(contract.id(), "up_stage_code")
-                .args_borsh(wasm)
-                .max_gas()
-                .transact()
+            .args_borsh(wasm)
+            .max_gas()
+            .transact()
     ).unwrap().is_success());
 }
