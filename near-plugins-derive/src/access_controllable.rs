@@ -493,6 +493,14 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 self.#acl_field.has_any_role(roles, &account_id)
             }
 
+            fn acl_get_super_admins(&self, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
+                let permission = <#bitflags_type>::from_bits(
+                    <#role_type>::acl_super_admin_permission()
+                )
+                .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
+                self.#acl_field.get_bearers(permission, skip, limit)
+            }
+
             fn acl_get_admins(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 let permission = <#bitflags_type>::from_bits(role.acl_admin_permission())
