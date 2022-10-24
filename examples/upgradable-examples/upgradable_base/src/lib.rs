@@ -75,7 +75,7 @@ mod tests {
         (owner, contract)
     }
 
-    async fn call_borsh_arg(contract: &Contract, method_name: &str, args: Vec<u8>) -> bool {
+    async fn call_method_with_borsh_args(contract: &Contract, method_name: &str, args: Vec<u8>) -> bool {
         contract.call(method_name)
                 .args_borsh(args)
                 .max_gas()
@@ -97,7 +97,7 @@ mod tests {
 
         let wasm = std::fs::read(WASM_FILEPATH_SECOND).unwrap();
 
-        assert!(call_borsh_arg(&contract, "up_stage_code", wasm).await);
+        assert!(call_method_with_borsh_args(&contract, "up_stage_code", wasm).await);
         assert!(call!(contract, "up_deploy_code").await);
         check_counter(&contract, 1).await;
 
