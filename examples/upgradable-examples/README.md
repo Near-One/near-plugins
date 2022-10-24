@@ -1,8 +1,8 @@
 # Example of using Upgradable plugin
 
-Allows a contract to be upgraded by owner without having a Full Access Key.
+Allows a contract to be upgraded by the owner without having a Full Access Key.
 
-Contract example using Upgradable plugin. Note that it requires the contract to be Ownable.
+Contract example using Upgradable plugin. Note, that it requires the contract to be Ownable.
 
 ```rust
 use near_plugins::{Ownable, Upgradable};
@@ -35,14 +35,8 @@ impl Counter1 {
 }
 ```
 
-The second example contract for upgrading you can find in the `../upgradable_base_second/` folder.
-
 The second contract: 
 ```rust
-use near_plugins::{Ownable, Upgradable};
-use near_sdk::near_bindgen;
-use borsh::{BorshSerialize, BorshDeserialize};
-
 #[near_bindgen]
 #[derive(Ownable, Upgradable, Default, BorshSerialize, BorshDeserialize)]
 struct Counter2 {
@@ -72,8 +66,8 @@ To upgrade the contract first call up_stage_code passing the binary as first arg
 
 ## The contract methods description
 ### up_storage_key
-`up_storage_key` is a _view_ method which return a key of storage slot for stage code.
-By default `b"__CODE__"` is used. For changing the attribute `upgradable` can be used.
+`up_storage_key` is a _view_ method that returns a key of the storage slot for stage code.
+By default, `b"__CODE__"` is used. For changing, the attribute `upgradable` can be used.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> up_storage_key
@@ -98,30 +92,33 @@ struct Counter {
 ```
 
 ### up_stage_code
-`up_stage_code` method to stage some code to be potentially deployed later. If a previous code was staged but not deployed, it is discarded. 
-Method can be called only by owner
+`up_stage_code` is the method to stage some code to be potentially deployed later. If a previous code was staged but not deployed, it is discarded.
+The method can be called only by the owner.
 
 ```shell
 $ export CODE=$(cat ../upgradable_base_second/target/wasm32-unknown-unknown/release/upgradable_base_second.wasm | xxd -ps | sed -z 's/\n//g')
 $ near call <CONTRACT_ACCOUNT> up_stage_code --base64 $CODE  --accountId <CONTRACT_ACCOUNT>
 ```
 
-But it doesn't work in that way because we cann't provide in Bash so long args... So, probable here we can't use just NEAR CLI for interaction with contract :(
+But it doesn't work in that way because we can't provide in Bash so long args... So, probable here we can't use just NEAR CLI for interaction with the contract :(
 
-For running `up_satge_code` take a look on `src/up_stage_code.rs` script.
+For running `up_satge_code` take a look on `up_stage_code/src/main.rs` script.
 ```shell
-cargo run -- "<PATH_TO_KEY_FOR_CONTRACT_ACCOUNT>"
+$ cd up_stage_code
+$ cargo run -- "<PATH_TO_KEY_FOR_CONTRACT_ACCOUNT>"
+$ cd ..
 ```
+Where `<PATH_TO_KEY_FOR_CONTRACT_ACCOUNT>` is `$HOME/.near-credentials/testnet/<CONTRACT_ACCOUNT>.json`
 
 ### up_staged_code
-`up_staged_code` a _view_ method which returns a staged code.
+`up_staged_code` is a _view_ method which returns a staged code.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> up_staged_code --accountId <CONTRACT_ACCOUNT>
 ```
 
 ### up_staged_code_hash
-`up_staged_code_hash` a _view_ method which returns the hash of the staged code.
+`up_staged_code_hash` is a _view_ method that returns the hash of the staged code.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> up_staged_code_hash
@@ -135,41 +132,39 @@ View call: <CONTRACT_ACCOUNT>.up_staged_code_hash()
 ```
 
 ### up_deploy_code
-`up_deploy_code` method deploy a staged code. If no code is staged the method fails.
-Method can be called only by owner
+`up_deploy_code`  is a method that deploys a staged code. If no code is staged, the method fails.
+The method can be called only by the owner.
 
 ```shell
-$ near call <CONTRACT_ACCOUNT> up_deploy_code --accountId <CONTRACT_ACCOUNT>
+$ near call <CONTRACT_ACCOUNT> up_deploy_code --accountId <OWNER_ACCOUNT>
 ```
 
 ## Preparation steps for demonstration
-In that document we are providing some example of using contract with access control plugin. You also can explore the usage examples in the tests in `./src/lib.rs`. For running a tests please take a look to the **Test running instruction** section.
-
+In that document, we are providing some examples of using a contract with an access control plugin. You also can explore the usage examples in the tests in `upgradable_base/src/lib.rs`. For running tests please take a look at the **Test running instruction** section.
 1. **Creating an account on testnet**
+
    For demonstration let's create 2 accounts: `<CONTRACT_ACCOUNT>`, `<ALICE_ACCOUNT>`
    ```shell
    $ near create-account <CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
    $ near create-account <ALICE_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
    ```
 
-   In the next section we will refer to the `<CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<CONTRACT_ACCOUNT>`,
+   In the next sections we will refer to the `<CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<CONTRACT_ACCOUNT>`,
    to the `<ALICE_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<ALICE_ACCOUNT>`.
 
 2. **Compile 2 Contract to wasm file**
-   We should compile 2 contracts: `upgradable_base`, `upgradable_base_second`.
 
    ```shell
+   $ cd upgradable_base
    $ ./build.sh
-   $ cd ../upgradable_base_second
-   $ ./build.sh
-   $ cd ../upgradable_base
+   $ cd ..
    ```
-
-   The contracts will be compiled into `./target/wasm32-unknown-unknown/release/upgradable_base.wasm`, `../upgradable_base_second/target/wasm32-unknown-unknown/release/upgradable_base_second.wasm`
+   
+   The contracts will be compiled into `../target/wasm32-unknown-unknown/release/upgradable_base.wasm` and `../target/wasm32-unknown-unknown/release/upgradable_base_second.wasm`
 
 3. **Deploy and init a contract**
    ```shell
-   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ./target/wasm32-unknown-unknown/release/upgradable_base.wasm --initFunction new --initArgs '{}'
+   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ../target/wasm32-unknown-unknown/release/upgradable_base.wasm --initFunction new --initArgs '{}'
    ```
 
 ## Example of using the contract with upgradable plugin
@@ -193,6 +188,8 @@ $ near view <CONTRACT_ACCOUNT> get_counter
 cargo run -- "<PATH_TO_KEY_FOR_CONTRACT_ACCOUNT>"
 ```
 
+Where `<PATH_TO_KEY_FOR_CONTRACT_ACCOUNT>` is `$HOME/.near-credentials/testnet/<CONTRACT_ACCOUNT>.json`
+
 #### Deploy new contract
 ```shell
 $ near call <CONTRACT_ACCOUNT> up_deploy_code --accountId <CONTRACT_ACCOUNT>
@@ -211,16 +208,16 @@ $ near view <CONTRACT_ACCOUNT> get_counter
 ```
 
 ## Tests running instruction
-Tests in `src/lib.rs` contain examples of interaction with a contract.
+Tests in `upgradable_base/src/lib.rs` contain examples of interaction with a contract.
 
 For running test:
-1. Generate `wasm` file by running `build.sh` script. The target file will be `target/wasm32-unknown-unknown/release/upgradable_base.wasm`
+1. Generate `wasm` file by running `build.sh` script. The target file will be `../target/wasm32-unknown-unknown/release/upgradable_base.wasm`
 2. Run tests `cargo test`
 
 ```shell
+$ cd upgradable_base
 $ ./build.sh
 $ cargo test
 ```
 
-For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate
-contract_account.
+For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate.
