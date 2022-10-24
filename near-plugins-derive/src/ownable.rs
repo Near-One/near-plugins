@@ -4,7 +4,6 @@ use darling::FromDeriveInput;
 use proc_macro::{self, TokenStream};
 use quote::quote;
 use syn::{parse, parse_macro_input, DeriveInput, ItemFn};
-use crate::utils;
 
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(ownable), forward_attrs(allow, doc, cfg))]

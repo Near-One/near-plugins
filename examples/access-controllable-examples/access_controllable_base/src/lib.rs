@@ -4,7 +4,6 @@ use near_plugins_derive::access_control;
 use near_plugins_derive::access_control_any;
 use near_sdk::near_bindgen;
 use borsh::{BorshSerialize, BorshDeserialize};
-use near_plugins::events::AsEvent;
 use near_sdk::env;
 
 /// All types of access groups
@@ -15,7 +14,7 @@ pub enum UsersGroups {
 }
 
 #[near_bindgen]
-#[access_control(role_type="UsersGroups")]
+#[access_control(role_type(UsersGroups))]
 #[derive(Default, BorshSerialize, BorshDeserialize)]
 struct Counter {
   counter: u64,
