@@ -54,7 +54,7 @@ mod tests {
     use serde_json::json;
     use near_plugins_test_utils::*;
 
-    const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/ownable_change_storage_key.wasm";
+    const WASM_FILEPATH: &str = "../../target/wasm32-unknown-unknown/release/ownable_change_storage_key.wasm";
 
     #[tokio::test]
     async fn check_owner_storage_key() {

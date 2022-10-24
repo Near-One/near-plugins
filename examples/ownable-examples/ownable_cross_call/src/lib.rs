@@ -81,7 +81,7 @@ mod tests {
     use near_sdk::AccountId;
     use near_plugins_test_utils::*;
 
-    const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/ownable_cross_call.wasm";
+    const WASM_FILEPATH: &str = "../../target/wasm32-unknown-unknown/release/ownable_cross_call.wasm";
 
     #[tokio::test]
     async fn base_scenario() {

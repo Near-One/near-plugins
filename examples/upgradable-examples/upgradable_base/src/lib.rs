@@ -61,8 +61,8 @@ mod tests {
     use workspaces::{Account, Contract};
     use near_plugins_test_utils::*;
 
-    const WASM_FILEPATH: &str = "./target/wasm32-unknown-unknown/release/upgradable_base.wasm";
-    const WASM_FILEPATH_SECOND: &str = "../upgradable_base_second/target/wasm32-unknown-unknown/release/upgradable_base_second.wasm";
+    const WASM_FILEPATH: &str = "../../target/wasm32-unknown-unknown/release/upgradable_base.wasm";
+    const WASM_FILEPATH_SECOND: &str = "../../target/wasm32-unknown-unknown/release/upgradable_base_second.wasm";
 
     async fn get_contract() -> (Account, Contract) {
         let worker = workspaces::testnet().await.unwrap();

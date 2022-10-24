@@ -3,7 +3,7 @@ use tokio::runtime::Runtime;
 use workspaces::{Account, Contract};
 use std::env;
 
-const WASM_FILEPATH_SECOND: &str = "../upgradable_base_second/target/wasm32-unknown-unknown/release/upgradable_base_second.wasm";
+const WASM_FILEPATH_SECOND: &str = "../../target/wasm32-unknown-unknown/release/upgradable_base_second.wasm";
 
 fn main() {
     let args: Vec<String> = env::args().collect();
