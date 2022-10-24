@@ -40,15 +40,15 @@ impl Counter {
 
 ## The contract methods description
 ### attach_full_access_key
-`attach_full_access_key` - attach a new full access for the current account. 
-Only owner of the contract can use this function. 
+`attach_full_access_key` is a method that attaches new full access for the current account.
+Only the owner of the contract can use this function.
 
 ```shell
 near call <CONTRACT_ACCOUNT> attach_full_access_key '{"public_key": "ed25519:ErVTCTvmepb4NDhQ7infTomkLVsd1iTWwLR84FBhV7UC"}' --accountId <OWNER_ACCOUNT>
 ```
 
 ## Preparation steps for demonstration
-In that document we are providing some example of using contract with access control plugin. You also can explore the usage examples in the tests in `./src/lib.rs`. For running a tests please take a look to the **Test running instruction** section.
+In that document, we are providing some examples of using a contract with a full access key fallback plugin. You also can explore the usage examples in the tests in `./full_access_key_fallback_base/src/lib.rs`. For running tests, please take a look at the **Test running instruction** section.
 
 1. **Creating an account on testnet**
    For demonstration let's create 2 accounts: `<CONTRACT_ACCOUNT>`, `<ALICE_ACCOUNT>`
@@ -61,63 +61,64 @@ In that document we are providing some example of using contract with access con
    to the `<ALICE_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<ALICE_ACCOUNT>`.
 
 2. **Compile Contract to wasm file**
-   For compiling the contract just run the `build.sh` script. The target file with compiled contract will be `./target/wasm32-unknown-unknown/release/full_access_key_fallback_base.wasm`
+   For compiling the contract just run the `full_access_key_fallback_base/build.sh` script. The target file with compiled contract will be `../target/wasm32-unknown-unknown/release/full_access_key_fallback_base.wasm`
 
    ```shell
+   $ cd full_access_key_fallback_base
    $ ./build.sh
+   $ cd ..
    ```
 
 3. **Deploy and init a contract**
    ```shell
-   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ./target/wasm32-unknown-unknown/release/full_access_key_fallback_base.wasm --initFunction new --initArgs '{}'
+   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ../target/wasm32-unknown-unknown/release/full_access_key_fallback_base.wasm --initFunction new --initArgs '{}'
    ```
 
 ## Example of using the contract with full access key fallback plugin
-Our plan for this example it is remove the full access key and after that bring it is back. 
-The keys usually storage at `~/.near-credentials/testnet/<CONTRACT_ACCOUNT>.json`. Also let's
-choose some operation which only the contract with full access key can done, for example, 
-transfer money. 
+Our plan for this example is to remove the full access key and after that bring it back.
+The keys usually storage at `$HOME/.near-credentials/testnet/<CONTRACT_ACCOUNT>.json`. Also let's
+choose some operations that only the contract with a full access key can do, for example,
+money transfer.
 
-Move ownership rights to the Alice account. 
+Moving ownership rights to the Alice account. 
 ```shell
 $ near call <CONTRACT_ACCOUNT> owner_set '{"owner": "<ALICE_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
 ```
 
-Check that currently we can transfer the money for example to Alice account
+Checking that currently we can transfer the money for example to Alice account
 ```shell
 $ near send <CONTRACT_ACCOUNT> <ALICE_ACCOUNT> 1
 ```
 
-Now removing the full access key for contract account
-
+Removing the full access key for contract account
 ```shell
 $ near delete-key <CONTRACT_ACCOUNT> "ed25519:ErVTCTvmepb4NDhQ7infTomkLVsd1iTWwLR84FBhV7UC"
 ```
+The value of public-key can be found at `$HOME/.near-credentials/testnet/<CONTRACT_ACCOUNT>.json`. 
 
-The value of public-key can be found at `~/.near-credentials/testnet/<CONTRACT_ACCOUNT>.json`. 
-
-Now check, that now the money transfer will not work: 
+Checking, that now the money transfer will not work: 
 ```shell
 $ near send <CONTRACT_ACCOUNT> <ALICE_ACCOUNT> 1
+ERROR
 ```
 
-And now let's add the key back and check that it will work
+Adding the key back and check that it will work
 ```shell
 $ near call <CONTRACT_ACCOUNT> attach_full_access_key '{"public_key": "ed25519:ErVTCTvmepb4NDhQ7infTomkLVsd1iTWwLR84FBhV7UC"}' --accountId <ALICE_ACCOUNT>
 $ near send <CONTRACT_ACCOUNT> <ALICE_ACCOUNT> 1
 ```
 
 ## Tests running instruction
-Tests in `src/lib.rs` contain examples of interaction with a contract.
+Tests in `full_access_key_fallback_base/src/lib.rs` contain examples of interaction with a contract.
 
 For running test:
-1. Generate `wasm` file by running `build.sh` script. The target file will be `target/wasm32-unknown-unknown/release/full_access_key_fallback_base.wasm`
+1. Generate `wasm` file by running `build.sh` script. The target file will be `../target/wasm32-unknown-unknown/release/full_access_key_fallback_base.wasm`
 2. Run tests `cargo test`
 
 ```shell
+$ cd full_access_key_fallback_base
 $ ./build.sh
 $ cargo test
 ```
 
-For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate
-contract_account.
+For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate.
