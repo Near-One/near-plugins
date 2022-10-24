@@ -1,5 +1,5 @@
 # Example of using Pausable plugin
-Allow contracts to implement an emergency stop mechanism that can be triggered by an authorized account. Pauses can be used granularly to only limit certain features.
+Allows contracts to implement an emergency stop mechanism that can be triggered by an authorized account. Pauses can be used granular to only limit certain features.
 
 Contract example using Pausable plugin. Note that it requires the contract to be Ownable.
 
@@ -77,8 +77,8 @@ impl Counter {
 
 ## The contract methods description
 ### pa_storage_key
-`pa_storage_key` is a _view_ method which returns the key of storage slot with list of paused features.
-By default `b"__PAUSED__"` is used. For changing the attribute `pausable` can be used.
+`pa_storage_key` is a _view_ method that returns the key of the storage slot with a list of paused features.
+By default, `b"__PAUSED__"` is used. For changing, the attribute `pausable` can be used.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> pa_storage_key
@@ -103,7 +103,7 @@ struct Counter {
 ```
 
 ### pa_is_paused
-`pa_is_paused` is a _view_ method which returns if a feature is paused.
+`pa_is_paused` is a _view_ method that returns if a feature is paused.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> pa_is_paused '{"key": "increase_1"}'
@@ -112,7 +112,7 @@ true
 ```
 
 ### pa_all_paused
-`pa_all_paused` is a _view_ method which return the list of the all paused features.
+`pa_all_paused` is a _view_ method that returns the list of all paused features.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> pa_all_paused
@@ -120,23 +120,22 @@ View call: <CONTRACT_ACCOUNT>.pa_all_paused()
 [ 'increase_1', 'increase_2' ]
 ```
 
-
 ### pa_pause_feature
-`pa_pause_feature` is a method for pause specified feature. Can be run only by owner or self.
+`pa_pause_feature` is a method for pausing specified features. Can be run only by the owner or self.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> pa_pause_feature '{"key": "increase_1"}' --accountId <OWNER_ACCOUNT>
 ```
 
 ### pa_unpause_feature
-`pa_unpause_feature` is a method for unpause specified feature. Can be run only by owner or self.
+`pa_unpause_feature` is a method for unpausing specified features. Can be run only by the owner or self.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> pa_unpause_feature '{"key": "increase_1"}' --accountId <OWNER_ACCOUNT>
 ```
 
 ## Preparation steps for demonstration
-In that document we are providing some example of using contract with access control plugin. You also can explore the usage examples in the tests in `./src/lib.rs`. For running a tests please take a look to the **Test running instruction** section.
+In that document, we are providing some examples of using a contract with access control plugins. You also can explore the usage examples in the tests in `./pausable_base/src/lib.rs`. For running tests, please take a look at the **Test running instruction** section.
 
 1. **Creating an account on testnet**
    For demonstration let's create 2 accounts: `<CONTRACT_ACCOUNT>`, `<ALICE_ACCOUNT>`
@@ -149,21 +148,23 @@ In that document we are providing some example of using contract with access con
    to the `<ALICE_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<ALICE_ACCOUNT>`.
 
 2. **Compile Contract to wasm file**
-   For compiling the contract just run the `build.sh` script. The target file with compiled contract will be `./target/wasm32-unknown-unknown/release/pausable_base.wasm`
+   For compiling the contract just run the `./pausable_base/build.sh` script. The target file with compiled contract will be `../target/wasm32-unknown-unknown/release/pausable_base.wasm`
 
    ```shell
+   $ cd pausable_base
    $ ./build.sh
+   $ ..
    ```
 
 3. **Deploy and init a contract**
    ```shell
-   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ./target/wasm32-unknown-unknown/release/pausable_base.wasm --initFunction new --initArgs '{}'
+   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ../target/wasm32-unknown-unknown/release/pausable_base.wasm --initFunction new --initArgs '{}'
    ```
    
 ## Example of using the contract with pausable plugin
 ### Simple pause and unpause function without name specification
-At the beginning the `<CONTRACT_ACCOUNT>` both the self and the owner. 
-`<ALICE_ACCOUNT>` doesn't have any specific rights. 
+In the beginning, the `<CONTRACT_ACCOUNT>` is both the self and the owner.
+`<ALICE_ACCOUNT>` doesn't have any specific rights.
 
 No features on pause:
 ```shell
@@ -191,12 +192,14 @@ View call: <CONTRACT_ACCOUNT>.pa_is_paused({"key": "increase_1"})
 true
 ```
 
-Now Alice or even self cann't run `increase_1` function
+Now Alice or even self can't run `increase_1` function
 ```shell
 $ near view <CONTRACT_ACCOUNT> get_counter
 1
 $ near call <CONTRACT_ACCOUNT> increase_1 --accountId <ALICE_ACCOUNT>
+ERROR
 $ near call <CONTRACT_ACCOUNT> increase_1 --accountId <CONTRACT_ACCOUNT>
+ERROR
 $ near view <CONTRACT_ACCOUNT> get_counter
 1
 ```
@@ -224,16 +227,16 @@ $ near view <CONTRACT_ACCOUNT> get_counter
 ```
 
 ## Tests running instruction
-Tests in `src/lib.rs` contain examples of interaction with a contract.
+Tests in `pausable_base/src/lib.rs` contain examples of interaction with a contract.
 
 For running test:
-1. Generate `wasm` file by running `build.sh` script. The target file will be `target/wasm32-unknown-unknown/release/pausable_base.wasm`
+1. Generate `wasm` file by running `build.sh` script. The target file will be `../target/wasm32-unknown-unknown/release/pausable_base.wasm`
 2. Run tests `cargo test`
 
 ```shell
+$ cd pausable_base
 $ ./build.sh
 $ cargo test
 ```
 
-For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate
-contract_account.
+For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate.
