@@ -1,6 +1,6 @@
 # Example of using Ownable plugin
 
-Basic access control mechanism that allows only an authorized account id to call certain methods. Note this account id can belong either to a regular user, or it could be a contract (a DAO for example).
+A basic access control mechanism that allows only an authorized account ID to call certain methods. Note, this account ID can belong either to a regular user, or it could be a contract (a DAO for example).
 
 ```Rust
 use near_plugins::Ownable;
@@ -56,15 +56,15 @@ impl Counter {
 ## The contract methods description
 
 ### owner_set
-`owner_set` - the method which sets the new owner of the contract. Only the current owner of the contract can set a new one. 
-If the contract doesn't have any owner the self can set one. 
+`owner_set` is the method that sets the new owner of the contract. Only the current owner of the contract can set a new one.
+If the contract doesn't have any owner, the self can set one.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> owner_set '{"owner": <NEW_OWNER_ACCOUNT>}' --accountId <OWNER_ACCOUNT>
 ```
 
 ### owner_get
-`owner_get` - the _view_ method which returns the current contract owner
+`owner_get` is the _view_ method, which returns the current contract owner.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> owner_get '{}'
@@ -73,8 +73,8 @@ View call: <CONTRACT_ACCOUNT>.owner_get({})
 ```
 
 ### owner_storage_key
-`owner_storage_key` - the _view_ method which returns the key for storage the owner account id. 
-The `__OWNER__` by default. Can be changed by using the `ownable` attribute. See example `ownable_change_storage_key`.
+`owner_storage_key` is the _view_ method that returns the key for storage, the owner account id.
+The `__OWNER__` by default. It can be changed by using the `ownable` attribute. See example `ownable_change_storage_key`.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> owner_storage_key
@@ -89,7 +89,8 @@ $ python3
 ```
 
 ### owner_is
-`owner_is` - the methods checks if the caller is the owner of the contract
+`owner_is` is the method that checks if the caller is the owner of the contract.
+
 ```shell
 $ near call <CONTRACT_ACCOUNT> owner_is --accountId <OWNER_ACCOUNT>
 Scheduling a call: <CONTRACT_ACCOUNT>.testnet.owner_is()
@@ -100,9 +101,8 @@ https://explorer.testnet.near.org/transactions/<TRANSACTION_ID>
 true
 ```
 
-
-## Example of using contract with ownable plugin
-In that document we are providing some example of using contract with ownable plugin. You also can explore the usage examples in the tests in `./src/lib.rs`. For running a tests please take a look to the **Test running instruction** section.
+## Example of using a contract with the ownable plugin
+In that document, we are providing some examples of using contracts with the ownable plugin. You also can explore the usage examples in the tests in `ownable_base/src/lib.rs`. For running tests, please take a look at the **Test running instruction** section.
 
 ### Preparation steps for demonstration
 1. **Creating an account on testnet**
@@ -116,23 +116,25 @@ In that document we are providing some example of using contract with ownable pl
    $ near create-account <OWNER_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet --masterAccount <MASTER_ACCOUNT_NAME>.testnet --initialBalance 10
    ```
 
-   In the next section we will refer to the `<CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<CONTRACT_ACCOUNT>` and to the `<OWNER_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<OWNER_ACCOUNT>` for simplicity. 
+   In the next sections we will refer to the `<CONTRACT_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<CONTRACT_ACCOUNT>` and to the `<OWNER_ACCOUNT_NAME>.<MASTER_ACCOUNT_NAME>.testnet` as `<OWNER_ACCOUNT>` for simplicity. 
 
 2. **Compile Contract to wasm file**
-   For compiling the contract just run the `build.sh` script. The target file with compiled contract will be `./target/wasm32-unknown-unknown/release/ownable_base.wasm`
+   For compiling the contract just run the `ownable_base/build.sh` script. The target file with compiled contract will be `../target/wasm32-unknown-unknown/release/ownable_base.wasm`
  
    ```shell
+   $ cd ownable_base
    $ ./build.sh
+   $ cd ..
    ```
 
 3. **Deploy and init a contract**
    ```shell
-   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ./target/wasm32-unknown-unknown/release/ownable_base.wasm --initFunction new --initArgs '{}'
+   $ near deploy --accountId <CONTRACT_ACCOUNT> --wasmFile ../target/wasm32-unknown-unknown/release/ownable_base.wasm --initFunction new --initArgs '{}'
    ```
 
 ### Contract with owner plugin usage examples
-#### When self is owner we can call all methods
-After initialization the `<CONTRACT_ACCOUNT>` is the owner of this contract. So this account both the `self` and the `owner` of the contract and can call of the contract method. 
+#### When the self is the owner it can call all methods
+After initialization, the `<CONTRACT_ACCOUNT>` is the owner of this contract. So this account is both the `self` and the `owner` of the contract, and it can call all the contract methods.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> protected '{}' --accountId <CONTRACT_ACCOUNT>
@@ -141,7 +143,7 @@ $ near call <CONTRACT_ACCOUNT> protected_self '{}' --accountId <CONTRACT_ACCOUNT
 $ near call <CONTRACT_ACCOUNT> unprotected '{}' --accountId <CONTRACT_ACCOUNT>
 ```
 
-We can check that we succeeded in calling all this function by calling `get_counter` view method and check that counter is 4.
+We can check that we succeeded in calling all these functions by calling the `get_counter` view method and checking that the counter is 4.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> get_counter '{}' 
@@ -154,8 +156,11 @@ Currently, the `<OWNER_ACCOUNT>` doesn't connected to the contract. So, we can c
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> protected '{}' --accountId <OWNER_ACCOUNT>
+ERROR
 $ near call <CONTRACT_ACCOUNT> protected_owner '{}' --accountId <OWNER_ACCOUNT>
+ERROR
 $ near call <CONTRACT_ACCOUNT> protected_self '{}' --accountId <OWNER_ACCOUNT>
+ERROR
 $ near view <CONTRACT_ACCOUNT> get_counter '{}' 
 View call: <CONTRACT_ACCOUNT>.get_counter({})
 4
@@ -166,29 +171,29 @@ View call: <CONTRACT_ACCOUNT>.get_counter({})
 ```
 
 #### Check and Change the contract owner
-Let's change the contract owner from `<CONTRACT_ACCOUNT>` to the `<OWNER_ACCOUNT>`. Only the current owner of the contract can change the owner. 
+Let's change the contract owner from `<CONTRACT_ACCOUNT>` to `<OWNER_ACCOUNT>`. Only the current owner of the contract can change the owner.
 
-We can check the owner of the contract by callint `owner_get` view method.
+We can check the owner of the contract by calling `owner_get` view method.
 ```shell
 $ near view <CONTRACT_ACCOUNT> owner_get '{}'
 View call: <CONTRACT_ACCOUNT>.owner_get({})
 '<CONTRACT_ACCOUNT>'
 ```
 
-In this case the owner is `<CONTRACT_ACCOUNT>`. And we can change the contract owner by running `owner_set`.
+In this case, the owner is `<CONTRACT_ACCOUNT>`. And we can change the contract owner by running `owner_set`.
 ```shell
 $ near call <CONTRACT_ACCOUNT> owner_set '{"owner": <OWNER_ACCOUNT>}' --accountId <CONTRACT_ACCOUNT>
 ```
 
-And we can chack the contract owner one more time for making sure, that it is changed. 
+And we can check the contract owner one more time for making sure, that it is changed.
 ```shell
 $ near view <CONTRACT_ACCOUNT> owner_get '{}'
 View call: <CONTRACT_ACCOUNT>.owner_get({})
 '<OWNER_ACCOUNT>'
 ```
 
-#### When self is not owner it can't run the only(owner) functions
-So, now `<CONTRACT_ACCOUNT>` is not an owner of out contract anymore. So, the `<CONTRACT_ACCOUNT>` can run the `unprotected`, `proteced_self`, `protected` and can't use the methods `protected_owner`.
+#### When the self is not owner it can't run the only(owner) functions
+So, now `<CONTRACT_ACCOUNT>` is not the owner of our contract anymore. The `<CONTRACT_ACCOUNT>` can run the `unprotected`, `proteced_self`, `protected` and can't use the methods `protected_owner`.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> protected '{}' --accountId <CONTRACT_ACCOUNT>
@@ -198,6 +203,7 @@ $ near view <CONTRACT_ACCOUNT> get_counter '{}'
 View call: <CONTRACT_ACCOUNT>.get_counter({})
 8
 $ near call <CONTRACT_ACCOUNT> protected_owner '{}' --accountId <CONTRACT_ACCOUNT>
+ERROR
 $ near view <CONTRACT_ACCOUNT> get_counter '{}' 
 View call: <CONTRACT_ACCOUNT>.get_counter({})
 8
@@ -214,18 +220,20 @@ $ near view <CONTRACT_ACCOUNT> get_counter '{}'
 View call: <CONTRACT_ACCOUNT>.get_counter({})
 11
 $ near call <CONTRACT_ACCOUNT> protected_self '{}' --accountId <OWNER_ACCOUNT>
+ERROR
 $ near view <CONTRACT_ACCOUNT> get_counter '{}' 
 View call: <CONTRACT_ACCOUNT>.get_counter({})
 11
 ```
 #### Only owner can change the contract ownership
-When the contract have an owner only the owner can change the ownership. All other account, include self, cann't.
+When the contract has an owner, only the owner can change the ownership. All other accounts, including self, can't.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> owner_get '{}'
 View call: <CONTRACT_ACCOUNT>.owner_get({})
 '<OWNER_ACCOUNT>'
 $ near call <CONTRACT_ACCOUNT> owner_set '{"owner": <CONTRACT_ACCOUNT>}' --accountId <CONTRACT_ACCOUNT>
+ERROR
 $ near view <CONTRACT_ACCOUNT> owner_get '{}'
 View call: <CONTRACT_ACCOUNT>.owner_get({})
 '<OWNER_ACCOUNT>'
@@ -241,21 +249,22 @@ View call: <CONTRACT_ACCOUNT>.owner_get({})
 null
 ```
 
-#### The self cann't run the only(owner) function if contract doesn't have an owner
-When contract doesn't have an owner no one can use only(owner) functions include self.
+#### The self can't run the only(owner) function if contract doesn't have an owner
+When the contract doesn't have an owner, no one can use `only(owner)` functions including self.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> get_counter '{}' 
 View call: <CONTRACT_ACCOUNT>.get_counter({})
 11
 $ near call <CONTRACT_ACCOUNT> protected_owner '{}' --accountId <CONTRACT_ACCOUNT>
+ERROR
 $ near view <CONTRACT_ACCOUNT> get_counter '{}' 
 View call: <CONTRACT_ACCOUNT>.get_counter({})
 11
 ```
 
-#### When the contract doesn't have owner the self can setup a new one
-When the contract doesn't have the owner, the self can setup a new owner.
+#### When the contract doesn't have owner, the self can set up a new one
+When the contract doesn't have the owner, the self can set up a new owner.
 ```shell
 $ near view <CONTRACT_ACCOUNT> owner_get '{}'
 View call: <CONTRACT_ACCOUNT>.owner_get({})
@@ -267,16 +276,16 @@ View call: <CONTRACT_ACCOUNT>.owner_get({})
 ```
 
 ### Tests running instruction
-Tests in `src/lib.rs` contain examples of interaction with a contract. 
+Tests in `ownable_base/src/lib.rs` contain examples of interaction with a contract. 
 
 For running test: 
-1. Generate `wasm` file by running `build.sh` script. The target file will be `target/wasm32-unknown-unknown/release/ownable_base.wasm`
+1. Generate `wasm` file by running `build.sh` script. The target file will be `../target/wasm32-unknown-unknown/release/ownable_base.wasm`
 2. Run tests `cargo test`
 
 ```shell
+$ cd ownable_base
 $ ./build.sh
 $ cargo test
 ```
 
-For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate
-contract_account.
+For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate.
