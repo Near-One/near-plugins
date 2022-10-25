@@ -4,41 +4,13 @@ use borsh::{BorshSerialize, BorshDeserialize};
 
 #[near_bindgen]
 #[derive(Ownable, Upgradable, Default, BorshSerialize, BorshDeserialize)]
-#[cfg(feature = "counter1")]
-struct Counter1 {
+struct Counter {
   counter: u64,
 }
 
 #[near_bindgen]
-#[cfg(feature = "counter1")]
-impl Counter1 {
-  /// Specify the owner of the contract in the constructor
-  #[init]
-  pub fn new() -> Self {
-      let mut contract = Self { counter: 0 };
-      contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
-      contract
-  }
-
-  pub fn inc1(&mut self) {
-      self.counter += 1;
-  }
-
-  pub fn get_counter(&self) -> u64 {
-      self.counter
-  }
-}
-
-#[near_bindgen]
-#[derive(Ownable, Upgradable, Default, BorshSerialize, BorshDeserialize)]
-#[cfg(feature = "counter2")]
-struct Counter2 {
-    counter: u64,
-}
-
-#[near_bindgen]
-#[cfg(feature = "counter2")]
-impl Counter2 {
+impl Counter {
+    /// Specify the owner of the contract in the constructor
     #[init]
     pub fn new() -> Self {
         let mut contract = Self { counter: 0 };
@@ -46,6 +18,12 @@ impl Counter2 {
         contract
     }
 
+    #[cfg(feature = "counter1")]
+    pub fn inc1(&mut self) {
+        self.counter += 1;
+    }
+
+    #[cfg(feature = "counter2")]
     pub fn inc2(&mut self) {
         self.counter += 2;
     }

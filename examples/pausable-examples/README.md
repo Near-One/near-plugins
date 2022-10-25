@@ -239,4 +239,4 @@ $ ./build.sh
 $ cargo test
 ```
 
-For tests, we use `workspaces` library and `sandbox` environment for details you can explorer `../near-plugins-test-utils` crate.
+For tests, we use `workspaces` library and `sandbox` environment. For details, you can explore `../near-plugins-test-utils` crate.
