@@ -84,6 +84,16 @@ $ python3
 95 95 97 99 108
 ```
 
+Example of changing acl storage prefix key:
+```rust
+#[near_bindgen]
+#[access_control(role_type(UsersGroups), storage_prefix = "__custom_prefix")]
+#[derive(Default, BorshSerialize, BorshDeserialize)]
+struct Counter {
+  counter: u64,
+}
+```
+
 ### acl_is_super_admin
 `acl_is_super_admin` is a _view_ method that checks that account has super admin rights.
 Super admin can control the member list of each group and control the admin list for each group.
