@@ -97,14 +97,14 @@ true
 ### acl_add_admin
 `acl_add_admin` is a method that adds a new admin for a specific group.
 Admins' rights don't allow running group-specific functions, but group admins can control the group member list.
-This method can be run by the admin of a specific group or by the super admin.
+This method can be run by an admin of a specific group or by a super admin.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_add_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
 ```
 
 ### acl_is_admin
-`acl_is_admin` is a _view_ method that checks if the account has an admin right for the specified group. For super admin, it will return true.
+`acl_is_admin` is a _view_ method that checks if the account has an admin right for the specified group. For super admin, it will return true for every group.
 
 ```shell
 $ near view <CONTRACT_ACCOUNT> acl_is_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}'
@@ -113,7 +113,7 @@ true
 ```
 
 ### acl_revoke_admin
-`acl_revoke_admin` is a method that removes the group admin right for a specific account. Can be executed by the admin of this group or by the super admin.
+`acl_revoke_admin` is a method that removes the group admin right for a specific account. Can be executed by an admin of this group or by a super admin.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_revoke_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
@@ -129,8 +129,8 @@ $ near call <CONTRACT_ACCOUNT> acl_renounce_admin '{"role": "GroupA"}' --account
 After calling that method, Alice will not have the admin right for GroupA anymore.
 
 ### acl_revoke_role
-`acl_revoke_role` is a method that removes the specified account from the list of the group member.
-Only the group admin or super admin can execute this function.
+`acl_revoke_role` is a method that removes the specified account from the list of the group members.
+Only a group admin or a super admin can execute this function.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_revoke_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
@@ -144,7 +144,7 @@ $ near call <CONTRACT_ACCOUNT> acl_renounce_role '{"role": "GroupA"}' --accountI
 ```
 
 ### acl_grant_role
-`acl_grant_role` is a method that adds the account to the group member list. Can be executed only by the group admin or by the super admin.
+`acl_grant_role` is a method that adds the account to the group member list. Can be executed only by a group admin or by a super admin.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_grant_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
