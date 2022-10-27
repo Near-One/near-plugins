@@ -94,6 +94,18 @@ struct Counter {
 }
 ```
 
+### acl_init_super_admin
+`acl_init_super_admin` is a method that adds `account_id` as a super-admin _without_ checking any permissions
+in case there are no super-admins. Do nothing if at least one super-admin exists. This function can be used to add a super-admin during contract initialization. 
+Moreover, it may provide a recovery mechanism if (mistakenly) all super-admins have been removed. 
+The return value indicates whether `account_id` was added as super-admin.
+
+It is `#[private]` in the implementation provided by this trait, i.e. only the contract itself may call this method.
+
+```shell
+$ near call <CONTRACT_ACCOUNT> acl_init_super_admin '{"account_id": "<SUPER_ADMIN_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
+```
+
 ### acl_is_super_admin
 `acl_is_super_admin` is a _view_ method that checks that account has super admin rights.
 Super admin can control the member list of each group and control the admin list for each group.
@@ -176,6 +188,15 @@ true
 $ near view <CONTRACT_ACCOUNT> acl_has_any_role '{"roles": ["GroupA", "GroupB"], "account_id": "<ALICE_ACCOUNT>"}'
 View call: <CONTRACT_ACCOUNT>.acl_has_any_role({"roles": ["GroupA", "GroupB"], "account_id": "<ALICE_ACCOUNT>"})
 true
+```
+
+### acl_get_super_admins
+`acl_get_super_admins` is a _view_ method that shows some super admins. It will skip first `skip` admins and return not more than `limit` number of super admins.
+
+```shell
+$ near view <CONTRACT_ACCOUNT> acl_get_super_admins '{"skip": 0, "limit": 2}'
+View call: <CONTRACT_ACCOUNT>.acl_get_super_admins({"skip": 0, "limit": 2})
+[ '<CONTRACT_ACCOUNT>' ]
 ```
 
 ### acl_get_admins
