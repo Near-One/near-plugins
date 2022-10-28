@@ -98,12 +98,14 @@ struct Counter {
 `acl_init_super_admin` is a method that adds `account_id` as a super-admin _without_ checking any permissions
 in case there are no super-admins. Do nothing if at least one super-admin exists. This function can be used to add a super-admin during contract initialization. 
 Moreover, it may provide a recovery mechanism if (mistakenly) all super-admins have been removed. 
-The return value indicates whether `account_id` was added as super-admin.
+
+**Return value:** the return value indicates whether `account_id` was added as super-admin.
 
 It is `#[private]` in the implementation provided by this trait, i.e. only the contract itself may call this method.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_init_super_admin '{"account_id": "<SUPER_ADMIN_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
+true
 ```
 
 If the method succeeds, the following event will be emitted:
@@ -134,8 +136,13 @@ true
 Admins' rights don't allow running group-specific functions, but group admins can control the group member list.
 This method can be run by an admin of a specific group or by a super admin.
 
+**Return value:** in case of sufficient permissions, the returned `Some(bool)` indicates
+whether `account_id` is a new admin for `role`. Without permissions,
+`None` is returned and internal state is not modified.
+
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_add_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
+true
 ```
 
 If the method succeeds, the following event will be emitted:
@@ -164,9 +171,15 @@ true
 ### acl_revoke_admin
 `acl_revoke_admin` is a method that removes the group admin right for a specific account. Can be executed by an admin of this group or by a super admin.
 
+**Return value:** in case of sufficient permissions, the returned `Some(bool)` indicates
+whether `account_id` was an admin for `role`. Without permissions,
+`None` is returned and internal state is not modified.
+
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_revoke_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
+true
 ```
+
 If the method succeeds, the following event will be emitted:
 ```json
 {
@@ -184,8 +197,11 @@ If the method succeeds, the following event will be emitted:
 ### acl_renounce_admin
 `acl_renounce_admin` is a method that removes the group admin right for an account that calls the method.
 
+**Return value:** returns whether the predecessor was an admin for `role`.
+
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_renounce_admin '{"role": "GroupA"}' --accountId <ALICE_ACCOUNT>
+true
 ```
 
 After calling that method, Alice will not have the admin right for GroupA anymore.
@@ -207,8 +223,13 @@ If the method succeeds, the following event will be emitted:
 `acl_revoke_role` is a method that removes the specified account from the list of the group members.
 Only a group admin or a super admin can execute this function.
 
+**Return value:** in case of sufficient permissions, the returned `Some(bool)` indicates
+whether `account_id` was a grantee of `role`. Without permissions,
+`None` is returned and internal state is not modified.
+
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_revoke_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
+true
 ```
 
 If the method succeeds, the following event will be emitted:
@@ -228,8 +249,11 @@ If the method succeeds, the following event will be emitted:
 ### acl_renounce_role
 `acl_renounce_role` is a method that removes the caller account from the member list of the group. Can be called by anyone.
 
+**Return value:** returns whether it was a grantee of `role`.
+
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_renounce_role '{"role": "GroupA"}' --accountId <ALICE_ACCOUNT>
+true
 ```
 
 If the method succeeds, the following event will be emitted:
@@ -248,8 +272,13 @@ If the method succeeds, the following event will be emitted:
 ### acl_grant_role
 `acl_grant_role` is a method that adds the account to the group member list. Can be executed only by a group admin or by a super admin.
 
+**Return value:** in case of sufficient permissions, the returned `Some(bool)` indicates
+whether `account_id` is a new grantee of `role`. Without permissions,
+`None` is returned and internal state is not modified.
+
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_grant_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
+true
 ```
 
 If the method succeeds, the following event will be emitted:
