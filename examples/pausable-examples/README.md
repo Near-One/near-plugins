@@ -127,11 +127,38 @@ View call: <CONTRACT_ACCOUNT>.pa_all_paused()
 $ near call <CONTRACT_ACCOUNT> pa_pause_feature '{"key": "increase_1"}' --accountId <OWNER_ACCOUNT>
 ```
 
+If the method succeeds, the following event will be emitted:
+```json
+{
+   "standard":"Pausable",
+   "version":"1.0.0",
+   "event":"pause",
+   "data": 
+   {
+      "by":"<OWNER_ACCOUNT>",
+      "key":"increase_1"
+   }
+}
+```
+
 ### pa_unpause_feature
 `pa_unpause_feature` is a method for unpausing specified features. Can be run only by the owner or self.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> pa_unpause_feature '{"key": "increase_1"}' --accountId <OWNER_ACCOUNT>
+```
+If the method succeeds, the following event will be emitted:
+```json
+{
+   "standard":"Pausable",
+   "version":"1.0.0",
+   "event":"unpause",
+   "data":
+   {
+      "by":"<OWNER_ACCOUNT>",
+      "key":"increase_1"
+   }
+}
 ```
 
 ## Preparation steps for demonstration

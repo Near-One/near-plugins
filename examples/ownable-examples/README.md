@@ -63,6 +63,20 @@ If the contract doesn't have any owner, the self can set one.
 $ near call <CONTRACT_ACCOUNT> owner_set '{"owner": <NEW_OWNER_ACCOUNT>}' --accountId <OWNER_ACCOUNT>
 ```
 
+If the ownership transfer were successful following event will be emitted: 
+```json
+{
+   "standard":"Ownable",
+   "version":"1.0.0",
+   "event":"ownership_transferred",
+   "data": {
+      "previous_owner":"<OWNER_ACCOUNT>",
+      "new_owner":"<NEW_OWNER_ACCOUNT>"
+   }
+}
+```
+
+
 ### owner_get
 `owner_get` is the _view_ method, which returns the current contract owner.
 

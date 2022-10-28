@@ -151,5 +151,8 @@ mod tests {
 
         assert!(!call!(&bob, contract, "level_a_incr").await);
         check_counter(&contract, 4).await;
+
+        assert!(call!(&bob, contract, "acl_renounce_admin", &json!({"role": String::from(UsersGroups::GroupA)})).await);
+        assert!(call!(&alice, contract, "acl_renounce_role", &json!({"role": String::from(UsersGroups::GroupA)})).await);
     }
 }

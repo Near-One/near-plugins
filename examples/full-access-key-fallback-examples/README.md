@@ -47,6 +47,19 @@ Only the owner of the contract can use this function.
 near call <CONTRACT_ACCOUNT> attach_full_access_key '{"public_key": "ed25519:ErVTCTvmepb4NDhQ7infTomkLVsd1iTWwLR84FBhV7UC"}' --accountId <OWNER_ACCOUNT>
 ```
 
+If the method succeeds, the following event will be emitted:
+```json
+{
+   "standard":"FullAccessKeyFallback",
+   "version":"1.0.0",
+   "event":"full_access_key_added",
+   "data": {
+      "by":"<OWNER_ACCOUNT>",
+      "public_key":"ed25519:ErVTCTvmepb4NDhQ7infTomkLVsd1iTWwLR84FBhV7UC"
+   }
+}
+```
+
 ## Preparation steps for demonstration
 In that document, we are providing some examples of using a contract with a full access key fallback plugin. You also can explore the usage examples in the tests in `./full_access_key_fallback_base/src/lib.rs`. For running tests, please take a look at the **Test running instruction** section.
 

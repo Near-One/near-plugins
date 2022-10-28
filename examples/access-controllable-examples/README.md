@@ -106,6 +106,19 @@ It is `#[private]` in the implementation provided by this trait, i.e. only the c
 $ near call <CONTRACT_ACCOUNT> acl_init_super_admin '{"account_id": "<SUPER_ADMIN_ACCOUNT>"}' --accountId <CONTRACT_ACCOUNT>
 ```
 
+If the method succeeds, the following event will be emitted:
+```json
+{
+   "standard":"AccessControllable",
+   "version":"1.0.0",
+   "event":"super_admin_added",
+   "data":{
+      "account":"test.near",
+      "by":"test.near"
+   }
+}
+```
+
 ### acl_is_super_admin
 `acl_is_super_admin` is a _view_ method that checks that account has super admin rights.
 Super admin can control the member list of each group and control the admin list for each group.
@@ -125,6 +138,20 @@ This method can be run by an admin of a specific group or by a super admin.
 $ near call <CONTRACT_ACCOUNT> acl_add_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
 ```
 
+If the method succeeds, the following event will be emitted:
+```json
+{
+   "standard":"AccessControllable",
+   "version":"1.0.0",
+   "event":"admin_added",
+   "data": {
+      "role":"GroupA",
+      "account":"<ALICE_ACCOUNT>",
+      "by":"<GROUP_A_ADMIN_ACCOUNT>"
+   }
+}
+```
+
 ### acl_is_admin
 `acl_is_admin` is a _view_ method that checks if the account has an admin right for the specified group. For super admin, it will return true for every group.
 
@@ -140,6 +167,19 @@ true
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_revoke_admin '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
 ```
+If the method succeeds, the following event will be emitted:
+```json
+{
+   "standard":"AccessControllable",
+   "version":"1.0.0",
+   "event":"admin_revoked",
+   "data":{
+      "role":"GroupA",
+      "account":"<ALICE_ACCOUNT>",
+      "by":"<GROUP_A_ADMIN_ACCOUNT>"
+   }
+}
+```
 
 ### acl_renounce_admin
 `acl_renounce_admin` is a method that removes the group admin right for an account that calls the method.
@@ -150,12 +190,39 @@ $ near call <CONTRACT_ACCOUNT> acl_renounce_admin '{"role": "GroupA"}' --account
 
 After calling that method, Alice will not have the admin right for GroupA anymore.
 
+If the method succeeds, the following event will be emitted:
+```json
+{
+   "standard":"AccessControllable",
+   "version":"1.0.0",
+   "event":"admin_revoked",
+   "data":{
+      "role":"GroupA",
+      "account":"<ALICE_ACCOUNT>",
+      "by":"<ALICE_ACCOUNT>"
+   }
+}
+```
 ### acl_revoke_role
 `acl_revoke_role` is a method that removes the specified account from the list of the group members.
 Only a group admin or a super admin can execute this function.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_revoke_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
+```
+
+If the method succeeds, the following event will be emitted:
+```json
+{
+   "standard":"AccessControllable",
+   "version":"1.0.0",
+   "event":"role_revoked",
+   "data": {
+      "role":"GroupA",
+      "from":"<ALICE_ACCOUNT>",
+      "by":"<GROUP_A_ADMIN_ACCOUNT>"
+   }
+}
 ```
 
 ### acl_renounce_role
@@ -165,11 +232,38 @@ $ near call <CONTRACT_ACCOUNT> acl_revoke_role '{"role": "GroupA", "account_id":
 $ near call <CONTRACT_ACCOUNT> acl_renounce_role '{"role": "GroupA"}' --accountId <ALICE_ACCOUNT>
 ```
 
+If the method succeeds, the following event will be emitted:
+```json
+{
+   "standard":"AccessControllable",
+   "version":"1.0.0",
+   "event":"role_revoked",
+   "data": {
+      "role":"GroupA",
+      "from":"<ALICE_ACCOUNT>",
+      "by":"<ALICE_ACCOUNT>"
+   }
+}
+```
 ### acl_grant_role
 `acl_grant_role` is a method that adds the account to the group member list. Can be executed only by a group admin or by a super admin.
 
 ```shell
 $ near call <CONTRACT_ACCOUNT> acl_grant_role '{"role": "GroupA", "account_id": "<ALICE_ACCOUNT>"}' --accountId <GROUP_A_ADMIN_ACCOUNT>
+```
+
+If the method succeeds, the following event will be emitted:
+```json
+{
+   "standard":"AccessControllable",
+   "version":"1.0.0",
+   "event":"role_granted",
+   "data": {
+      "role":"GroupA",
+      "to":"<ALICE_ACCOUNT>",
+      "by":"<GROUP_A_ADMIN_ACCOUNT>"
+   }
+}
 ```
 
 ### acl_has_role
