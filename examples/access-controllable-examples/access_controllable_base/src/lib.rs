@@ -3,7 +3,7 @@ use near_plugins::AccessControlRole;
 use near_plugins::AccessControllable;
 use near_plugins_derive::access_control;
 use near_plugins_derive::access_control_any;
-use near_sdk::env;
+use near_sdk::{AccountId, env};
 use near_sdk::near_bindgen;
 
 /// All types of access groups
@@ -56,6 +56,20 @@ impl Counter {
     /// view method for get current counter value, every one can use it
     pub fn get_counter(&self) -> u64 {
         self.counter
+    }
+
+    /// method for adding new super admin
+    pub fn add_super_admin(&mut self, new_super_admin_account_id: &AccountId) {
+        ::near_sdk::require!(self.__acl.is_super_admin(&near_sdk::env::predecessor_account_id()),
+                    "Method can be run only by super admin");
+        self.__acl.add_super_admin_unchecked(new_super_admin_account_id);
+    }
+
+    /// method for removing super admin
+    pub fn remove_super_admin(&mut self, super_admin_account_id: &AccountId) {
+        ::near_sdk::require!(self.__acl.is_super_admin(&near_sdk::env::predecessor_account_id()),
+                    "Method can be run only by super admin");
+        self.__acl.revoke_super_admin_unchecked(&super_admin_account_id);
     }
 }
 
@@ -154,5 +168,37 @@ mod tests {
 
         assert!(call!(&bob, contract, "acl_renounce_admin", &json!({"role": String::from(UsersGroups::GroupA)})).await);
         assert!(call!(&alice, contract, "acl_renounce_role", &json!({"role": String::from(UsersGroups::GroupA)})).await);
+    }
+
+    #[tokio::test]
+    async fn two_super_admin() {
+        let (contract_holder, contract) = get_contract(WASM_FILEPATH).await;
+        assert!(call!(contract, "new").await);
+
+        let alice = get_subaccount(&contract_holder, "alice").await;
+        let is_admin: bool = view!(
+            contract,
+            "acl_is_super_admin",
+            &json!({"account_id": alice.id()})
+        );
+
+        assert!(!is_admin);
+
+        assert!(call!(contract, "add_super_admin", &json!({"new_super_admin_account_id": alice.id()})).await);
+
+        let is_admin: bool = view!(
+            contract,
+            "acl_is_super_admin",
+            &json!({"account_id": alice.id()})
+        );
+
+        assert!(is_admin);
+
+        let is_admin: bool = view!(
+            contract,
+            "acl_is_super_admin",
+            &json!({"account_id": contract.id()})
+        );
+        assert!(is_admin);
     }
 }

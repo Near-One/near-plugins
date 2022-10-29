@@ -411,6 +411,29 @@ $ near view get_counter
 2
 ```
 
+### A few super admins
+There may be two or more super admins. 
+By default, there are no interfaces that allow you to add or remove super admins. 
+You can add the corresponding functions to the contract as follows:
+
+```rust
+/// method for adding new super admin
+pub fn add_super_admin(&mut self, new_super_admin_account_id: &AccountId) {
+    ::near_sdk::require!(self.__acl.is_super_admin(&near_sdk::env::predecessor_account_id()),
+                         "Method can be run only by super admin");
+    self.__acl.add_super_admin_unchecked(new_super_admin_account_id); 
+}
+
+/// method for removing super admin
+pub fn remove_super_admin(&mut self, super_admin_account_id: &AccountId) {
+   ::near_sdk::require!(self.__acl.is_super_admin(&near_sdk::env::predecessor_account_id()),
+                       "Method can be run only by super admin");
+   self.__acl.revoke_super_admin_unchecked(&super_admin_account_id);
+}
+```
+
+An illustration of adding two administrators can be seen in the test `two_super_admin` in `access/contrllable_base/lib.rs`
+
 ## Tests running instruction
 Tests in `access_controllable_base/src/lib.rs` contain examples of interaction with a contract.
 
