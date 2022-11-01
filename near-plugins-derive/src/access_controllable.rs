@@ -62,7 +62,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             /// Stores the set of accounts that bear a permission.
             bearers: ::near_sdk::collections::UnorderedMap<
                 #bitflags_type,
-                ::near_sdk::collections::UnorderedSet<::near_sdk::AccountId>,
+                ::near_sdk::store::UnorderedSet<::near_sdk::AccountId>,
             >,
         }
 
@@ -99,10 +99,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         }
 
         impl #acl_type {
-            fn new_bearers_set(permission: #bitflags_type) -> ::near_sdk::collections::UnorderedSet<::near_sdk::AccountId> {
+            fn new_bearers_set(permission: #bitflags_type) -> ::near_sdk::store::UnorderedSet<::near_sdk::AccountId> {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 let specifier = __AclStorageKey::BearersSet { permission };
-                ::near_sdk::collections::UnorderedSet::new(__acl_storage_prefix(base_prefix, specifier))
+                ::near_sdk::store::UnorderedSet::new(__acl_storage_prefix(base_prefix, specifier))
             }
 
             fn get_or_init_permissions(&self, account_id: &::near_sdk::AccountId) -> #bitflags_type {
@@ -387,7 +387,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     Some(set) => set,
                     None => Self::new_bearers_set(permission),
                 };
-                if let true = set.insert(account_id) {
+                if let true = set.insert(account_id.clone()) {
                     self.bearers.insert(&permission, &set);
                 }
             }
@@ -405,7 +405,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     Some(set) => set,
                     None => return vec![],
                 };
-                set.iter().skip(skip).take(limit).collect()
+                set.iter().skip(skip).take(limit).cloned().collect()
             }
 
             /// Removes `account_id` from the set of `permission` bearers.
