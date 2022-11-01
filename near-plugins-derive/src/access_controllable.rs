@@ -60,7 +60,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 #bitflags_type,
             >,
             /// Stores the set of accounts that bear a permission.
-            bearers: ::near_sdk::collections::UnorderedMap<
+            bearers: ::near_sdk::store::UnorderedMap<
                 #bitflags_type,
                 ::near_sdk::store::UnorderedSet<::near_sdk::AccountId>,
             >,
@@ -73,7 +73,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                      permissions: ::near_sdk::collections::UnorderedMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Permissions),
                     ),
-                    bearers: ::near_sdk::collections::UnorderedMap::new(
+                    bearers: ::near_sdk::store::UnorderedMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Bearers),
                     ),
                 }
@@ -383,13 +383,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     permission.bits().is_power_of_two(),
                     "Adding a bearer is allowed only for permissions with exactly one active bit"
                 );
-                let mut set = match self.bearers.get(&permission) {
-                    Some(set) => set,
-                    None => Self::new_bearers_set(permission),
-                };
-                if let true = set.insert(account_id.clone()) {
-                    self.bearers.insert(&permission, &set);
-                }
+                let mut set = self.bearers.entry(permission).or_insert_with(|| {
+                    Self::new_bearers_set(permission)
+                });
+                set.insert(account_id.clone());
             }
 
             /// Enables paginated retrieval of bearers. Returns up to `limit`
@@ -412,13 +409,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn remove_bearer(&mut self, permission: #bitflags_type, account_id: &::near_sdk::AccountId) {
                 // If `permission` is invalid (more than one active bit), this
                 // function is a no-op, due to the check in `add_bearer`.
-                let mut set = match self.bearers.get(&permission) {
+                let mut set = match self.bearers.get_mut(&permission) {
                     Some(set) => set,
                     None => return,
                 };
-                if let true = set.remove(account_id) {
-                    self.bearers.insert(&permission, &set);
-                }
+                set.remove(account_id);
             }
         }
 
