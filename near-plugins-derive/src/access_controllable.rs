@@ -55,7 +55,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         #[derive(::near_sdk::borsh::BorshDeserialize, ::near_sdk::borsh::BorshSerialize)]
         struct #acl_type {
             /// Stores permissions per account.
-            permissions: ::near_sdk::collections::UnorderedMap<
+            permissions: ::near_sdk::store::UnorderedMap<
                 ::near_sdk::AccountId,
                 #bitflags_type,
             >,
@@ -70,7 +70,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn default() -> Self {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 Self {
-                     permissions: ::near_sdk::collections::UnorderedMap::new(
+                     permissions: ::near_sdk::store::UnorderedMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Permissions),
                     ),
                     bearers: ::near_sdk::store::UnorderedMap::new(
@@ -105,11 +105,8 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 ::near_sdk::store::UnorderedSet::new(__acl_storage_prefix(base_prefix, specifier))
             }
 
-            fn get_or_init_permissions(&self, account_id: &::near_sdk::AccountId) -> #bitflags_type {
-                match self.permissions.get(account_id) {
-                    Some(permissions) => permissions,
-                    None => <#bitflags_type>::empty(),
-                }
+            fn get_or_insert_permissions(&mut self, account_id: ::near_sdk::AccountId) -> &mut #bitflags_type {
+                self.permissions.entry(account_id).or_insert_with(|| #bitflags_type::empty())
             }
 
             fn init_super_admin(&mut self, account_id: &::near_sdk::AccountId) -> bool {
@@ -136,12 +133,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn add_super_admin_unchecked(&mut self, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
                     .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
-                let mut permissions = self.get_or_init_permissions(account_id);
+                let mut permissions = self.get_or_insert_permissions(account_id.clone());
 
                 let is_new_super_admin = !permissions.contains(flag);
                 if is_new_super_admin {
                     permissions.insert(flag);
-                    self.permissions.insert(account_id, &permissions);
                     self.add_bearer(flag, account_id);
 
                     let event = ::#cratename::access_controllable::events::SuperAdminAdded {
@@ -171,12 +167,14 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn revoke_super_admin_unchecked(&mut self, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(<#role_type>::acl_super_admin_permission())
                     .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
-                let mut permissions = self.get_or_init_permissions(account_id);
+                let mut permissions = match self.permissions.get_mut(account_id) {
+                    Some(permissions) => permissions,
+                    None => return false, // nothing to do, account has no permissions
+                };
 
                 let was_super_admin = permissions.contains(flag);
                 if was_super_admin {
                     permissions.remove(flag);
-                    self.permissions.insert(account_id, &permissions);
                     self.remove_bearer(flag, account_id);
 
                     let event = ::#cratename::access_controllable::events::SuperAdminRevoked {
@@ -203,12 +201,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn add_admin_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_admin_permission())
                     .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
-                let mut permissions = self.get_or_init_permissions(account_id);
+                let mut permissions = self.get_or_insert_permissions(account_id.clone());
 
                 let is_new_admin = !permissions.contains(flag);
                 if is_new_admin {
                     permissions.insert(flag);
-                    self.permissions.insert(account_id, &permissions);
                     self.add_bearer(flag, account_id);
 
                     let event = ::#cratename::access_controllable::events::AdminAdded {
@@ -252,12 +249,14 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn revoke_admin_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_admin_permission())
                     .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
-                let mut permissions = self.get_or_init_permissions(account_id);
+                let mut permissions = match self.permissions.get_mut(account_id) {
+                    Some(permissions) => permissions,
+                    None => return false, // nothing to do, account has no permissions
+                };
 
                 let was_admin = permissions.contains(flag);
                 if was_admin {
                     permissions.remove(flag);
-                    self.permissions.insert(account_id, &permissions);
                     self.remove_bearer(flag, account_id);
 
                     let event = ::#cratename::access_controllable::events::AdminRevoked {
@@ -283,12 +282,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn grant_role_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_permission())
                     .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
-                let mut permissions = self.get_or_init_permissions(account_id);
+                let mut permissions = self.get_or_insert_permissions(account_id.clone());
 
                 let is_new_grantee = !permissions.contains(flag);
                 if is_new_grantee {
                     permissions.insert(flag);
-                    self.permissions.insert(account_id, &permissions);
                     self.add_bearer(flag, account_id);
 
                     let event = ::#cratename::access_controllable::events::RoleGranted {
@@ -316,12 +314,14 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn revoke_role_unchecked(&mut self, role: #role_type, account_id: &::near_sdk::AccountId) -> bool {
                 let flag = <#bitflags_type>::from_bits(role.acl_permission())
                     .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
-                let mut permissions = self.get_or_init_permissions(account_id);
+                let mut permissions = match self.permissions.get_mut(account_id) {
+                    Some(permissions) => permissions,
+                    None => return false, // nothing to do, account has no permissions
+                };
 
                 let was_grantee = permissions.contains(flag);
                 if was_grantee {
                     permissions.remove(flag);
-                    self.permissions.insert(account_id, &permissions);
                     self.remove_bearer(flag, account_id);
 
                     let event = ::#cratename::access_controllable::events::RoleRevoked {
@@ -365,7 +365,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             fn has_any_permission(&self, target: #bitflags_type, account_id: &::near_sdk::AccountId) -> bool {
-                let permissions = self.get_or_init_permissions(account_id);
+                let permissions = match self.permissions.get(account_id) {
+                    Some(&permissions) => permissions,
+                    None => return false,
+                };
                 target.intersects(permissions)
             }
 
