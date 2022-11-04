@@ -1,17 +1,44 @@
-use std::env;
+use clap::Parser;
 use workspaces::Account;
 
-const WASM_FILEPATH_SECOND: &str =
+const DEFAULT_WASM_FILEPATH_SECOND: &str =
     "../../target/wasm32-unknown-unknown/release/upgradable_base_second.wasm";
+
+#[derive(Parser, Default, Debug)]
+#[clap(version, about = "Up stage code")]
+struct Arguments {
+    #[clap(short, long)]
+    // Path to key for contract account (for example `$HOME/.near-credentials/testnet/<CONTRACT_ACCOUNT>.json`)
+    path_to_key: String,
+
+    #[clap(short, long,  default_value_t = String::from(DEFAULT_WASM_FILEPATH_SECOND))]
+    /// Path to wasm file with the new contract
+    wasm: String,
+
+    #[clap(long, default_value_t = String::from("testnet"))]
+    /// NEAR network (testnet, mainnet, betanet)
+    network: String,
+}
+
+#[macro_export]
+macro_rules! get_contract {
+    ($network_name:ident, $path_to_key:expr) => {
+        Account::from_file($path_to_key, &workspaces::$network_name().await.unwrap()).unwrap()
+    };
+}
 
 #[tokio::main]
 async fn main() {
-    let args: Vec<String> = env::args().collect();
-    let worker = workspaces::testnet().await.unwrap();
+    let args = Arguments::parse();
 
-    let contract: Account = Account::from_file(args[1].clone(), &worker).unwrap();
+    let contract: Account = match &*args.network {
+        "testnet" => get_contract!(testnet, args.path_to_key),
+        "mainnet" =>  get_contract!(mainnet, args.path_to_key),
+        "betanet" => get_contract!(betanet, args.path_to_key),
+        network => panic!("Unknown network {}. Possible networks: testnet, mainnet, betanet", network)
+    };
 
-    let wasm = std::fs::read(WASM_FILEPATH_SECOND).unwrap();
+    let wasm = std::fs::read(&args.wasm).unwrap();
 
     println!(
         "{}",
