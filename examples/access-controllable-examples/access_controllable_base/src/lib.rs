@@ -60,14 +60,14 @@ impl Counter {
 
     /// method for adding new super admin
     pub fn add_super_admin(&mut self, new_super_admin_account_id: &AccountId) {
-        ::near_sdk::require!(self.__acl.is_super_admin(&near_sdk::env::predecessor_account_id()),
+        ::near_sdk::require!(self.acl_is_super_admin(near_sdk::env::predecessor_account_id()),
                     "Method can be run only by super admin");
         self.__acl.add_super_admin_unchecked(new_super_admin_account_id);
     }
 
     /// method for removing super admin
     pub fn remove_super_admin(&mut self, super_admin_account_id: &AccountId) {
-        ::near_sdk::require!(self.__acl.is_super_admin(&near_sdk::env::predecessor_account_id()),
+        ::near_sdk::require!(self.acl_is_super_admin(near_sdk::env::predecessor_account_id()),
                     "Method can be run only by super admin");
         self.__acl.revoke_super_admin_unchecked(&super_admin_account_id);
     }

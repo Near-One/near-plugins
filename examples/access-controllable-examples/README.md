@@ -115,8 +115,8 @@ If the method succeeds, the following event will be emitted:
    "version":"1.0.0",
    "event":"super_admin_added",
    "data":{
-      "account":"test.near",
-      "by":"test.near"
+      "account":"<SUPER_ADMIN_ACCOUNT>",
+      "by":"<CONTRACT_ACCOUNT>"
    }
 }
 ```
@@ -411,23 +411,25 @@ $ near view get_counter
 2
 ```
 
-### A few super admins
-There may be two or more super admins. 
-By default, there are no interfaces that allow you to add or remove super admins. 
-You can add the corresponding functions to the contract as follows:
+### Multiple super admins
+There may be multiple super admins.
+
+By default, only `acl_init_super_admin` is exposed on the contract. To add more super admins or to remove super admins, internal functions can be used.
+
+To make this functionality publicly available, you could add functions like the following to your contract:
 
 ```rust
 /// method for adding new super admin
 pub fn add_super_admin(&mut self, new_super_admin_account_id: &AccountId) {
-    ::near_sdk::require!(self.__acl.is_super_admin(&near_sdk::env::predecessor_account_id()),
-                         "Method can be run only by super admin");
-    self.__acl.add_super_admin_unchecked(new_super_admin_account_id); 
+   ::near_sdk::require!(self.acl_is_super_admin(near_sdk::env::predecessor_account_id()),
+                    "Method can be run only by super admin");
+   self.__acl.add_super_admin_unchecked(new_super_admin_account_id);
 }
 
 /// method for removing super admin
 pub fn remove_super_admin(&mut self, super_admin_account_id: &AccountId) {
-   ::near_sdk::require!(self.__acl.is_super_admin(&near_sdk::env::predecessor_account_id()),
-                       "Method can be run only by super admin");
+   ::near_sdk::require!(self.acl_is_super_admin(near_sdk::env::predecessor_account_id()),
+                    "Method can be run only by super admin");
    self.__acl.revoke_super_admin_unchecked(&super_admin_account_id);
 }
 ```
