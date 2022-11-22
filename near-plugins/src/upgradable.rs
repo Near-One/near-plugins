@@ -24,7 +24,7 @@ use near_sdk::{AccountId, CryptoHash, Promise};
 use serde::Serialize;
 
 pub trait Upgradable {
-    /// Key of storage slot to save the current owner.
+    /// Key of storage slot to save the staged code.
     /// By default b"__CODE__" is used.
     fn up_storage_key(&self) -> Vec<u8>;
 

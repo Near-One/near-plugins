@@ -3,7 +3,7 @@ members = [
     "near-plugins",
     "near-plugins-derive"
 ]
-exclude = ["target"]
+exclude = ["target", "examples"]
 
 [workspace.metadata.workspaces]
 version = "0.15.0"

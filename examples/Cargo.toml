@@ -1,0 +1,14 @@
+[workspace]
+
+members = [
+    "access-controllable-examples/access_controllable_base",
+    "access-controllable-examples/access_control_role_base",
+    "full-access-key-fallback-examples/full_access_key_fallback_base",
+    "near-plugins-test-utils", 
+    "ownable-examples/ownable_base",
+    "ownable-examples/ownable_change_storage_key",
+    "ownable-examples/ownable_cross_call",
+    "pausable-examples/pausable_base",
+    "upgradable-examples/upgradable_base",
+    "upgradable-examples/up_stage_code"
+]
