@@ -5,8 +5,13 @@ using near-sdk-rs and `#[near_bindgen]` macro.
 
 ## Plugins
 
-Documentation and implementation details of each plugin can be found in the source code. Events emitted by each plugin
-are also described in the source code of each macro. Each event follows [NEP-297](https://nomicon.io/Standards/EventsFormat).
+Documentation and implementation details of each plugin can be found in the source code, primarily in the [traits](/near-plugins/src/) which define plugin behavior. Events emitted by each plugin
+are also described in the [source code](/near-plugins-derive/src/) of each macro. Each event follows [NEP-297](https://nomicon.io/Standards/EventsFormat).
+
+The following sections provide an overview of all available plugins. More examples and usage patterns are available in:
+
+- [`examples/`](/examples/)
+- [`near-plugins/tests/contracts/`](/near-plugins/tests/contracts/)
 
 ### [Ownable](/near-plugins/src/ownable.rs)
 
@@ -57,6 +62,8 @@ impl Counter {
 }
 ```
 
+Documentation of all methods provided by the derived implementation of `Ownable` is available in the [definition of the trait](/near-plugins/src/ownable.rs). More examples and guidelines for interacting with an `Ownable` contract can be found [here](/examples/ownable-examples/README.md).
+
 ### [Full Access Key Fallback](/near-plugins/src/full_access_key_fallback.rs)
 
 Allows an authorized account to attach a Full Access Key to the contract.
@@ -81,6 +88,8 @@ impl Counter {
   }
 }
 ```
+
+Documentation of all methods provided by the derived implementation of `FullAccessKeyFallback` is available in the [definition of the trait](/near-plugins/src/full_access_key_fallback.rs). More examples and guidelines for interacting with a `FullAccessKeyFallback` contract can be found [here](/examples/full-access-key-fallback-examples/README.md).
 
 ### [Pausable](/near-plugins/src/pausable.rs)
 
@@ -152,6 +161,8 @@ impl Counter {
 }
 ```
 
+Documentation of all methods provided by the derived implementation of `Pausable` is available in the [definition of the trait](/near-plugins/src/pausable.rs). More examples and guidelines for interacting with a `Pausable` contract can be found [here](/examples/pausable-examples/README.md).
+
 ### [Upgradable](/near-plugins/src/upgradable.rs)
 
 Allows a contract to be upgraded by owner without having a Full Access Key.
@@ -177,6 +188,8 @@ impl Counter {
 
 To upgrade the contract first call `up_stage_code` passing the binary as first argument serialized as borsh. Then call `up_deploy_code`.
 This functions must be called from the owner.
+
+Documentation of all methods provided by the derived implementation of `Upgradable` is available in the [definition of the trait](/near-plugins/src/upgradable.rs). More examples and guidelines for interacting with an `Upgradable` contract can be found [here](/examples/upgradable-examples/README.md).
 
 ## Contributors Notes
 
