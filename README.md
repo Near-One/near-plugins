@@ -180,7 +180,7 @@ This functions must be called from the owner.
 
 ### [AccessControllable](/near-plugins/src/access_controllable.rs)
 
-Enables role based access control for contract methods. A method with restricted access can only be called _successfully_ by accounts that have been granted one of the whitelisted roles. If a restricted method is called by an account with insufficient permissions it panics.
+Enables role-based access control for contract methods. A method with restricted access can only be called _successfully_ by accounts that have been granted one of the whitelisted roles. If a restricted method is called by an account with insufficient permissions, it panics.
 
 Each role is managed by admins who may grant the role to accounts and revoke it from them. In addition, there are super admins that have admin permissions for every role.
 
@@ -213,27 +213,36 @@ impl Counter {
     pub fn new() -> Self {
         let contract = Self {
             counter: 0,
-            __acl: Default::default(), // initialize state
+            // Initialize `AccessControllable` plugin state.
+            __acl: Default::default(),
         };
 
-        // Add a super admin.
+        // Add the contract itself as super admin.
         near_sdk::require!(
             contract.acl_init_super_admin(near_sdk::env::predecessor_account_id()),
             "Failed to initialize super admin",
         );
 
-        // Add an admin. This is possible since the contract was just made a
-        // super admin.
-        near_sdk::require!(
-            Some(true) == contract.acl_add_admin(Role::SkipperByOne.into(), admin_account_id),
-            "Failed to add admin",
+        // Specify an account to be added as admin for a specifc role.
+        let skipper_by_one_admin_account_id: AccountId = "alice.near".parse().unwrap();
+
+        // Add an admin for `Role::SkipperByOne`. This is possible since the
+        // contract was just made a super admin.
+        let result = contract.acl_add_admin(
+            Role::SkipperByOne.into(),
+            skipper_by_one_admin_account_id,
         );
+        near_sdk::require!(Some(true) == result, "Failed to add admin");
+
+        // Specify an account to be granted a specific role.
+        let skipper_by_any_grantee_account_id: AccountId = "bob.near".parse().unwrap();
 
         // Grant a role. Also possible since the contract is super admin.
-        near_sdk::require!(
-            Some(true) == contract.acl_grant_role(Role::SkpperByAny.into(), grantee_account_id),
-            "Failed to grant role",
+        let result = contract.acl_grant_role(
+            Role::SkpperByAny.into(),
+            skipper_by_any_grantee_account_id,
         );
+        near_sdk::require!(Some(true) == result, "Failed to grant role");
     }
 
     /// This method has no access control. Anyone can call it successfully.
@@ -241,14 +250,14 @@ impl Counter {
        self.counter += 1; 
     }
 
-    /// Only an account which was granted any of the whitelisted roles may
-    /// successfully call this method.
+    /// Only an account that was granted either `Role::SkipperByOne` or
+    /// `Role::SkipperByAny` may successfully call this method.
     #[access_control_any(roles(Role::SkipperByOne, Role::SkipperByAny))]
     pub fn skip_one(&mut self) {
         self.counter += 2;
     }
 
-    /// Only an account which was granted `Role:Resetter` may successfully call
+    /// Only an account that was granted `Role:Resetter` may successfully call
     /// this method.
     #[access_control_any(roles(Role::Resetter))]
     pub fn reset(&mut self) {
