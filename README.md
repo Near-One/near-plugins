@@ -223,7 +223,7 @@ impl Counter {
             "Failed to initialize super admin",
         );
 
-        // Specify an account to be added as admin for a specifc role.
+        // Specify an account to be added as admin for a specific role.
         let skipper_by_one_admin_account_id: AccountId = "alice.near".parse().unwrap();
 
         // Add an admin for `Role::SkipperByOne`. This is possible since the
