@@ -18,6 +18,10 @@ struct Arguments {
     #[clap(long, default_value_t = String::from("testnet"))]
     /// NEAR network (testnet, mainnet, betanet)
     network: String,
+
+    #[clap(short, long)]
+    /// Timestamp in nanoseconds to delay deploying the staged code
+    delay_timestamp: u64,
 }
 
 #[macro_export]
@@ -40,11 +44,20 @@ async fn main() {
 
     let wasm = std::fs::read(&args.wasm).unwrap();
 
+    #[derive(borsh::BorshSerialize)]
+    struct UpStageCodeInput {
+        code: Vec<u8>,
+        delay_timestamp: u64,
+    }
+
     println!(
         "{}",
         contract
             .call(contract.id(), "up_stage_code")
-            .args_borsh(wasm)
+            .args_borsh(UpStageCodeInput {
+                code: wasm, 
+                delay_timestamp: args.delay_timestamp
+            })
             .max_gas()
             .transact()
             .await

@@ -105,7 +105,7 @@ But it doesn't work in that way because we can't provide in Bash so long args...
 For running `up_satge_code` take a look on `up_stage_code/src/main.rs` script.
 ```shell
 $ cd up_stage_code
-$ cargo run -- "<PATH_TO_KEY_FOR_CONTRACT_ACCOUNT>"
+$ cargo run -- -p '<PATH_TO_KEY_FOR_CONTRACT_ACCOUNT>' -d <DELAY_TIMESTAMP>
 $ cd ..
 ```
 Where `<PATH_TO_KEY_FOR_CONTRACT_ACCOUNT>` is `$HOME/.near-credentials/testnet/<CONTRACT_ACCOUNT>.json`
