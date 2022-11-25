@@ -191,6 +191,96 @@ This functions must be called from the owner.
 
 Documentation of all methods provided by the derived implementation of `Upgradable` is available in the [definition of the trait](/near-plugins/src/upgradable.rs). More examples and guidelines for interacting with an `Upgradable` contract can be found [here](/examples/upgradable-examples/README.md).
 
+### [AccessControllable](/near-plugins/src/access_controllable.rs)
+
+Enables role-based access control for contract methods. A method with restricted access can only be called _successfully_ by accounts that have been granted one of the whitelisted roles. If a restricted method is called by an account with insufficient permissions, it panics.
+
+Each role is managed by admins who may grant the role to accounts and revoke it from them. In addition, there are super admins that have admin permissions for every role.
+
+The sets of accounts that are (super) admins and grantees are stored in the contract's state.
+
+```rust
+/// Roles are represented by enum variants.
+/// 
+/// Deriving `AccessControlRole` ensures `Role` can be used in
+/// `AccessControllable`.
+#[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub enum Role {
+    SkipperByOne,
+    SkipperByAny,
+    Resetter,
+}
+
+#[access_control(role_type(Role))]
+#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+pub struct Contract {
+    counter: u64,
+}
+
+#[near_bindgen]
+impl Counter {
+    /// Setup access control in the constructor.
+    #[init]
+    pub fn new() -> Self {
+        let contract = Self {
+            counter: 0,
+            // Initialize `AccessControllable` plugin state.
+            __acl: Default::default(),
+        };
+
+        // Add the contract itself as super admin.
+        near_sdk::require!(
+            contract.acl_init_super_admin(near_sdk::env::predecessor_account_id()),
+            "Failed to initialize super admin",
+        );
+
+        // Specify an account to be added as admin for a specific role.
+        let skipper_by_one_admin_account_id: AccountId = "alice.near".parse().unwrap();
+
+        // Add an admin for `Role::SkipperByOne`. This is possible since the
+        // contract was just made a super admin.
+        let result = contract.acl_add_admin(
+            Role::SkipperByOne.into(),
+            skipper_by_one_admin_account_id,
+        );
+        near_sdk::require!(Some(true) == result, "Failed to add admin");
+
+        // Specify an account to be granted a specific role.
+        let skipper_by_any_grantee_account_id: AccountId = "bob.near".parse().unwrap();
+
+        // Grant a role. Also possible since the contract is super admin.
+        let result = contract.acl_grant_role(
+            Role::SkpperByAny.into(),
+            skipper_by_any_grantee_account_id,
+        );
+        near_sdk::require!(Some(true) == result, "Failed to grant role");
+    }
+
+    /// This method has no access control. Anyone can call it successfully.
+    pub fn increase(&mut self) {
+       self.counter += 1; 
+    }
+
+    /// Only an account that was granted either `Role::SkipperByOne` or
+    /// `Role::SkipperByAny` may successfully call this method.
+    #[access_control_any(roles(Role::SkipperByOne, Role::SkipperByAny))]
+    pub fn skip_one(&mut self) {
+        self.counter += 2;
+    }
+
+    /// Only an account that was granted `Role:Resetter` may successfully call
+    /// this method.
+    #[access_control_any(roles(Role::Resetter))]
+    pub fn reset(&mut self) {
+        self.counter = 0;
+    }
+}
+```
+
+The derived implementation of `AccessControllable` provides more methods that are documented in the [definition of the trait](/near-plugins/src/access_controllable.rs). More usage patterns are explained in [examples](/examples/access-controllable-examples/) and in [integration tests](/near-plugins/tests/access_controllable.rs).
+
 ## Contributors Notes
 
 Traits doesn't contain any implementation, even though some interfaces are self-contained enough to have it.
@@ -202,7 +292,6 @@ automatically from macros. They can be changed if the trait is manually implemen
 
 ## Roadmap
 
-- Access Control: Implement a plugin similar to [OpenZeppelin's Access Control](https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/access).
 - Factory upgrades: Allow upgrading all deployed contracts from the factory fetching binary upstream.
 - Events ergonomics. `Event` macro that can be used in the following way:
 ```rust
