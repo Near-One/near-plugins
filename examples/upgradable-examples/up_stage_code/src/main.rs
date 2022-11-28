@@ -21,7 +21,7 @@ struct Arguments {
 
     #[clap(short, long)]
     /// Timestamp in nanoseconds to delay deploying the staged code
-    delay_timestamp: u64,
+    deploy_timestamp: Option<u64>,
 }
 
 #[macro_export]
@@ -37,27 +37,24 @@ async fn main() {
 
     let contract: Account = match &*args.network {
         "testnet" => get_contract!(testnet, args.path_to_key),
-        "mainnet" =>  get_contract!(mainnet, args.path_to_key),
+        "mainnet" => get_contract!(mainnet, args.path_to_key),
         "betanet" => get_contract!(betanet, args.path_to_key),
-        network => panic!("Unknown network {}. Possible networks: testnet, mainnet, betanet", network)
+        network => panic!(
+            "Unknown network {}. Possible networks: testnet, mainnet, betanet",
+            network
+        ),
     };
 
     let wasm = std::fs::read(&args.wasm).unwrap();
-
-    #[derive(borsh::BorshSerialize)]
-    struct UpStageCodeInput {
-        code: Vec<u8>,
-        delay_timestamp: u64,
-    }
 
     println!(
         "{}",
         contract
             .call(contract.id(), "up_stage_code")
-            .args_borsh(UpStageCodeInput {
-                code: wasm, 
-                delay_timestamp: args.delay_timestamp
-            })
+            .args_json(serde_json::json!({
+                "code": near_sdk::json_types::Base64VecU8(wasm),
+                "timestamp": args.deploy_timestamp,
+            }))
             .max_gas()
             .transact()
             .await

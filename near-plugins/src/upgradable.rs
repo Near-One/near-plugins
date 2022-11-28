@@ -20,7 +20,7 @@
 //! After the code is deployed, it should be removed from staging. This will prevent an old code
 //! with a security vulnerability to be deployed, in case it was upgraded using other mechanism.
 use crate::events::{AsEvent, EventMetadata};
-use near_sdk::{AccountId, CryptoHash, Promise};
+use near_sdk::{json_types::Base64VecU8, AccountId, CryptoHash, Duration, Promise, Timestamp};
 use serde::Serialize;
 
 pub trait Upgradable {
@@ -28,13 +28,17 @@ pub trait Upgradable {
     /// By default b"__CODE__" is used.
     fn up_storage_key(&self) -> Vec<u8>;
 
-    /// Key of storage slot to save the allowed timestamp.
-    /// By default b"__ALLOWED_TIMESTAMP__" is used.
-    fn up_allowed_timestamp_storage_key(&self) -> Vec<u8>;
+    /// Key of storage slot to save the staged code.
+    /// By default b"__TIMESTAMP__" is used.
+    fn up_staging_timestamp_storage_key(&self) -> Vec<u8>;
+
+    /// Key of storage slot to save the staged code.
+    /// By default b"__DURATION__" is used.
+    fn up_staging_duration_storage_key(&self) -> Vec<u8>;
 
     /// Allows authorized account to stage some code to be potentially deployed later.
     /// If a previous code was staged but not deployed, it is discarded.
-    fn up_stage_code(&mut self, code: Vec<u8>, delay_timestamp: u64);
+    fn up_stage_code(&mut self, code: Base64VecU8, timestamp: Option<Timestamp>);
 
     /// Returns staged code.
     fn up_staged_code(&self) -> Option<Vec<u8>>;
@@ -45,8 +49,14 @@ pub trait Upgradable {
     /// Allows authorized account to deploy staged code. If no code is staged the method fails.
     fn up_deploy_code(&mut self) -> Promise;
 
-    // The timestamp until which deploying the staged code is not allowed.
-    fn up_allowed_timestamp(&self) -> Option<u64>;
+    /// Initialize the duration of the delay for deploying the staged code.
+    fn up_init_staging_duration(&self, staging_duration: near_sdk::Duration);
+
+    /// Returns the staging delay duration.
+    fn up_get_staging_duration(&self) -> Option<Duration>;
+
+    /// Returns the timestamp until which deploying the last staged code is not allowed.
+    fn up_get_staging_timestamp(&self) -> Option<Duration>;
 }
 
 /// Event emitted when the code is staged
@@ -124,7 +134,7 @@ mod tests {
     #[should_panic(expected = r#"Ownable: Method must be called from owner"#)]
     fn test_stage_code_not_owner() {
         let (mut counter, _) = setup_basic();
-        counter.up_stage_code(vec![1], 0);
+        counter.up_stage_code(vec![1].into(), None);
     }
 
     #[test]
@@ -135,7 +145,7 @@ mod tests {
         testing_env!(ctx);
 
         assert_eq!(counter.up_staged_code(), None);
-        counter.up_stage_code(vec![1], 0);
+        counter.up_stage_code(vec![1].into(), None);
 
         assert_eq!(counter.up_staged_code(), Some(vec![1]));
 
@@ -156,15 +166,22 @@ mod tests {
 
         assert_eq!(counter.up_staged_code(), None);
 
-        let delay_timestamp: u64 = std::time::Duration::from_secs(60)
+        let staging_duration: u64 = std::time::Duration::from_secs(60)
             .as_nanos()
             .try_into()
             .unwrap();
-        counter.up_stage_code(vec![1], delay_timestamp);
+        counter.up_init_staging_duration(staging_duration);
+
+        let staging_timestamp = ctx.block_timestamp + staging_duration;
+        counter.up_stage_code(vec![1].into(), Some(staging_timestamp));
+        assert_eq!(
+            counter.up_get_staging_timestamp().unwrap(),
+            staging_timestamp
+        );
 
         assert_eq!(counter.up_staged_code(), Some(vec![1]));
 
-        ctx.block_timestamp = ctx.block_timestamp + delay_timestamp;
+        ctx.block_timestamp = ctx.block_timestamp + staging_duration;
         testing_env!(ctx);
 
         assert_eq!(
@@ -176,20 +193,27 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Upgradable: The delay time hasn't yet passed")]
+    #[should_panic(expected = "Upgradable: Deploy code too early: staging ends on")]
     fn test_panic_stage_code_with_delay() {
         let (mut counter, mut ctx) = setup_basic();
 
         ctx.predecessor_account_id = "eli.test".to_string().try_into().unwrap();
-        testing_env!(ctx);
+        testing_env!(ctx.clone());
 
         assert_eq!(counter.up_staged_code(), None);
 
-        let delay_timestamp: u64 = std::time::Duration::from_secs(60)
+        let staging_duration: u64 = std::time::Duration::from_secs(60)
             .as_nanos()
             .try_into()
             .unwrap();
-        counter.up_stage_code(vec![1], delay_timestamp);
+        counter.up_init_staging_duration(staging_duration);
+
+        let staging_timestamp = ctx.block_timestamp + staging_duration;
+        counter.up_stage_code(vec![1].into(), Some(staging_timestamp));
+        assert_eq!(
+            counter.up_get_staging_timestamp().unwrap(),
+            staging_timestamp
+        );
 
         assert_eq!(counter.up_staged_code(), Some(vec![1]));
 
@@ -197,6 +221,9 @@ mod tests {
             counter.up_staged_code_hash(),
             Some(sha256(vec![1].as_slice()).try_into().unwrap())
         );
+
+        ctx.block_timestamp = staging_timestamp + 1;
+        testing_env!(ctx);
 
         counter.up_deploy_code();
     }
