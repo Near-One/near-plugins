@@ -175,7 +175,7 @@ impl Counter {
 }
 ```
 
-To upgrade the contract first call `up_stage_code` passing the binary as first argument and the delay timestamp as second argument serialized as borsh. Then call `up_deploy_code`.
+To upgrade the contract first call `up_stage_code` passing the binary as first argument serialized as borsh. Then call `up_deploy_code`.
 This functions must be called from the owner.
 
 ## Contributors Notes

@@ -18,10 +18,6 @@ struct Arguments {
     #[clap(long, default_value_t = String::from("testnet"))]
     /// NEAR network (testnet, mainnet, betanet)
     network: String,
-
-    #[clap(short, long)]
-    /// Timestamp in nanoseconds to delay deploying the staged code
-    deploy_timestamp: Option<u64>,
 }
 
 #[macro_export]
@@ -51,10 +47,7 @@ async fn main() {
         "{}",
         contract
             .call(contract.id(), "up_stage_code")
-            .args_json(serde_json::json!({
-                "code": near_sdk::json_types::Base64VecU8(wasm),
-                "timestamp": args.deploy_timestamp,
-            }))
+            .args_borsh(wasm)
             .max_gas()
             .transact()
             .await

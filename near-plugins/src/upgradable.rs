@@ -20,7 +20,7 @@
 //! After the code is deployed, it should be removed from staging. This will prevent an old code
 //! with a security vulnerability to be deployed, in case it was upgraded using other mechanism.
 use crate::events::{AsEvent, EventMetadata};
-use near_sdk::{json_types::Base64VecU8, AccountId, CryptoHash, Duration, Promise, Timestamp};
+use near_sdk::{AccountId, CryptoHash, Duration, Promise};
 use serde::Serialize;
 
 pub trait Upgradable {
@@ -46,7 +46,7 @@ pub trait Upgradable {
 
     /// Allows authorized account to stage some code to be potentially deployed later.
     /// If a previous code was staged but not deployed, it is discarded.
-    fn up_stage_code(&mut self, code: Base64VecU8, timestamp: Option<Timestamp>);
+    fn up_stage_code(&mut self, code: Vec<u8>);
 
     /// Returns staged code.
     fn up_staged_code(&self) -> Option<Vec<u8>>;
@@ -154,7 +154,7 @@ mod tests {
     #[should_panic(expected = r#"Ownable: Method must be called from owner"#)]
     fn test_stage_code_not_owner() {
         let (mut counter, _) = setup_basic();
-        counter.up_stage_code(vec![1].into(), None);
+        counter.up_stage_code(vec![1]);
     }
 
     #[test]
@@ -165,7 +165,7 @@ mod tests {
         testing_env!(ctx);
 
         assert_eq!(counter.up_staged_code(), None);
-        counter.up_stage_code(vec![1].into(), None);
+        counter.up_stage_code(vec![1]);
 
         assert_eq!(counter.up_staged_code(), Some(vec![1]));
 
@@ -193,7 +193,7 @@ mod tests {
         counter.up_init_staging_duration(staging_duration);
 
         let staging_timestamp = ctx.block_timestamp + staging_duration;
-        counter.up_stage_code(vec![1].into(), Some(staging_timestamp));
+        counter.up_stage_code(vec![1]);
         assert_eq!(
             counter.up_get_staging_timestamp().unwrap(),
             staging_timestamp
@@ -229,7 +229,7 @@ mod tests {
         counter.up_init_staging_duration(staging_duration);
 
         let staging_timestamp = ctx.block_timestamp + staging_duration;
-        counter.up_stage_code(vec![1].into(), Some(staging_timestamp));
+        counter.up_stage_code(vec![1]);
         assert_eq!(
             counter.up_get_staging_timestamp().unwrap(),
             staging_timestamp

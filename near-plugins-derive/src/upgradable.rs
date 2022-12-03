@@ -65,19 +65,13 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             #[#cratename::only(owner)]
-            fn up_stage_code(&mut self, code: near_sdk::json_types::Base64VecU8, timestamp: Option<near_sdk::Timestamp>) {
-                let min_staging_timestamp = near_sdk::env::block_timestamp() + self.up_get_staging_duration().unwrap_or(0);
-                let timestamp = timestamp.unwrap_or(min_staging_timestamp);
+            fn up_stage_code(&mut self, #[serializer(borsh)] code: Vec<u8>) {
+                let timestamp = near_sdk::env::block_timestamp() + self.up_get_staging_duration().unwrap_or(0);
 
-                near_sdk::require!(
-                    min_staging_timestamp <= timestamp,
-                    format!("Upgradable: Timestamp must be later than the minimum staging timestamp {}", min_staging_timestamp)
-                );
-
-                if code.0.is_empty() {
+                if code.is_empty() {
                     near_sdk::env::storage_remove(self.up_storage_key().as_ref());
                 } else {
-                    near_sdk::env::storage_write(self.up_storage_key().as_ref(), code.0.as_ref());
+                    near_sdk::env::storage_write(self.up_storage_key().as_ref(), code.as_ref());
                 }
 
                 near_sdk::env::storage_write(self.up_staging_timestamp_storage_key().as_ref(), &timestamp.to_be_bytes());
