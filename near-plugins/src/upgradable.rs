@@ -36,6 +36,14 @@ pub trait Upgradable {
     /// By default b"__DURATION__" is used.
     fn up_staging_duration_storage_key(&self) -> Vec<u8>;
 
+    /// Key of storage slot to save the staged code.
+    /// By default b"__UPDATE_DURATION__" is used.
+    fn up_update_staging_duration_storage_key(&self) -> Vec<u8>;
+
+    /// Key of storage slot to save the staged code.
+    /// By default b"__UPDATE_DURATION_TIMESTAMP__" is used.
+    fn up_update_staging_duration_timestamp_storage_key(&self) -> Vec<u8>;
+
     /// Allows authorized account to stage some code to be potentially deployed later.
     /// If a previous code was staged but not deployed, it is discarded.
     fn up_stage_code(&mut self, code: Base64VecU8, timestamp: Option<Timestamp>);
@@ -57,6 +65,18 @@ pub trait Upgradable {
 
     /// Returns the timestamp until which deploying the last staged code is not allowed.
     fn up_get_staging_timestamp(&self) -> Option<Duration>;
+
+    /// Allows authorized account to stage update of the staging duration.
+    fn up_stage_update_staging_duration(&self, staging_duration: near_sdk::Duration);
+
+    /// Allows authorized account to apply the staging duration update.
+    fn up_apply_update_staging_duration(&self);
+
+    /// Returns the timestamp until which applying the last staged duration is not allowed.
+    fn up_get_update_staging_duration_timestamp(&self) -> Option<near_sdk::Timestamp>;
+
+    /// Returns the staged duration update.
+    fn up_get_update_staging_duration(&self) -> Option<near_sdk::Duration>;
 }
 
 /// Event emitted when the code is staged
