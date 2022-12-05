@@ -28,19 +28,19 @@ pub trait Upgradable {
     /// By default b"__CODE__" is used.
     fn up_storage_key(&self) -> Vec<u8>;
 
-    /// Key of storage slot to save the staged code.
+    /// Key of storage slot to save the allowed timestamp to deploy the staged code.
     /// By default b"__TIMESTAMP__" is used.
     fn up_staging_timestamp_storage_key(&self) -> Vec<u8>;
 
-    /// Key of storage slot to save the staged code.
+    /// Key of storage slot to save the delay duration of deploying staged code.
     /// By default b"__DURATION__" is used.
     fn up_staging_duration_storage_key(&self) -> Vec<u8>;
 
-    /// Key of storage slot to save the staged code.
+    /// Key of storage slot to save the staged delay duration update.
     /// By default b"__UPDATE_DURATION__" is used.
     fn up_update_staging_duration_storage_key(&self) -> Vec<u8>;
 
-    /// Key of storage slot to save the staged code.
+    /// Key of storage slot to save the allowed timestamp to deploy the staged duration update.
     /// By default b"__UPDATE_DURATION_TIMESTAMP__" is used.
     fn up_update_staging_duration_timestamp_storage_key(&self) -> Vec<u8>;
 
