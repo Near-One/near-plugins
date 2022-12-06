@@ -40,7 +40,7 @@ pub trait Upgradable {
     /// By default b"__UPDATE_DURATION__" is used.
     fn up_update_staging_duration_storage_key(&self) -> Vec<u8>;
 
-    /// Key of storage slot to save the allowed timestamp to deploy the staged duration update.
+    /// Key of storage slot to save the allowed timestamp to apply the staged duration update.
     /// By default b"__UPDATE_DURATION_TIMESTAMP__" is used.
     fn up_update_staging_duration_timestamp_storage_key(&self) -> Vec<u8>;
 
