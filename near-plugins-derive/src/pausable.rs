@@ -1,5 +1,6 @@
 use crate::utils;
 use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
+use darling::util::PathList;
 use darling::{FromDeriveInput, FromMeta};
 use proc_macro::{self, TokenStream};
 use quote::quote;
@@ -8,7 +9,11 @@ use syn::{parse, parse_macro_input, AttributeArgs, DeriveInput, ItemFn};
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(pausable), forward_attrs(allow, doc, cfg))]
 struct Opts {
+    /// Storage key under which the set of paused features is stored. If it is
+    /// `None` the default value will be used.
     paused_storage_key: Option<String>,
+    /// Access control roles whose grantees may pause and unpause features.
+    manager_roles: PathList,
 }
 
 pub fn derive_pausable(input: TokenStream) -> TokenStream {
@@ -21,6 +26,11 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
     let paused_storage_key = opts
         .paused_storage_key
         .unwrap_or_else(|| "__PAUSE__".to_string());
+    let manager_roles = opts.manager_roles;
+    assert!(
+        manager_roles.len() > 0,
+        "Specify at least one role for manager_roles"
+    );
 
     let output = quote! {
         #[near_bindgen]
@@ -42,7 +52,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                 })
             }
 
-            #[#cratename::only(owner)]
+            #[#cratename::access_control_any(roles(#(#manager_roles),*))]
             fn pa_pause_feature(&mut self, key: String) {
                 let mut paused_keys = self.pa_all_paused().unwrap_or_default();
                 paused_keys.insert(key.clone());
@@ -63,7 +73,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                 );
             }
 
-            #[#cratename::only(owner)]
+            #[#cratename::access_control_any(roles(#(#manager_roles),*))]
             fn pa_unpause_feature(&mut self, key: String) {
                 let mut paused_keys = self.pa_all_paused().unwrap_or_default();
                 paused_keys.remove(&key);
@@ -96,11 +106,8 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
 #[derive(Default, FromMeta, Debug)]
 #[darling(default)]
 pub struct ExceptSubArgs {
-    #[darling(default)]
-    owner: bool,
-    #[darling(default)]
-    #[darling(rename = "self")]
-    _self: bool,
+    /// Grantees of these roles are exempted and may always call the method.
+    roles: PathList,
 }
 
 #[derive(Debug, FromMeta)]
@@ -158,9 +165,9 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let bypass_condition = get_bypass_condition(&args.except);
 
     let check_pause = quote!(
-        let mut check_paused = true;
+        let mut __check_paused = true;
         #bypass_condition
-        if check_paused {
+        if __check_paused {
             ::near_sdk::require!(self.pa_is_paused(#fn_name.to_string()), "Pausable: Method must be paused");
         }
     );
@@ -169,28 +176,16 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn get_bypass_condition(args: &ExceptSubArgs) -> proc_macro2::TokenStream {
-    let self_condition = if args._self {
-        quote!(
-            if ::near_sdk::env::predecessor_account_id() == ::near_sdk::env::current_account_id() {
-                __check_paused = false;
-            }
-        )
-    } else {
-        quote!()
-    };
-
-    let owner_condition = if args.owner {
-        quote!(
-            if Some(::near_sdk::env::predecessor_account_id()) == self.owner_get() {
-                __check_paused = false;
-            }
-        )
-    } else {
-        quote!()
-    };
-
+    let except_roles = args.roles.clone();
     quote!(
-        #self_condition
-        #owner_condition
+        let __except_roles: Vec<&str> = vec![#(#except_roles.into()),*];
+        let __except_roles: Vec<String> = __except_roles.iter().map(|&x| x.into()).collect();
+        let may_bypass = self.acl_has_any_role(
+            __except_roles,
+            ::near_sdk::env::predecessor_account_id()
+        );
+        if may_bypass {
+            __check_paused = false;
+        }
     )
 }

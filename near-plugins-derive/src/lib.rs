@@ -28,7 +28,7 @@ pub fn derive_fak_fallback(input: TokenStream) -> TokenStream {
     full_access_key_fallback::derive_fak_fallback(input)
 }
 
-#[proc_macro_derive(Pausable)]
+#[proc_macro_derive(Pausable, attributes(pausable))]
 pub fn derive_pausable(input: TokenStream) -> TokenStream {
     pausable::derive_pausable(input)
 }

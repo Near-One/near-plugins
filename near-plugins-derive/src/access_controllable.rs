@@ -140,11 +140,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     permissions.insert(flag);
                     self.add_bearer(flag, account_id);
 
-                    let event = ::#cratename::access_controllable::events::SuperAdminAdded {
+                    let event = #cratename::access_controllable::events::SuperAdminAdded {
                         account: account_id.clone(),
                         by: ::near_sdk::env::predecessor_account_id(),
                     };
-                    ::#cratename::events::AsEvent::emit(&event);
+                    #cratename::events::AsEvent::emit(&event);
                 }
 
                 is_new_super_admin
@@ -177,11 +177,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     permissions.remove(flag);
                     self.remove_bearer(flag, account_id);
 
-                    let event = ::#cratename::access_controllable::events::SuperAdminRevoked {
+                    let event = #cratename::access_controllable::events::SuperAdminRevoked {
                         account: account_id.clone(),
                         by: ::near_sdk::env::predecessor_account_id(),
                     };
-                    ::#cratename::events::AsEvent::emit(&event);
+                    #cratename::events::AsEvent::emit(&event);
                 }
 
                 was_super_admin
@@ -208,12 +208,12 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     permissions.insert(flag);
                     self.add_bearer(flag, account_id);
 
-                    let event = ::#cratename::access_controllable::events::AdminAdded {
+                    let event = #cratename::access_controllable::events::AdminAdded {
                         role: role.into(),
                         account: account_id.clone(),
                         by: ::near_sdk::env::predecessor_account_id(),
                     };
-                    ::#cratename::events::AsEvent::emit(&event);
+                    #cratename::events::AsEvent::emit(&event);
                 }
 
                 is_new_admin
@@ -259,12 +259,12 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     permissions.remove(flag);
                     self.remove_bearer(flag, account_id);
 
-                    let event = ::#cratename::access_controllable::events::AdminRevoked {
+                    let event = #cratename::access_controllable::events::AdminRevoked {
                         role: role.into(),
                         account: account_id.clone(),
                         by: ::near_sdk::env::predecessor_account_id(),
                     };
-                    ::#cratename::events::AsEvent::emit(&event);
+                    #cratename::events::AsEvent::emit(&event);
                 }
 
                 was_admin
@@ -289,12 +289,12 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     permissions.insert(flag);
                     self.add_bearer(flag, account_id);
 
-                    let event = ::#cratename::access_controllable::events::RoleGranted {
+                    let event = #cratename::access_controllable::events::RoleGranted {
                         role: role.into(),
                         by: ::near_sdk::env::predecessor_account_id(),
                         to: account_id.clone(),
                     };
-                    ::#cratename::events::AsEvent::emit(&event);
+                    #cratename::events::AsEvent::emit(&event);
                 }
 
                 is_new_grantee
@@ -324,12 +324,12 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     permissions.remove(flag);
                     self.remove_bearer(flag, account_id);
 
-                    let event = ::#cratename::access_controllable::events::RoleRevoked {
+                    let event = #cratename::access_controllable::events::RoleRevoked {
                         role: role.into(),
                         from: account_id.clone(),
                         by: ::near_sdk::env::predecessor_account_id(),
                     };
-                    ::#cratename::events::AsEvent::emit(&event);
+                    #cratename::events::AsEvent::emit(&event);
                 }
 
                 was_grantee
@@ -575,7 +575,7 @@ pub fn access_control_any(attrs: TokenStream, item: TokenStream) -> TokenStream 
                 #function_name,
                 __acl_any_roles,
             );
-            env::panic_str(&message);
+            near_sdk::env::panic_str(&message);
         }
     };
 
