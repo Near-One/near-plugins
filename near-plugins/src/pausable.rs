@@ -516,5 +516,4 @@ mod tests {
         counter.decrease_1();
         assert_eq!(counter.counter, 0);
     }
-
 }
