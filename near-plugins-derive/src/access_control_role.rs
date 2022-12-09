@@ -176,7 +176,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             }
         }
 
-        ::#cratename::bitflags::bitflags! {
+        #cratename::bitflags::bitflags! {
             /// Encodes permissions for roles and admins.
             #[derive(BorshDeserialize, BorshSerialize, Default)]
             struct #bitflags_type_ident: u128 {
