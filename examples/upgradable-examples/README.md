@@ -66,26 +66,26 @@ To upgrade the contract first call up_stage_code passing the binary as first arg
 
 ## The contract methods description
 ### up_storage_key
-`up_storage_key` is a _view_ method that returns a key of the storage slot for stage code.
-By default, `b"__CODE__"` is used. For changing, the attribute `upgradable` can be used.
+`up_storage_prefix` is a _view_ method that returns the storage prefix for slots related to upgradable.
+By default, `b"__up__"` is used. For changing, the attribute `upgradable` can be used.
 
 ```shell
-$ near view <CONTRACT_ACCOUNT> up_storage_key
-View call: <CONTRACT_ACCOUNT>.up_storage_key()
+$ near view <CONTRACT_ACCOUNT> up_storage_prefix
+View call: <CONTRACT_ACCOUNT>.up_storage_prefix()
 [
-  95, 95, 80, 65, 85,
-  83, 69, 68, 95, 95
+  95, 95, 117,
+  112, 95, 95
 ]
 $ python3
->>> print(' '.join(str(b) for b in bytes("__CODE__", 'utf8')))
-95 95 67 79 68 69 95 95
+>>> print(' '.join(str(b) for b in bytes("__up__", 'utf8')))
+95 95 117 112 95 95
 ```
 
-Example of changing paused storage key:
+Example of changing the storage prefix:
 ```rust
 #[near_bindgen]
 #[derive(Ownable, Upgradable, Default, BorshSerialize, BorshDeserialize)]
-#[upgradable(code_storage_key="OTHER_CODE_STORAGE_KEY")]
+#[upgradable(storage_prefix="OTHER_CODE_STORAGE_PREFIX")]
 struct Counter {
   counter: u64,
 }

@@ -20,29 +20,15 @@
 //! After the code is deployed, it should be removed from staging. This will prevent an old code
 //! with a security vulnerability to be deployed, in case it was upgraded using other mechanism.
 use crate::events::{AsEvent, EventMetadata};
-use near_sdk::{AccountId, CryptoHash, Duration, Promise};
+use near_sdk::{AccountId, CryptoHash, Promise};
 use serde::Serialize;
 
 pub trait Upgradable {
-    /// Key of storage slot to save the staged code.
-    /// By default b"__CODE__" is used.
-    fn up_storage_key(&self) -> Vec<u8>;
+    /// Returns the storage prefix for slots related to upgradable.
+    fn up_storage_prefix(&self) -> &'static [u8];
 
-    /// Key of storage slot to save the allowed timestamp to deploy the staged code.
-    /// By default b"__TIMESTAMP__" is used.
-    fn up_staging_timestamp_storage_key(&self) -> Vec<u8>;
-
-    /// Key of storage slot to save the delay duration of deploying staged code.
-    /// By default b"__DURATION__" is used.
-    fn up_staging_duration_storage_key(&self) -> Vec<u8>;
-
-    /// Key of storage slot to save the staged delay duration update.
-    /// By default b"__UPDATE_DURATION__" is used.
-    fn up_update_staging_duration_storage_key(&self) -> Vec<u8>;
-
-    /// Key of storage slot to save the allowed timestamp to apply the staged duration update.
-    /// By default b"__UPDATE_DURATION_TIMESTAMP__" is used.
-    fn up_update_staging_duration_timestamp_storage_key(&self) -> Vec<u8>;
+    /// Returns all staging durations and timestamps.
+    fn up_get_duration_status(&self) -> UpgradableDurationStatus;
 
     /// Allows authorized account to stage some code to be potentially deployed later.
     /// If a previous code was staged but not deployed, it is discarded.
@@ -60,23 +46,19 @@ pub trait Upgradable {
     /// Initialize the duration of the delay for deploying the staged code.
     fn up_init_staging_duration(&self, staging_duration: near_sdk::Duration);
 
-    /// Returns the staging delay duration.
-    fn up_get_staging_duration(&self) -> Option<Duration>;
-
-    /// Returns the timestamp until which deploying the last staged code is not allowed.
-    fn up_get_staging_timestamp(&self) -> Option<Duration>;
-
     /// Allows authorized account to stage update of the staging duration.
     fn up_stage_update_staging_duration(&self, staging_duration: near_sdk::Duration);
 
     /// Allows authorized account to apply the staging duration update.
     fn up_apply_update_staging_duration(&self);
+}
 
-    /// Returns the timestamp until which applying the last staged duration is not allowed.
-    fn up_get_update_staging_duration_timestamp(&self) -> Option<near_sdk::Timestamp>;
-
-    /// Returns the staged duration update.
-    fn up_get_update_staging_duration(&self) -> Option<near_sdk::Duration>;
+#[derive(Serialize)]
+pub struct UpgradableDurationStatus {
+    pub staging_duration: Option<near_sdk::Duration>,
+    pub staging_timestamp: Option<near_sdk::Timestamp>,
+    pub update_staging_duration: Option<near_sdk::Duration>,
+    pub update_staging_duration_timestamp: Option<near_sdk::Timestamp>,
 }
 
 /// Event emitted when the code is staged
@@ -125,6 +107,7 @@ mod tests {
     use near_sdk::env::sha256;
     use near_sdk::{near_bindgen, testing_env, VMContext};
     use std::convert::TryInto;
+    use borsh::BorshSerialize;
 
     #[near_bindgen]
     #[derive(Ownable, Upgradable)]
@@ -195,7 +178,7 @@ mod tests {
         let staging_timestamp = ctx.block_timestamp + staging_duration;
         counter.up_stage_code(vec![1]);
         assert_eq!(
-            counter.up_get_staging_timestamp().unwrap(),
+            counter.up_get_duration_status().staging_timestamp.unwrap(),
             staging_timestamp
         );
 
@@ -231,7 +214,7 @@ mod tests {
         let staging_timestamp = ctx.block_timestamp + staging_duration;
         counter.up_stage_code(vec![1]);
         assert_eq!(
-            counter.up_get_staging_timestamp().unwrap(),
+            counter.up_get_duration_status().staging_timestamp.unwrap(),
             staging_timestamp
         );
 
