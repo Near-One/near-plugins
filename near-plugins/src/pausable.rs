@@ -299,6 +299,23 @@ mod tests {
         assert_eq!(counter.counter, 0);
     }
 
+    /// Verify `except` escape hatch works when the feature is paused via `ALL`.
+    #[test]
+    fn test_pause_with_all_allows_except() {
+        let (mut counter, mut ctx) = setup_basic();
+
+        // Pause `ALL`.
+        ctx.predecessor_account_id = "anna.test".to_string().try_into().unwrap();
+        testing_env!(ctx.clone());
+        counter.pa_pause_feature("ALL".to_string());
+
+        // Call paused function from exempted account.
+        ctx.predecessor_account_id = "brenda.test".to_string().try_into().unwrap();
+        testing_env!(ctx.clone());
+        counter.increase_4();
+        assert_eq!(counter.counter, 4);
+    }
+
     #[test]
     fn test_not_paused_with_different_key() {
         let (mut counter, mut ctx) = setup_basic();
