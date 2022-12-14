@@ -15,8 +15,10 @@
 //! by storing all paused keys in a single slot on the storage. Notice that unpausing "ALL" will not
 //! necessarily unpause all features, if other features are still present in the paused_list.
 //!
-//! Only owner and self can call `pa_pause_feature` / `pa_unpause_feature`. Requires the contract to
-//! be Ownable.
+//! As a precondition for being `Pausable` a contract must be `AccessControllable`. Access control
+//! is used to define the permissions required to pause and unpause features. In addition, grantees
+//! of access control roles may be allowed to call methods that are `#[pause]` or `#[if_paused]`
+//! unrestrictedly via the `except` argument.
 //!
 //! ## Credits:
 //!

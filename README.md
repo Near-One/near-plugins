@@ -96,7 +96,7 @@ Documentation of all methods provided by the derived implementation of `FullAcce
 Allow contracts to implement an emergency stop mechanism that can be triggered by an authorized account. Pauses can be
 used granularly to only limit certain features.
 
-Contract example using _Pausable_ plugin. Note that it requires the contract to be _AccessControllable_.
+Contract example using _Pausable_ plugin. Note that it requires the contract to be _AccessControllable_ in order to manage permissions. Roles allowing accounts to call certain methods can be granted and revoked via the _AccessControllable_ plugin.
 
 ```rust
 
