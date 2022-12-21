@@ -113,38 +113,3 @@ impl Counter {
         self.counter += 1;
     }
 }
-
-/// Exposing internal methods to facilitate integration testing.
-/// TODO needed for this contract?
-#[near_bindgen]
-impl Counter {
-    #[private]
-    pub fn acl_add_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
-        self.__acl.add_super_admin_unchecked(&account_id)
-    }
-
-    #[private]
-    pub fn acl_revoke_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
-        self.__acl.revoke_super_admin_unchecked(&account_id)
-    }
-
-    #[private]
-    pub fn acl_revoke_role_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.__acl.revoke_role_unchecked(role.into(), &account_id)
-    }
-
-    #[private]
-    pub fn acl_add_admin_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.__acl.add_admin_unchecked(role, &account_id)
-    }
-
-    #[private]
-    pub fn acl_revoke_admin_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.__acl.revoke_admin_unchecked(role, &account_id)
-    }
-
-    #[private]
-    pub fn acl_grant_role_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.__acl.grant_role_unchecked(role, &account_id)
-    }
-}
