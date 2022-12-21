@@ -30,20 +30,59 @@ use serde::Serialize;
 use std::collections::HashSet;
 
 pub trait Pausable {
-    /// Key of storage slot with list of paused features.
-    /// By default b"__PAUSED__" is used.
+    /// Returns the key of the storage slot which contains the list of features that are paused. By
+    /// default `b"__PAUSED__"` is used.
+    ///
+    /// Attribute `paused_storage_key` can be used to set a different key:
+    ///
+    /// ```ignore
+    /// #[pausable(paused_storage_key="CUSTOM_KEY")]
+    /// struct Contract { /* ... */}
+    /// ```
     fn pa_storage_key(&self) -> Vec<u8>;
 
-    /// Check if a feature is paused
+    /// Returns whether feature `key` is paused.
     fn pa_is_paused(&self, key: String) -> bool;
 
-    /// List of all current paused features
+    /// Returns all features that are currently paused.
     fn pa_all_paused(&self) -> Option<HashSet<String>>;
 
-    /// Pause specified feature.
+    /// Pauses feature `key`. This method fails if the caller has not been granted one of the access
+    /// control `manager_roles` passed to the `Pausable` plugin.
+    ///
+    /// If the method succeeds, the following event will be emitted:
+    ///
+    /// ```json
+    /// {
+    ///   "standard":"Pausable",
+    ///   "version":"1.0.0",
+    ///   "event":"pause",
+    ///   "data":
+    ///     {
+    ///       "by":"<OWNER_ACCOUNT>",
+    ///       "key":"<KEY>"
+    ///     }
+    /// }
+    /// ```
     fn pa_pause_feature(&mut self, key: String);
 
-    /// Unpause specified feature
+    /// Unpauses feature `key`. This method fails if the caller has not been granted one of the
+    /// access control `manager_roles` passed to the `Pausable` plugin.
+    ///
+    /// If the method succeeds, the following event will be emitted:
+    ///
+    /// ```json
+    /// {
+    ///    "standard":"Pausable",
+    ///    "version":"1.0.0",
+    ///    "event":"unpause",
+    ///    "data":
+    ///    {
+    ///       "by":"<OWNER_ACCOUNT>",
+    ///       "key":"<KEY>"
+    ///    }
+    /// }
+    /// ```
     fn pa_unpause_feature(&mut self, key: String);
 }
 
