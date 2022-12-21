@@ -174,7 +174,6 @@ async fn assert_pause_feature_acl_failure(contract: &PausableContract, caller: &
 
 #[tokio::test]
 /// Only accounts that were granted a manager role may pause features.
-/// TODO same for unpause
 async fn test_pause_not_allowed_from_unauthorized_account() -> anyhow::Result<()> {
     let Setup {
         pausable_contract,
@@ -194,6 +193,43 @@ async fn test_pause_not_allowed_from_self() -> anyhow::Result<()> {
         ..
     } = Setup::new().await?;
     assert_pause_feature_acl_failure(&pausable_contract, contract.as_account()).await;
+    Ok(())
+}
+
+/// Asserts `pa_unpause_feature` fails due to insufficient acl permissions when called by `caller`.
+async fn assert_unpause_feature_acl_failure(contract: &PausableContract, caller: &Account) {
+    let result = contract
+        .pa_unpause_feature(caller, "increase_1")
+        .await
+        .unwrap();
+    assert_insufficient_acl_permissions(
+        result,
+        "pa_unpause_feature",
+        vec!["PauseManager".to_string()],
+    );
+}
+
+#[tokio::test]
+/// Only accounts that were granted a manager role may unpause features.
+async fn test_unpause_not_allowed_from_unauthorized_account() -> anyhow::Result<()> {
+    let Setup {
+        pausable_contract,
+        unauth_account,
+        ..
+    } = Setup::new().await?;
+    assert_unpause_feature_acl_failure(&pausable_contract, &unauth_account).await;
+    Ok(())
+}
+
+#[tokio::test]
+/// If not granted a manager role, the contract itself may not unpause features.
+async fn test_unpause_not_allowed_from_self() -> anyhow::Result<()> {
+    let Setup {
+        contract,
+        pausable_contract,
+        ..
+    } = Setup::new().await?;
+    assert_unpause_feature_acl_failure(&pausable_contract, contract.as_account()).await;
     Ok(())
 }
 
