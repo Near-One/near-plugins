@@ -4,3 +4,5 @@ build:
 # Helpful for debugging. Requires `cargo-expand`.
 expand:
 	cargo expand > expanded.rs
+
+.PHONY: build expand
