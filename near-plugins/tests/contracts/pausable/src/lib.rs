@@ -5,6 +5,8 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault};
 
+/// Define roles for access control of `Pausable` features. Accounts which are
+/// granted a role are authorized to execute the corresponding action.
 #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub enum Role {
@@ -55,6 +57,7 @@ impl Counter {
         contract
     }
 
+    /// Returns the value of the counter.
     pub fn get_counter(&self) -> u64 {
         self.counter
     }
@@ -79,7 +82,8 @@ impl Counter {
         self.counter += 2;
     }
 
-    /// Similar to `#[pause]` but roles passed as argument may still successfully call this method.
+    /// Similar to `#[pause]` but roles passed as argument may still successfully call this method
+    /// even when the corresponding feature is paused.
     #[pause(except(roles(Role::Unrestricted4Increaser, Role::Unrestricted4Modifier)))]
     pub fn increase_4(&mut self) {
         self.counter += 4;
