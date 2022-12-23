@@ -23,6 +23,7 @@ use crate::events::{AsEvent, EventMetadata};
 use near_sdk::{AccountId, CryptoHash, Promise};
 use serde::Serialize;
 
+/// Trait describing the functionality of the _Upgradable_ plugin.
 pub trait Upgradable {
     /// Key of storage slot to save the staged code.
     /// By default b"__CODE__" is used.
@@ -45,7 +46,9 @@ pub trait Upgradable {
 /// Event emitted when the code is staged
 #[derive(Serialize, Clone)]
 struct StageCode {
+    /// The account which staged the code.
     by: AccountId,
+    /// The hash of the code that was staged.
     code_hash: CryptoHash,
 }
 
@@ -63,7 +66,9 @@ impl AsEvent<StageCode> for StageCode {
 /// Event emitted when the code is deployed
 #[derive(Serialize, Clone)]
 struct DeployCode {
+    /// The account that deployed the code.
     by: AccountId,
+    /// The hash of the code that was deployed.
     code_hash: CryptoHash,
 }
 

@@ -29,6 +29,7 @@ use near_sdk::AccountId;
 use serde::Serialize;
 use std::collections::HashSet;
 
+/// Trait describing the functionality of the `Pausable` plugin.
 pub trait Pausable {
     /// Returns the key of the storage slot which contains the list of features that are paused. By
     /// default `b"__PAUSED__"` is used.
