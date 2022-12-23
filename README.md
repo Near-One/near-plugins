@@ -220,6 +220,24 @@ impl Counter {
 
 The derived implementation of `AccessControllable` provides more methods that are documented in the [definition of the trait](/near-plugins/src/access_controllable.rs). More usage patterns are explained in [examples](/examples/access-controllable-examples/) and in [integration tests](/near-plugins/tests/access_controllable.rs).
 
+## Internal Architecture
+
+Each plugin's functionality is described by a trait defined in `near-plugins/src/<plugin_name>.rs`. The trait's methods will be available on contracts that use the corresponding plugin, whereas the implementation of the trait is provided by procedural macros.
+
+The code that is generated for a trait implementation is based on `near-plugins-derive/src/<plugin_name.rs>`. To inspect the code generated for your particular smart contract, [`cargo-expand`](https://github.com/dtolnay/cargo-expand) can be helpful.
+
+## Testing
+
+Tests should verify that once the macros provided by this crate are expanded, the contract they are used in has the intended functionality. Integration tests are utilized for that purpose:
+
+- A contract using the plugin is contained in `near-plugins/tests/contracts/<plugin_name>/`.
+- This contract is used in `near-plugins/tests/<plugin_name>.rs` which:
+    - Compiles and deploys the contract on chain via [NEAR `workspaces`](https://docs.rs/workspaces/0.7.0/workspaces/).
+    - Sends transactions to the deployed contract to verify plugin functionality.
+
+> **Note**
+> Currently some plugins are still tested by unit tests in `near-plugins/src/<plugin_name>.rs`, not by integration tests. Migrating these unit tests to integration tests as described above is WIP.
+
 ## Contributors Notes
 
 Traits doesn't contain any implementation, even though some interfaces are self-contained enough to have it.
