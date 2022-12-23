@@ -8,6 +8,7 @@ use quote::quote;
 use syn::parse::Parser;
 use syn::{parse_macro_input, AttributeArgs, ItemFn, ItemStruct};
 
+/// Defines attributes for the `access_controllable` macro.
 #[derive(Debug, FromMeta)]
 pub struct MacroArgs {
     #[darling(default)]
@@ -22,6 +23,7 @@ const DEFAULT_ACL_TYPE_NAME: &str = "__Acl";
 const ERR_PARSE_BITFLAG: &str = "Value does not correspond to a permission";
 const ERR_PARSE_ROLE: &str = "Value does not correspond to a role";
 
+/// Generates the token stream that implements `AccessControllable`.
 pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let cratename = cratename();
     let attr_args = parse_macro_input!(attrs as AttributeArgs);
@@ -539,11 +541,13 @@ fn inject_acl_field(
     Ok(())
 }
 
+/// Defines attributes for the `access_control_any` macro.
 #[derive(Debug, FromMeta)]
 pub struct MacroArgsAny {
     roles: darling::util::PathList,
 }
 
+/// Generates the token stream for the `access_control_any` macro.
 pub fn access_control_any(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let attr_args = parse_macro_input!(attrs as AttributeArgs);
     let cloned_item = item.clone();

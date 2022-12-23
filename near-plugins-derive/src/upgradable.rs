@@ -10,6 +10,7 @@ struct Opts {
     code_storage_key: Option<String>,
 }
 
+/// Generates the token stream for the `Upgradable` macro.
 pub fn derive_upgradable(input: TokenStream) -> TokenStream {
     let cratename = cratename();
 

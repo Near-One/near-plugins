@@ -50,6 +50,7 @@ const DEFAULT_SUPER_ADMIN_NAME: &str = "__SUPER_ADMIN";
 const DEFAULT_BITFLAGS_TYPE_NAME: &str = "RoleFlags";
 const DEFAULT_BOUNDCHECKER_TYPE_NAME: &str = "__AclBoundchecker";
 
+/// Generates the token stream that implements `AccessControlRole`.
 pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
     // This derive doesn't take attributes, so no need to use `darling`.
     let cratename = cratename();
@@ -190,6 +191,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
     output.into()
 }
 
+/// Generates and identifier for the bitflag type that represents permissions.
 pub fn new_bitflags_type_ident(span: Span) -> Ident {
     Ident::new(DEFAULT_BITFLAGS_TYPE_NAME, span)
 }
