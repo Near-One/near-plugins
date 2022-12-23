@@ -11,6 +11,7 @@ struct Opts {
     owner_storage_key: Option<String>,
 }
 
+/// Generates the token stream that implements `Ownable`.
 pub fn derive_ownable(input: TokenStream) -> TokenStream {
     let cratename = cratename();
 
@@ -83,6 +84,7 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
     output.into()
 }
 
+/// Generates the token stream for the `only` macro.
 pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse::<ItemFn>(item.clone()).unwrap();
     if is_near_bindgen_wrapped_or_marshall(&input) {

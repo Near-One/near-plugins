@@ -3,6 +3,7 @@ use proc_macro::{self, TokenStream};
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
+/// Generates the token stream that implements `FullAccessKeyFallback`.
 pub fn derive_fak_fallback(input: TokenStream) -> TokenStream {
     let cratename = cratename();
 

@@ -15,6 +15,7 @@ use crate::events::{AsEvent, EventMetadata};
 use near_sdk::AccountId;
 use serde::Serialize;
 
+/// Trait describing the functionality of the _Ownable_ plugin.
 pub trait Ownable {
     /// Key of storage slot to save the current owner.
     /// By default b"__OWNER__" is used.
@@ -40,7 +41,9 @@ pub trait Ownable {
 /// Event emitted when ownership is changed.
 #[derive(Serialize, Clone)]
 pub struct OwnershipTransferred {
+    /// The previous owner, if any.
     pub previous_owner: Option<AccountId>,
+    /// The new owner, if any.
     pub new_owner: Option<AccountId>,
 }
 

@@ -16,6 +16,7 @@ pub(crate) fn is_near_bindgen_wrapped_or_marshall(item: &ItemFn) -> bool {
     })
 }
 
+/// Returns an identifier for the name of the crate which is imported by plugin users.
 pub(crate) fn cratename() -> Ident {
     Ident::new(
         &crate_name("near-plugins").unwrap_or_else(|_| "near_plugins".to_string()),
@@ -23,6 +24,7 @@ pub(crate) fn cratename() -> Ident {
     )
 }
 
+/// Injects extra code into a function.
 pub(crate) fn add_extra_code_to_fn(
     fn_code: &ItemFn,
     extra_code: proc_macro2::TokenStream,

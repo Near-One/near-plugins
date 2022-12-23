@@ -16,6 +16,7 @@ struct Opts {
     manager_roles: PathList,
 }
 
+/// Generates the token stream that implements `Pausable`.
 pub fn derive_pausable(input: TokenStream) -> TokenStream {
     let cratename = cratename();
 
@@ -103,6 +104,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
     output.into()
 }
 
+/// Defines sub-attributes for the `except` attribute.
 #[derive(Default, FromMeta, Debug)]
 #[darling(default)]
 pub struct ExceptSubArgs {
@@ -110,6 +112,7 @@ pub struct ExceptSubArgs {
     roles: PathList,
 }
 
+/// Defines attributes for the `pause` macro.
 #[derive(Debug, FromMeta)]
 pub struct PauseArgs {
     #[darling(default)]
@@ -118,6 +121,7 @@ pub struct PauseArgs {
     except: ExceptSubArgs,
 }
 
+/// Generates the token stream for the `pause` macro.
 pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse::<ItemFn>(item.clone()).unwrap();
 
@@ -143,6 +147,7 @@ pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
     utils::add_extra_code_to_fn(&input, check_pause)
 }
 
+/// Defines attributes for the `if_paused` macro.
 #[derive(Debug, FromMeta)]
 pub struct IfPausedArgs {
     name: String,
@@ -150,6 +155,7 @@ pub struct IfPausedArgs {
     except: ExceptSubArgs,
 }
 
+/// Generates the token stream for the `if_paused` macro.
 pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse::<ItemFn>(item.clone()).unwrap();
 

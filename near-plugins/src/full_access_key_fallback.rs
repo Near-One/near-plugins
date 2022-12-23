@@ -16,6 +16,7 @@ use crate::events::{AsEvent, EventMetadata};
 use near_sdk::{AccountId, PublicKey};
 use serde::Serialize;
 
+/// Trait describing the functionality of the _Full Access Key Fallback_ plugin.
 pub trait FullAccessKeyFallback {
     /// Attach a new full access to the current contract.
     fn attach_full_access_key(&mut self, public_key: PublicKey) -> near_sdk::Promise;
@@ -25,7 +26,9 @@ pub trait FullAccessKeyFallback {
 /// Event emitted every time a new FullAccessKey is added
 #[derive(Serialize, Clone)]
 pub struct FullAccessKeyAdded {
+    /// The account that added the full access key.
     pub by: AccountId,
+    /// The public key that was added.
     pub public_key: PublicKey,
 }
 
