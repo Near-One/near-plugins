@@ -111,6 +111,22 @@ impl Counter {
     pub fn reset(&mut self) {
         self.counter = 0;
     }
+
+    /// The implementation of `AccessControllable` provided by `near-plugins`
+    /// adds further methods to the contract which are not part of the trait.
+    /// Most of them are implemented for the type that holds the plugin's state,
+    /// here `__acl`.
+    ///
+    /// This function shows how these methods can be exposed on the contract.
+    /// Usually this should involve security checks, for example requiring the
+    /// caller to be a super admin.
+    pub fn add_super_admin(&mut self, account_id: AccountId) -> bool {
+        near_sdk::require!(
+            self.acl_is_super_admin(env::predecessor_account_id()),
+            "Only super admins are allowed to add other super admins."
+        );
+        self.__acl.add_super_admin_unchecked(&account_id)
+    }
 }
 
 /// Exposing internal methods to facilitate integration testing.

@@ -134,13 +134,11 @@ Documentation of all methods provided by the derived implementation of `Upgradab
 
 Enables role-based access control for contract methods. A method with restricted access can only be called _successfully_ by accounts that have been granted one of the whitelisted roles. If a restricted method is called by an account with insufficient permissions, it panics.
 
-Each role is managed by admins who may grant the role to accounts and revoke it from them. In addition, there are super admins that have admin permissions for every role.
+Each role is managed by admins who may grant the role to accounts and revoke it from them. In addition, there are super admins that have admin permissions for every role. The sets of accounts that are (super) admins and grantees are stored in the contract's state.
 
-The sets of accounts that are (super) admins and grantees are stored in the contract's state.
+[This contract](/near-plugins/tests/contracts/access_controllable/src/lib.rs) provides and example of using `AccessControllable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/access_controllable.rs).
 
-TODO update acl section
-
-The derived implementation of `AccessControllable` provides more methods that are documented in the [definition of the trait](/near-plugins/src/access_controllable.rs). More usage patterns are explained in [examples](/examples/access-controllable-examples/) and in [integration tests](/near-plugins/tests/access_controllable.rs).
+Documentation of all methods provided by `AccessControllable` is available in the [definition of the trait](/near-plugins/src/access_controllable.rs).
 
 ## Internal Architecture
 
