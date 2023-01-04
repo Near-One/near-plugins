@@ -10,7 +10,7 @@ use std::collections::HashMap;
 #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub enum Role {
-    /// Grantees of this role may call the contract method `increase`.
+    /// Grantees of this role may call the contract method `skip_one`.
     Increaser,
     /// Grantees of this role may call the contract method `skip_one`.
     Skipper,
