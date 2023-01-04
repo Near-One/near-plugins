@@ -53,14 +53,14 @@ impl Counter {
             );
 
             // Add admins.
-            for (role, account_id) in admins.iter() {
-                let result = contract.acl_add_admin(role.clone(), account_id.clone());
+            for (role, account_id) in admins.into_iter() {
+                let result = contract.acl_add_admin(role, account_id);
                 near_sdk::require!(Some(true) == result, "Failed to add admin");
             }
 
             // Grant roles.
-            for (role, account_id) in grantees.iter() {
-                let result = contract.acl_grant_role(role.clone(), account_id.clone());
+            for (role, account_id) in grantees.into_iter() {
+                let result = contract.acl_grant_role(role, account_id);
                 near_sdk::require!(Some(true) == result, "Failed to grant role");
             }
 
