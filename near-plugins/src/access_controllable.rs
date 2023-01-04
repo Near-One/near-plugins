@@ -59,9 +59,9 @@ pub trait AccessControllable {
     /// this trait offers `add_super_admin_unchecked.`
     fn acl_init_super_admin(&mut self, account_id: AccountId) -> bool;
 
-    /// Returns whether `account_id` is a super-admin. Note tha adding an
-    /// account as super-admin for `role` does not make that account a grantee
-    /// of `role`. Instead, `role` has to be granted explicitly.
+    /// Returns whether `account_id` is a super-admin. A super-admin has admin
+    /// permissions for every role. However, a super-admin is not considered
+    /// grantee of any role.
     fn acl_is_super_admin(&self, account_id: AccountId) -> bool;
 
     /// Makes `account_id` an admin provided that the predecessor has sufficient
