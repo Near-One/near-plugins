@@ -845,7 +845,7 @@ async fn test_attribute_access_control_any() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
     let raw_contract = setup.contract.contract();
     let method_name = "skip_one";
-    let allowed_roles = vec!["Skipper".to_string(), "Skipper".to_string()];
+    let allowed_roles = vec!["Increaser".to_string(), "Skipper".to_string()];
 
     // Account without any of the required permissions is restricted.
     let account = setup.new_account_with_roles(&[]).await?;

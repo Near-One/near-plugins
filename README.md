@@ -136,7 +136,7 @@ Enables role-based access control for contract methods. A method with restricted
 
 Each role is managed by admins who may grant the role to accounts and revoke it from them. In addition, there are super admins that have admin permissions for every role. The sets of accounts that are (super) admins and grantees are stored in the contract's state.
 
-[This contract](/near-plugins/tests/contracts/access_controllable/src/lib.rs) provides and example of using `AccessControllable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/access_controllable.rs).
+[This contract](/near-plugins/tests/contracts/access_controllable/src/lib.rs) provides an example of using `AccessControllable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/access_controllable.rs).
 
 Documentation of all methods provided by `AccessControllable` is available in the [definition of the trait](/near-plugins/src/access_controllable.rs).
 
