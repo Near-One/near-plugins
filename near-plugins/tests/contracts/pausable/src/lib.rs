@@ -46,7 +46,7 @@ impl Counter {
         // Make the contract itself super admin. This allows us to grant any role in the
         // constructor.
         near_sdk::require!(
-            contract.acl_init_super_admin(env::predecessor_account_id()),
+            contract.acl_init_super_admin(env::current_account_id()),
             "Failed to initialize super admin",
         );
 
