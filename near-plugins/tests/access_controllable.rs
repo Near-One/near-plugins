@@ -17,7 +17,7 @@ use workspaces::{Account, AccountId, Contract, Worker};
 const PROJECT_PATH: &str = "./tests/contracts/access_controllable";
 
 /// All roles which are defined in the contract in [`PROJECT_PATH`].
-const ALL_ROLES: [&str; 3] = ["Increaser", "Skipper", "Resetter"];
+const ALL_ROLES: [&str; 3] = ["ByMax2Increaser", "ByMax3Increaser", "Resetter"];
 
 /// Bundles resources required in tests.
 struct Setup {
@@ -105,12 +105,12 @@ impl Setup {
     }
 }
 
-async fn call_skip_one(
+async fn call_increase_2(
     contract: &Contract,
     caller: &Account,
 ) -> workspaces::Result<ExecutionFinalResult> {
     caller
-        .call(contract.id(), "skip_one")
+        .call(contract.id(), "increase_2")
         .args_json(())
         .max_gas()
         .transact()
@@ -147,14 +147,14 @@ async fn test_acl_initialization_in_constructor() -> anyhow::Result<()> {
     let admin_id: AccountId = "admin.acl_test.near".parse().unwrap();
     let grantee_id: AccountId = "grantee.acl_test.near".parse().unwrap();
     let setup = Setup::new_with_admins_and_grantees(
-        HashMap::from([("Increaser".to_string(), admin_id.clone())]),
+        HashMap::from([("ByMax2Increaser".to_string(), admin_id.clone())]),
         HashMap::from([("Resetter".to_string(), grantee_id.clone())]),
     )
     .await?;
 
     setup
         .contract
-        .assert_acl_is_admin(true, "Increaser", &admin_id)
+        .assert_acl_is_admin(true, "ByMax2Increaser", &admin_id)
         .await;
     setup
         .contract
@@ -384,7 +384,7 @@ async fn test_acl_is_admin() -> anyhow::Result<()> {
         contract, account, ..
     } = Setup::new().await?;
     let contract_account = contract.contract().as_account();
-    let role = "Increaser";
+    let role = "ByMax2Increaser";
 
     let is_admin = contract.acl_is_admin(&account, role, account.id()).await?;
     assert_eq!(is_admin, false);
@@ -409,7 +409,7 @@ async fn test_acl_add_admin() -> anyhow::Result<()> {
         ..
     } = Setup::new().await?;
     let contract_account = contract.contract().as_account();
-    let role = "Increaser";
+    let role = "ByMax2Increaser";
 
     let acc_adding_admin = account;
     let acc_to_be_admin = worker.dev_create_account().await?;
@@ -452,7 +452,7 @@ async fn test_acl_add_admin_unchecked() -> anyhow::Result<()> {
         contract, account, ..
     } = Setup::new().await?;
     let contract_account = contract.contract().as_account();
-    let role = "Increaser";
+    let role = "ByMax2Increaser";
 
     contract
         .assert_acl_is_admin(false, role, account.id())
@@ -475,7 +475,7 @@ async fn test_acl_add_admin_unchecked() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_acl_revoke_admin() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
-    let role = "Skipper";
+    let role = "ByMax3Increaser";
     let admin = setup.new_account_as_admin(&[role]).await?;
 
     setup
@@ -490,7 +490,7 @@ async fn test_acl_revoke_admin() -> anyhow::Result<()> {
         .acl_revoke_admin(&revoker, role, admin.id())
         .await?;
     assert_eq!(res, None);
-    let revoker = setup.new_account_as_admin(&["Increaser"]).await?;
+    let revoker = setup.new_account_as_admin(&["ByMax2Increaser"]).await?;
     let res = setup
         .contract
         .acl_revoke_admin(&revoker, role, admin.id())
@@ -557,12 +557,12 @@ async fn test_acl_renounce_admin() -> anyhow::Result<()> {
 async fn test_acl_revoke_admin_unchecked() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
     let account = setup
-        .new_account_as_admin(&["Increaser", "Resetter"])
+        .new_account_as_admin(&["ByMax2Increaser", "Resetter"])
         .await?;
 
     setup
         .contract
-        .assert_acl_is_admin(true, "Increaser", account.id())
+        .assert_acl_is_admin(true, "ByMax2Increaser", account.id())
         .await;
     setup
         .contract
@@ -572,12 +572,12 @@ async fn test_acl_revoke_admin_unchecked() -> anyhow::Result<()> {
     // Revoke admin permissions for one of the roles.
     let res = setup
         .contract
-        .acl_revoke_admin_unchecked(setup.contract_account(), "Increaser", account.id())
+        .acl_revoke_admin_unchecked(setup.contract_account(), "ByMax2Increaser", account.id())
         .await?;
     assert_success_with(res, true);
     setup
         .contract
-        .assert_acl_is_admin(false, "Increaser", account.id())
+        .assert_acl_is_admin(false, "ByMax2Increaser", account.id())
         .await;
     setup
         .contract
@@ -592,7 +592,7 @@ async fn test_acl_revoke_admin_unchecked() -> anyhow::Result<()> {
     assert_success_with(res, true);
     setup
         .contract
-        .assert_acl_is_admin(false, "Increaser", account.id())
+        .assert_acl_is_admin(false, "ByMax2Increaser", account.id())
         .await;
     setup
         .contract
@@ -615,7 +615,7 @@ async fn test_acl_has_role() -> anyhow::Result<()> {
         contract, account, ..
     } = Setup::new().await?;
     let contract_account = contract.contract().as_account();
-    let role = "Increaser";
+    let role = "ByMax2Increaser";
 
     let has_role = contract.acl_has_role(&account, role, account.id()).await?;
     assert_eq!(has_role, false);
@@ -640,7 +640,7 @@ async fn test_acl_grant_role() -> anyhow::Result<()> {
         ..
     } = Setup::new().await?;
     let contract_account = contract.contract().as_account();
-    let role = "Skipper";
+    let role = "ByMax3Increaser";
 
     let granter = account;
     let grantee = worker.dev_create_account().await?;
@@ -683,7 +683,7 @@ async fn test_acl_grant_role_unchecked() -> anyhow::Result<()> {
         contract, account, ..
     } = Setup::new().await?;
     let contract_account = contract.contract().as_account();
-    let role = "Increaser";
+    let role = "ByMax2Increaser";
 
     contract
         .assert_acl_has_role(false, role, account.id())
@@ -706,7 +706,7 @@ async fn test_acl_grant_role_unchecked() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_acl_revoke_role() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
-    let role = "Skipper";
+    let role = "ByMax3Increaser";
     let grantee = setup.new_account_with_roles(&[role]).await?;
 
     setup
@@ -721,7 +721,7 @@ async fn test_acl_revoke_role() -> anyhow::Result<()> {
         .acl_revoke_role(&revoker, role, grantee.id())
         .await?;
     assert_eq!(res, None);
-    let revoker = setup.new_account_as_admin(&["Increaser"]).await?;
+    let revoker = setup.new_account_as_admin(&["ByMax2Increaser"]).await?;
     let res = setup
         .contract
         .acl_revoke_role(&revoker, role, grantee.id())
@@ -788,12 +788,12 @@ async fn test_acl_renounce_role() -> anyhow::Result<()> {
 async fn test_acl_revoke_role_unchecked() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
     let account = setup
-        .new_account_with_roles(&["Increaser", "Resetter"])
+        .new_account_with_roles(&["ByMax2Increaser", "Resetter"])
         .await?;
 
     setup
         .contract
-        .assert_acl_has_role(true, "Increaser", account.id())
+        .assert_acl_has_role(true, "ByMax2Increaser", account.id())
         .await;
     setup
         .contract
@@ -803,12 +803,12 @@ async fn test_acl_revoke_role_unchecked() -> anyhow::Result<()> {
     // Revoke one of the roles.
     let res = setup
         .contract
-        .acl_revoke_role_unchecked(setup.contract_account(), "Increaser", account.id())
+        .acl_revoke_role_unchecked(setup.contract_account(), "ByMax2Increaser", account.id())
         .await?;
     assert_success_with(res, true);
     setup
         .contract
-        .assert_acl_has_role(false, "Increaser", account.id())
+        .assert_acl_has_role(false, "ByMax2Increaser", account.id())
         .await;
     setup
         .contract
@@ -823,7 +823,7 @@ async fn test_acl_revoke_role_unchecked() -> anyhow::Result<()> {
     assert_success_with(res, true);
     setup
         .contract
-        .assert_acl_has_role(false, "Increaser", account.id())
+        .assert_acl_has_role(false, "ByMax2Increaser", account.id())
         .await;
     setup
         .contract
@@ -844,50 +844,50 @@ async fn test_acl_revoke_role_unchecked() -> anyhow::Result<()> {
 async fn test_attribute_access_control_any() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
     let raw_contract = setup.contract.contract();
-    let method_name = "skip_one";
-    let allowed_roles = vec!["Increaser".to_string(), "Skipper".to_string()];
+    let method_name = "increase_2";
+    let allowed_roles = vec!["ByMax2Increaser".to_string(), "ByMax3Increaser".to_string()];
 
     // Account without any of the required permissions is restricted.
     let account = setup.new_account_with_roles(&[]).await?;
-    let res = call_skip_one(raw_contract, &account).await?;
+    let res = call_increase_2(raw_contract, &account).await?;
     assert_insufficient_acl_permissions(res, method_name, allowed_roles.clone());
     let account = setup.new_account_with_roles(&["Resetter"]).await?;
-    let res = call_skip_one(raw_contract, &account).await?;
+    let res = call_increase_2(raw_contract, &account).await?;
     assert_insufficient_acl_permissions(res, method_name, allowed_roles.clone());
 
     // A super-admin which has not been granted the role is restricted.
     let super_admin = setup.new_super_admin_account().await?;
-    let res = call_skip_one(raw_contract, &super_admin).await?;
+    let res = call_increase_2(raw_contract, &super_admin).await?;
     assert_insufficient_acl_permissions(res, method_name, allowed_roles.clone());
 
     // An admin for a permitted role is restricted (no grantee of role itself).
-    let admin = setup.new_account_as_admin(&["Increaser"]).await?;
-    let res = call_skip_one(raw_contract, &admin).await?;
+    let admin = setup.new_account_as_admin(&["ByMax2Increaser"]).await?;
+    let res = call_increase_2(raw_contract, &admin).await?;
     assert_insufficient_acl_permissions(res, method_name, allowed_roles.clone());
 
     // Account with one of the required permissions succeeds.
-    let account = setup.new_account_with_roles(&["Increaser"]).await?;
-    let res = call_skip_one(raw_contract, &account).await?;
+    let account = setup.new_account_with_roles(&["ByMax2Increaser"]).await?;
+    let res = call_increase_2(raw_contract, &account).await?;
     assert_success_with(res, 2);
-    let account = setup.new_account_with_roles(&["Skipper"]).await?;
-    let res = call_skip_one(raw_contract, &account).await?;
+    let account = setup.new_account_with_roles(&["ByMax3Increaser"]).await?;
+    let res = call_increase_2(raw_contract, &account).await?;
     assert_success_with(res, 4);
     let account = setup
-        .new_account_with_roles(&["Increaser", "Resetter"])
+        .new_account_with_roles(&["ByMax2Increaser", "Resetter"])
         .await?;
-    let res = call_skip_one(raw_contract, &account).await?;
+    let res = call_increase_2(raw_contract, &account).await?;
     assert_success_with(res, 6);
 
     // Account with both permissions succeeds.
     let account = setup
-        .new_account_with_roles(&["Increaser", "Skipper"])
+        .new_account_with_roles(&["ByMax2Increaser", "ByMax3Increaser"])
         .await?;
-    let res = call_skip_one(raw_contract, &account).await?;
+    let res = call_increase_2(raw_contract, &account).await?;
     assert_success_with(res, 8);
     let account = setup
-        .new_account_with_roles(&["Increaser", "Skipper", "Resetter"])
+        .new_account_with_roles(&["ByMax2Increaser", "ByMax3Increaser", "Resetter"])
         .await?;
-    let res = call_skip_one(raw_contract, &account).await?;
+    let res = call_increase_2(raw_contract, &account).await?;
     assert_success_with(res, 10);
 
     Ok(())
@@ -978,7 +978,7 @@ async fn test_acl_get_super_admins() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_acl_get_admins() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
-    let role = "Skipper";
+    let role = "ByMax3Increaser";
 
     let admin_ids = vec![
         setup.new_account_as_admin(&[role]).await?,
@@ -1049,7 +1049,7 @@ async fn test_acl_get_admins() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_acl_get_grantees() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
-    let role = "Increaser";
+    let role = "ByMax2Increaser";
 
     let grantee_ids = vec![
         setup.new_account_with_roles(&[role]).await?,
@@ -1147,7 +1147,7 @@ async fn test_acl_add_admin_unchecked_is_private() -> anyhow::Result<()> {
         contract, account, ..
     } = Setup::new().await?;
     let res = contract
-        .acl_add_admin_unchecked(&account, "Increaser", account.id())
+        .acl_add_admin_unchecked(&account, "ByMax2Increaser", account.id())
         .await?;
     assert_private_method_failure(res, "acl_add_admin_unchecked");
     Ok(())
@@ -1159,7 +1159,7 @@ async fn test_acl_revoke_admin_unchecked_is_private() -> anyhow::Result<()> {
         contract, account, ..
     } = Setup::new().await?;
     let res = contract
-        .acl_revoke_admin_unchecked(&account, "Increaser", account.id())
+        .acl_revoke_admin_unchecked(&account, "ByMax2Increaser", account.id())
         .await?;
     assert_private_method_failure(res, "acl_revoke_admin_unchecked");
     Ok(())
@@ -1171,7 +1171,7 @@ async fn test_acl_grant_role_unchecked_is_private() -> anyhow::Result<()> {
         contract, account, ..
     } = Setup::new().await?;
     let res = contract
-        .acl_grant_role_unchecked(&account, "Increaser", account.id())
+        .acl_grant_role_unchecked(&account, "ByMax2Increaser", account.id())
         .await?;
     assert_private_method_failure(res, "acl_grant_role_unchecked");
     Ok(())
@@ -1183,7 +1183,7 @@ async fn test_acl_revoke_role_unchecked_is_private() -> anyhow::Result<()> {
         contract, account, ..
     } = Setup::new().await?;
     let res = contract
-        .acl_revoke_role_unchecked(&account, "Increaser", account.id())
+        .acl_revoke_role_unchecked(&account, "ByMax2Increaser", account.id())
         .await?;
     assert_private_method_failure(res, "acl_revoke_role_unchecked");
     Ok(())
