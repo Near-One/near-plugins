@@ -10,10 +10,10 @@ use std::collections::HashMap;
 #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub enum Role {
-    /// Grantees of this role may call the contract method `skip_one`.
-    Increaser,
-    /// Grantees of this role may call the contract method `skip_one`.
-    Skipper,
+    /// Grantees may call contract methods increasing the counter by up to _two_ at once.
+    ByMax2Increaser,
+    /// Grantees may call contract methods increasing the counter by up to _three_ at once.
+    ByMax3Increaser,
     /// Grantees of this role may call the contract method `reset`.
     Resetter,
 }
@@ -96,11 +96,22 @@ impl Counter {
 
     /// Increases the counter by two and returns its new value.
     ///
-    /// Only an account that was granted either `Role::Increaser` or `Role::Skipper` may
-    /// successfully call this method.
-    #[access_control_any(roles(Role::Increaser, Role::Skipper))]
-    pub fn skip_one(&mut self) -> u64 {
+    /// This method shows how to pass multiple `Role` variants to the `roles` attribute of
+    /// `access_control_any`. It lets any account which was granted at least one of the specified
+    /// roles call the method successfully. If the caller was not granted any of these roles, the
+    /// method panics.
+    #[access_control_any(roles(Role::ByMax2Increaser, Role::ByMax3Increaser))]
+    pub fn increase_2(&mut self) -> u64 {
         self.counter += 2;
+        self.counter
+    }
+
+    /// Increases the counter by three and returns its new value.
+    ///
+    /// Only an account that was granted `Role::ByMax3Increaser` may successfully call this method.
+    #[access_control_any(roles(Role::ByMax3Increaser))]
+    pub fn increase_3(&mut self) -> u64 {
+        self.counter += 3;
         self.counter
     }
 
