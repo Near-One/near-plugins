@@ -35,6 +35,13 @@ pub trait Ownable {
     fn owner_set(&mut self, owner: Option<AccountId>);
 
     /// Return true if the predecessor account id is the owner of the contract.
+    ///
+    /// # View calls
+    ///
+    /// This method fails in view calls since getting the predecessor account id is [not allowed] in
+    /// view calls. A workaround is using [`Self::owner_get`] and checking the returned account id.
+    ///
+    /// [not allowed]: https://nomicon.io/Proposals/view-change-method
     fn owner_is(&self) -> bool;
 }
 
