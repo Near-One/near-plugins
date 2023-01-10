@@ -84,6 +84,51 @@ pub fn assert_method_is_paused(res: ExecutionFinalResult) {
     );
 }
 
+pub fn assert_owner_update_failure(res: ExecutionFinalResult) {
+    let err = res
+        .into_result()
+        .err()
+        .expect("Transaction should have failed");
+    let err = format!("{}", err);
+    let must_contain = "Ownable: Only owner can update current owner";
+    assert!(
+        err.contains(&must_contain),
+        "Expected failure due to caller not being owner, instead it failed with: {}",
+        err
+    );
+}
+
+/// Assert failure due to calling a method protected by `#[only]` without required permissions.
+pub fn assert_ownable_permission_failure(res: ExecutionFinalResult) {
+    let err = res
+        .into_result()
+        .err()
+        .expect("Transaction should have failed");
+    let err = format!("{}", err);
+    let must_contain = "Method is private";
+    assert!(
+        err.contains(&must_contain),
+        "Expected failure due to insufficient permissions, instead it failed with: {}",
+        err
+    );
+}
+
+/// Assert failure due to calling a method protected by `#[only(owner)]` from an account other than the
+/// owner.
+pub fn assert_only_owner_permission_failure(res: ExecutionFinalResult) {
+    let err = res
+        .into_result()
+        .err()
+        .expect("Transaction should have failed");
+    let err = format!("{}", err);
+    let must_contain = "Ownable: Method must be called from owner";
+    assert!(
+        err.contains(&must_contain),
+        "Expected failure due to caller not being owner, instead it failed with: {}",
+        err
+    );
+}
+
 /// Asserts the execution of `res` failed and the error contains `must_contain`.
 pub fn assert_failure_with(res: ExecutionFinalResult, must_contain: &str) {
     let err = res
