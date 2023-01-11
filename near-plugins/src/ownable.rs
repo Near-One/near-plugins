@@ -17,24 +17,46 @@ use serde::Serialize;
 
 /// Trait describing the functionality of the _Ownable_ plugin.
 pub trait Ownable {
-    /// Key of storage slot to save the current owner.
-    /// By default b"__OWNER__" is used.
+    /// Returns the key of storage slot to save the current owner. By default b"__OWNER__" is used.
+    ///
+    /// Attribute `owner_storage_key` can be used to set a different key:
+    ///
+    /// ```ignore
+    /// #[ownable(owner_storage_key="CUSTOM_KEY")]
+    /// struct Contract { /* ... */}
+    /// ```
     fn owner_storage_key(&self) -> Vec<u8>;
 
-    /// Return the current owner of the contract. Result must be a NEAR valid account id
-    /// or None, in case the account doesn't have an owner.
+    /// Returns the current owner of the contract. Result must be a NEAR valid account id or None,
+    /// in case the account doesn't have an owner.
     fn owner_get(&self) -> Option<AccountId>;
 
-    /// Replace the current owner of the contract by a new owner. Triggers an event of type
-    /// OwnershipTransferred. Use `None` to remove the owner of the contract all together.
+    /// Replaces the current owner of the contract by a new owner. Use `None` to remove the owner of
+    /// the contract.
     ///
     /// # Default Implementation:
     ///
     /// Only the current owner can call this method. If no owner is set, only self can call this
     /// method. Notice that if the owner is set, self will not be able to call `owner_set` by default.
+    ///
+    /// # Event
+    ///
+    /// If ownership is successfully transferred, the following event will be emitted:
+    ///
+    /// ```json
+    /// {
+    ///    "standard": "Ownable",
+    ///    "version": "1.0.0",
+    ///    "event": "ownership_transferred",
+    ///    "data": {
+    ///       "previous_owner": "Option<PREV_OWNER_ACCOUNT>",
+    ///       "new_owner": "Option<NEW_OWNER_ACCOUNT>"
+    ///    }
+    /// }
+    /// ```
     fn owner_set(&mut self, owner: Option<AccountId>);
 
-    /// Return true if the predecessor account id is the owner of the contract.
+    /// Returns true if the predecessor account id is the owner of the contract.
     ///
     /// # View calls
     ///
