@@ -15,54 +15,11 @@ The following sections provide an overview of all available plugins. More exampl
 
 ### [Ownable](/near-plugins/src/ownable.rs)
 
-Basic access control mechanism that allows _only_ an authorized account id to call certain methods. Note this account
-id can belong either to a regular user, or it could be a contract (a DAO for example).
+Basic access control mechanism that allows _only_ an authorized account id to call certain methods. Note this account id can belong either to a regular user, or it could be a contract (a DAO for example).
 
-Contract example using _Ownable_ plugin.
+[This contract](/near-plugins/tests/contracts/ownable/src/lib.rs) provides an example of using `Ownable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/ownable.rs).
 
-```rust
-#[near_bindgen]
-#[derive(Ownable)]
-struct Counter {
-  counter: u64,
-}
-
-#[near_bindgen]
-impl Counter {
-  /// Specify the owner of the contract in the constructor
-  #[init]
-  fn new() -> Self {
-      let mut contract = Self { counter: 0 };
-      contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
-      contract
-  }
-
-  /// Only owner account, or the contract itself can call this method.
-  #[only(self, owner)]
-  fn protected(&mut self) {
-      self.counter += 1;
-  }
-
-  /// *Only* owner account can call this method.
-  #[only(owner)]
-  fn protected_owner(&mut self) {
-      self.counter += 1;
-  }
-
-  /// *Only* self account can call this method. This can be used even if the contract is not Ownable.
-  #[only(self)]
-  fn protected_self(&mut self) {
-      self.counter += 1;
-  }
-
-  /// Everyone can call this method
-  fn unprotected(&mut self) {
-      self.counter += 1;
-  }
-}
-```
-
-Documentation of all methods provided by the derived implementation of `Ownable` is available in the [definition of the trait](/near-plugins/src/ownable.rs). More examples and guidelines for interacting with an `Ownable` contract can be found [here](/examples/ownable-examples/README.md).
+Documentation of all methods provided by the derived implementation of `Ownable` is available in the [definition of the trait](/near-plugins/src/ownable.rs).
 
 ### [Full Access Key Fallback](/near-plugins/src/full_access_key_fallback.rs)
 
