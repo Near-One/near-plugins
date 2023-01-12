@@ -48,7 +48,7 @@ impl Setup {
     ) -> anyhow::Result<Self> {
         let worker = workspaces::sandbox().await?;
         let wasm =
-            common::repo::compile_project(&Path::new(PROJECT_PATH), "access_controllable").await?;
+            common::repo::compile_project(Path::new(PROJECT_PATH), "access_controllable").await?;
         let contract = AccessControllableContract::new(worker.dev_deploy(&wasm).await?);
         let account = worker.dev_create_account().await?;
 
@@ -171,7 +171,7 @@ async fn test_acl_is_super_admin() -> anyhow::Result<()> {
     } = Setup::new().await?;
 
     let is_super_admin = contract.acl_is_super_admin(&account, account.id()).await?;
-    assert_eq!(is_super_admin, false);
+    assert!(!is_super_admin);
 
     contract
         .acl_add_super_admin_unchecked(contract.contract().as_account(), account.id())
@@ -179,7 +179,7 @@ async fn test_acl_is_super_admin() -> anyhow::Result<()> {
         .into_result()?;
 
     let is_super_admin = contract.acl_is_super_admin(&account, account.id()).await?;
-    assert_eq!(is_super_admin, true);
+    assert!(is_super_admin);
 
     Ok(())
 }
@@ -387,7 +387,7 @@ async fn test_acl_is_admin() -> anyhow::Result<()> {
     let role = "ByMax2Increaser";
 
     let is_admin = contract.acl_is_admin(&account, role, account.id()).await?;
-    assert_eq!(is_admin, false);
+    assert!(!is_admin);
 
     contract
         .acl_add_admin_unchecked(contract_account, role, account.id())
@@ -395,7 +395,7 @@ async fn test_acl_is_admin() -> anyhow::Result<()> {
         .into_result()?;
 
     let is_admin = contract.acl_is_admin(&account, role, account.id()).await?;
-    assert_eq!(is_admin, true);
+    assert!(is_admin);
 
     Ok(())
 }
@@ -535,7 +535,7 @@ async fn test_acl_renounce_admin() -> anyhow::Result<()> {
         .contract
         .acl_renounce_admin(&setup.account, role)
         .await?;
-    assert_eq!(res, false);
+    assert!(!res);
 
     // An admin calls `acl_renounce_admin`.
     let admin = setup.new_account_as_admin(&[role]).await?;
@@ -544,7 +544,7 @@ async fn test_acl_renounce_admin() -> anyhow::Result<()> {
         .assert_acl_is_admin(true, role, admin.id())
         .await;
     let res = setup.contract.acl_renounce_admin(&admin, role).await?;
-    assert_eq!(res, true);
+    assert!(res);
     setup
         .contract
         .assert_acl_is_admin(false, role, admin.id())
@@ -618,7 +618,7 @@ async fn test_acl_has_role() -> anyhow::Result<()> {
     let role = "ByMax2Increaser";
 
     let has_role = contract.acl_has_role(&account, role, account.id()).await?;
-    assert_eq!(has_role, false);
+    assert!(!has_role);
 
     contract
         .acl_grant_role_unchecked(contract_account, role, account.id())
@@ -626,7 +626,7 @@ async fn test_acl_has_role() -> anyhow::Result<()> {
         .into_result()?;
 
     let has_role = contract.acl_has_role(&account, role, account.id()).await?;
-    assert_eq!(has_role, true);
+    assert!(has_role);
 
     Ok(())
 }
@@ -766,7 +766,7 @@ async fn test_acl_renounce_role() -> anyhow::Result<()> {
         .contract
         .acl_renounce_role(&setup.account, role)
         .await?;
-    assert_eq!(res, false);
+    assert!(!res);
 
     // A grantee calls `acl_renounce_admin`.
     let grantee = setup.new_account_with_roles(&[role]).await?;
@@ -775,7 +775,7 @@ async fn test_acl_renounce_role() -> anyhow::Result<()> {
         .assert_acl_has_role(true, role, grantee.id())
         .await;
     let res = setup.contract.acl_renounce_role(&grantee, role).await?;
-    assert_eq!(res, true);
+    assert!(res);
     setup
         .contract
         .assert_acl_has_role(false, role, grantee.id())

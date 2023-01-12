@@ -19,8 +19,6 @@ const PROJECT_PATH: &str = "./tests/contracts/ownable";
 /// Allows spinning up a setup for testing the contract in [`PROJECT_PATH`] and bundles related
 /// resources.
 struct Setup {
-    /// The worker interacting with the current sandbox.
-    worker: Worker<Sandbox>,
     /// Instance of the deployed contract.
     contract: Contract,
     /// Wrapper around the deployed contract that facilitates interacting with methods provided by
@@ -37,7 +35,7 @@ impl Setup {
     /// the owner during initialization.
     async fn new(worker: Worker<Sandbox>, owner: Option<AccountId>) -> anyhow::Result<Self> {
         // Compile and deploy the contract.
-        let wasm = common::repo::compile_project(&Path::new(PROJECT_PATH), "ownable").await?;
+        let wasm = common::repo::compile_project(Path::new(PROJECT_PATH), "ownable").await?;
         let contract = worker.dev_deploy(&wasm).await?;
         let ownable_contract = OwnableContract::new(contract.clone());
 
@@ -54,7 +52,6 @@ impl Setup {
 
         let unauth_account = worker.dev_create_account().await?;
         Ok(Self {
-            worker,
             contract,
             ownable_contract,
             unauth_account,
@@ -123,16 +120,15 @@ async fn test_owner_is() -> anyhow::Result<()> {
     let setup = Setup::new(worker, Some(owner.id().clone())).await?;
 
     // Returns false for an account that isn't owner.
-    assert_eq!(
-        setup
+    assert!(
+        !setup
             .ownable_contract
             .owner_is(&setup.unauth_account)
-            .await?,
-        false
+            .await?
     );
 
     // Returns true for the owner.
-    assert_eq!(setup.ownable_contract.owner_is(&owner).await?, true);
+    assert!(setup.ownable_contract.owner_is(&owner).await?);
 
     Ok(())
 }
@@ -147,7 +143,7 @@ async fn test_set_owner_ok() -> anyhow::Result<()> {
     let owner_id = setup.unauth_account.id();
     setup
         .ownable_contract
-        .owner_set(&setup.contract.as_account(), Some(owner_id.clone()))
+        .owner_set(setup.contract.as_account(), Some(owner_id.clone()))
         .await?
         .into_result()?;
     setup.assert_owner_is(Some(owner_id)).await;
@@ -200,7 +196,7 @@ async fn test_only_self_ok() -> anyhow::Result<()> {
 
     assert_eq!(setup.get_counter().await?, 0);
     let res = setup
-        .call_counter_increaser(&setup.contract.as_account(), "increase_4")
+        .call_counter_increaser(setup.contract.as_account(), "increase_4")
         .await?;
     assert_success_with(res, 4);
     assert_eq!(setup.get_counter().await?, 4);

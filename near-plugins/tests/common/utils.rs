@@ -29,8 +29,7 @@ where
 pub fn assert_private_method_failure(res: ExecutionFinalResult, method: &str) {
     let err = res
         .into_result()
-        .err()
-        .expect("Transaction should have failed");
+        .expect_err("Transaction should have failed");
     let err = format!("{}", err);
     let must_contain = format!("Method {} is private", method);
     assert!(
@@ -50,8 +49,7 @@ pub fn assert_insufficient_acl_permissions(
 ) {
     let err = res
         .into_result()
-        .err()
-        .expect("Transaction should have failed");
+        .expect_err("Transaction should have failed");
     let err = format!("{}", err);
 
     // TODO fix escaping issue to also verify second sentence of the error
@@ -73,12 +71,11 @@ pub fn assert_insufficient_acl_permissions(
 pub fn assert_method_is_paused(res: ExecutionFinalResult) {
     let err = res
         .into_result()
-        .err()
-        .expect("Transaction should have failed");
+        .expect_err("Transaction should have failed");
     let err = format!("{}", err);
     let must_contain = "Pausable: Method is paused";
     assert!(
-        err.contains(&must_contain),
+        err.contains(must_contain),
         "Expected method to be paused, instead it failed with: {}",
         err
     );
@@ -87,12 +84,11 @@ pub fn assert_method_is_paused(res: ExecutionFinalResult) {
 pub fn assert_owner_update_failure(res: ExecutionFinalResult) {
     let err = res
         .into_result()
-        .err()
-        .expect("Transaction should have failed");
+        .expect_err("Transaction should have failed");
     let err = format!("{}", err);
     let must_contain = "Ownable: Only owner can update current owner";
     assert!(
-        err.contains(&must_contain),
+        err.contains(must_contain),
         "Expected failure due to caller not being owner, instead it failed with: {}",
         err
     );
@@ -102,12 +98,11 @@ pub fn assert_owner_update_failure(res: ExecutionFinalResult) {
 pub fn assert_ownable_permission_failure(res: ExecutionFinalResult) {
     let err = res
         .into_result()
-        .err()
-        .expect("Transaction should have failed");
+        .expect_err("Transaction should have failed");
     let err = format!("{}", err);
     let must_contain = "Method is private";
     assert!(
-        err.contains(&must_contain),
+        err.contains(must_contain),
         "Expected failure due to insufficient permissions, instead it failed with: {}",
         err
     );
@@ -118,12 +113,11 @@ pub fn assert_ownable_permission_failure(res: ExecutionFinalResult) {
 pub fn assert_only_owner_permission_failure(res: ExecutionFinalResult) {
     let err = res
         .into_result()
-        .err()
-        .expect("Transaction should have failed");
+        .expect_err("Transaction should have failed");
     let err = format!("{}", err);
     let must_contain = "Ownable: Method must be called from owner";
     assert!(
-        err.contains(&must_contain),
+        err.contains(must_contain),
         "Expected failure due to caller not being owner, instead it failed with: {}",
         err
     );
@@ -133,8 +127,7 @@ pub fn assert_only_owner_permission_failure(res: ExecutionFinalResult) {
 pub fn assert_failure_with(res: ExecutionFinalResult, must_contain: &str) {
     let err = res
         .into_result()
-        .err()
-        .expect("Transaction should have failed");
+        .expect_err("Transaction should have failed");
     let err = format!("{}", err);
     assert!(
         err.contains(must_contain),
