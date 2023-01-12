@@ -42,7 +42,7 @@ impl Setup {
     async fn new() -> anyhow::Result<Self> {
         // Compile and deploy the contract.
         let worker = workspaces::sandbox().await?;
-        let wasm = common::repo::compile_project(&Path::new(PROJECT_PATH), "pausable").await?;
+        let wasm = common::repo::compile_project(Path::new(PROJECT_PATH), "pausable").await?;
         let contract = worker.dev_deploy(&wasm).await?;
         let pausable_contract = PausableContract::new(contract.clone());
         let acl_contract = AccessControllableContract::new(contract.clone());
@@ -324,7 +324,7 @@ async fn assert_paused_list(
     contract: &PausableContract,
     caller: &Account,
 ) {
-    let paused_list = contract.pa_all_paused(&caller).await.unwrap();
+    let paused_list = contract.pa_all_paused(caller).await.unwrap();
     assert_eq!(paused_list, expected);
 }
 
@@ -474,7 +474,7 @@ async fn test_pause_except_ok() -> anyhow::Result<()> {
     // Grantee of `Role::Unrestricted4Increaser` is exempted.
     let increaser = setup.worker.dev_create_account().await?;
     setup
-        .must_grant_acl_role("Unrestricted4Increaser", &increaser.id())
+        .must_grant_acl_role("Unrestricted4Increaser", increaser.id())
         .await;
     let res = setup
         .call_counter_modifier(&increaser, "increase_4")
@@ -485,7 +485,7 @@ async fn test_pause_except_ok() -> anyhow::Result<()> {
     // Grantee of `Role::Unrestricted4Modifier` is exempted.
     let modifier = setup.worker.dev_create_account().await?;
     setup
-        .must_grant_acl_role("Unrestricted4Modifier", &modifier.id())
+        .must_grant_acl_role("Unrestricted4Modifier", modifier.id())
         .await;
     let res = setup.call_counter_modifier(&modifier, "increase_4").await?;
     assert_success_with_unit_return(res);
