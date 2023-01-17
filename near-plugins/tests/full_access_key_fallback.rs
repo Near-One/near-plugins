@@ -82,41 +82,47 @@ impl Setup {
 
     /// Asserts the contract's access keys are:
     ///
-    /// - the contracts own key followed by
+    /// - the contracts own key plus
     /// - the keys specified in `keys`
     ///
+    /// with the order of keys being irrelevant.
+    ///
     /// Moreover, it asserts that all access keys have `FullAccess` permission.
+    ///
+    /// Input parameter `keys` is expected to not contain duplicates.
     async fn assert_full_access_keys(&self, keys: &[PublicKey]) {
         // Assert the number of keys.
-        let access_keys = self
+        let access_key_infos = self
             .contract
             .view_access_keys()
             .await
             .expect("Should view access keys");
         assert_eq!(
-            access_keys.len(),
+            access_key_infos.len(),
             keys.len() + 1, // + 1 for the contract's key
         );
 
-        // Assert the `access_keys` are the contract's key followed by `keys` (all full access).
+        // Assert the attached access keys are the ones we expected and all have `FullAccess`.
+        //
+        // Since `workspaces::types::PublicKey` doesn't implement `Hash`, it cannot be stored in
+        // `std::collections::HashSet`. Hence the search in `access_key_infos` with
+        // `find()`.
         let contract_key = self.contract.as_account().secret_key().public_key();
         let expected_keys = iter::once(&contract_key).chain(keys.iter());
-        for (i, expected_key) in expected_keys.into_iter().enumerate() {
-            let access_key = &access_keys[i];
-            assert_eq!(
-                &access_key.public_key, expected_key,
-                "Unexpected PublicKey at index {}",
-                i
-            );
-            println!("looking at {:?}", expected_key);
+        for expected_key in expected_keys.into_iter() {
+            let attached_key = access_key_infos
+                .iter()
+                .find(|info| &info.public_key == expected_key)
+                .expect(format!("PublicKey {:?} is not attached", expected_key).as_str());
+
             assert!(
                 matches!(
-                    access_key.access_key.permission,
+                    attached_key.access_key.permission,
                     AccessKeyPermission::FullAccess,
                 ),
-                "Unexpected permission of access key at index {}: {:?}",
-                i,
-                access_key.access_key.permission,
+                "Unexpected permission of access key {:?}: {:?}",
+                attached_key,
+                attached_key.access_key.permission,
             );
         }
     }
