@@ -27,6 +27,8 @@ fn new_public_key() -> near_sdk::PublicKey {
 
 /// Converts a `near_sdk::PublicKey` to a `workspaces::types::PublicKey`.
 fn pk_sdk_to_workspaces(public_key: near_sdk::PublicKey) -> PublicKey {
+    // Going via json since there seems to be no direct conversion, see this issue:
+    // https://github.com/near/workspaces-rs/issues/262
     #[derive(Deserialize)]
     struct Wrapper {
         public_key: PublicKey,
