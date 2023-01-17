@@ -111,11 +111,11 @@ impl Setup {
         // `find()`.
         let contract_key = self.contract.as_account().secret_key().public_key();
         let expected_keys = iter::once(&contract_key).chain(keys.iter());
-        for expected_key in expected_keys.into_iter() {
+        for expected_key in expected_keys {
             let attached_key = access_key_infos
                 .iter()
                 .find(|info| &info.public_key == expected_key)
-                .expect(format!("PublicKey {:?} is not attached", expected_key).as_str());
+                .unwrap_or_else(|| panic!("PublicKey {:?} is not attached", expected_key));
 
             assert!(
                 matches!(
