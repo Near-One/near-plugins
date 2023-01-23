@@ -29,6 +29,21 @@ jobs:
       - name: cargo test
         run: cargo test --all --all-features
 
+      - name: build examples
+        run: |
+          cd examples
+          ./build.sh
+
+      - name: Diff
+        run: |
+          git diff
+          git status
+          changed_files=$(git status --porcelain --untracked-files=no | wc -l)
+          if [ $changed_files -gt 0 ]; then
+            echo 'contract changed, please rebuild contract'
+            exit 1
+          fi
+
   lint:
     name: Format
     runs-on: ubuntu-latest
