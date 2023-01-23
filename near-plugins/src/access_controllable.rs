@@ -99,7 +99,8 @@ pub trait AccessControllable {
 
     /// Revokes admin permissions for `role` from `account_id` provided that the
     /// predecessor has sufficient permissions, i.e. is an admin as defined by
-    /// [`acl_is_admin`].
+    /// [`acl_is_admin`]. This means an admin for `role` may revoke admin
+    /// permissions from any other account that is admin for `role`.
     ///
     /// In case of sufficient permissions, the returned `Some(bool)` indicates
     /// whether `account_id` was an admin for `role`. Without permissions,
