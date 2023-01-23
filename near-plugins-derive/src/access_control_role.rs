@@ -46,6 +46,13 @@ use quote::quote;
 use std::convert::TryFrom;
 use syn::{parse_macro_input, ItemEnum};
 
+/// Roles as are represented by enum variants which are, in turn, represented by
+/// `u128` bitflags. Each variant requires two flags, one for the role itself
+/// and one for the corresponding admin permission. This would allow for 64
+/// roles. However, one flag is reserved for `__SUPER_ADMIN`, leaving 127
+/// bits that can fit 63 roles.
+pub const MAX_ROLE_VARIANTS: u8 = 63;
+
 const DEFAULT_SUPER_ADMIN_NAME: &str = "__SUPER_ADMIN";
 const DEFAULT_BITFLAGS_TYPE_NAME: &str = "RoleFlags";
 const DEFAULT_BOUNDCHECKER_TYPE_NAME: &str = "__AclBoundchecker";
@@ -60,6 +67,10 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
     } = input;
 
     let variant_idents = variants.into_iter().map(|v| v.ident).collect::<Vec<_>>();
+    assert!(
+        variant_idents.len() <= usize::try_from(MAX_ROLE_VARIANTS).unwrap(),
+        "The number of enum variants should not exceed MAX_ROLE_VARIANTS",
+    );
     let variant_idxs: Vec<_> =
         (0..u8::try_from(variant_idents.len()).expect("Too many enum variants")).collect();
     let variant_names: Vec<_> = variant_idents.iter().map(|v| format!("{}", v)).collect();
