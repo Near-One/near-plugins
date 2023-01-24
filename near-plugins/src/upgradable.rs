@@ -1,24 +1,48 @@
-//! # Upgradable:
+//! # Upgradable
 //!
-//! Upgradable implementation inspired by [NEP123](https://github.com/near/NEPs/pull/123).
+//! Upgradable trait inspired by [NEP123](https://github.com/near/NEPs/pull/123).
 //!
 //! To upgrade the contract, first the code needs to be staged, and then it can be deployed.
 //!
-//! ## Default implementation:
+//! ## Default implementation
 //!
-//! Only owner or self can call `stage_code` and `deploy_code`.
+//! Only owner or self can call [`Upgradable::up_stage_code`] and [`Upgradable::up_deploy_code`].
+//!
 //! There is no timer or staging duration implemented by default.
 //!
-//! ## Security concerns:
+//! ## Permissions
 //!
-//! Only authorized account is allowed to call `stage_code` and `deploy_code`. There may be several
-//! reasons to protect `deploy_code`. One such reason to keep in mind, is when the code is upgraded
-//! in such a way that requires some sort of migration or initialization. In that case, it is
-//! recommended to run a batched transaction where `deploy_code` is called first, and then a
+//! Only an authorized account is allowed to call [`Upgradable::up_stage_code`] and
+//! [`Upgradable::up_deploy_code`]. There may be several reasons to protect `deploy_code`. For
+//! example if an upgrade requires migration or initialization. In that case, it is recommended to
+//! run a batched transaction where [`Upgradable::up_deploy_code`] is called first, and then a
 //! function that executes the migration or initialization.
 //!
-//! After the code is deployed, it should be removed from staging. This will prevent an old code
-//! with a security vulnerability to be deployed, in case it was upgraded using other mechanism.
+//! ## Stale staged code
+//!
+//! After the code is deployed, it should be removed from staging. This will prevent old code with a
+//! security vulnerability to be deployed.
+//!
+//! ## Upgrading code that contains a security vulnerability
+//!
+//! Once code is staged for an upgrade, it is publicly visible via [`Upgradable::up_staged_code`].
+//! Staged code that fixes a security vulnerability might be discovered by an attacker who then
+//! exploits the vulnerability before its fix is deployed.
+//!
+//! To avoid that, the upgrade can be executed by calling [`Upgradable::up_stage_code`] and
+//! [`Upgradable::up_deploy_code`] in a [batch transaction]. Since [`Upgradable::up_deploy_code`]
+//! returns a promise that ultimately deploys the new contract code, a theoretical risk remains.
+//! However, the [time between scheduling and execution] of a promise hardly allows an attacker to
+//! exploit a vulnerability: they would have to retrieve the bytes of the staged code, reverse
+//! engineer the new contract, build an exploit and finally execute it. Therefore, we consider that
+//! risk of an exploit in case of a batched upgrade negligible.
+//!
+//! Another defense mechanism is staging encrypted code, though this requires your own
+//! implementation of the trait `Upgradable`. The default implementation provided by
+//! `near-plugins-derive` does not support it.
+//!
+//! [batch transaction]: https://docs.near.org/concepts/basics/transactions/overview
+//! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
 use near_sdk::{AccountId, CryptoHash, Promise};
 use serde::Serialize;
