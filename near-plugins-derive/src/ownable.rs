@@ -114,6 +114,10 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
             ::near_sdk::require!(self.owner_is(), "Ownable: Method must be called from owner");
         },
         (false, false) => {
+            // The developer did not specify a target for `only`, so we panic during macro
+            // expansion instead of returning a `TokenStream` that's added to the `input` function.
+            // That's why this block is _not_ wrapped in `quote!` and we use `std::panic!` as opposed
+            // to `near_sdk::env::panic_str`.
             panic!("Ownable::only macro target not specified. Select at least one in [self, owner]")
         }
     };
