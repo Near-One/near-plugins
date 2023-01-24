@@ -22,6 +22,27 @@
 //!
 //! After the code is deployed, it should be removed from staging. This will prevent old code with a
 //! security vulnerability to be deployed.
+//!
+//! ## Upgrading code that contains a security vulnerability
+//!
+//! Once code is staged for an upgrade, it is publicly visible via [`Upgradable::up_staged_code`].
+//! Staged code that fixes a security vulnerability might be discovered by an attacker who then
+//! exploits the vulnerability before its fix is deployed.
+//!
+//! To avoid that, the upgrade can be executed by calling [`Upgradable::up_stage_code`] and
+//! [`Upgradable::up_deploy_code`] in a [batch transaction]. Since [`Upgradable::up_deploy_code`]
+//! returns a promise that ultimately deploys the new contract code, a theoretical risk remains.
+//! However, the [time between scheduling and execution] of a promise hardly allows an attacker to
+//! exploit a vulnerability: they would have to retrieve the bytes of the staged code, reverse
+//! engineer the new contract, build an exploit and finally execute it. Therefore, we consider that
+//! risk of an exploit in case of a batched upgrade negligible.
+//!
+//! Another defense mechanism is staging encrypted code, though this requires your own
+//! implementation of the trait `Upgradable`. The default implementation provided by
+//! `near-plugins-derive` does not support it.
+//!
+//! [batch transaction]: https://docs.near.org/concepts/basics/transactions/overview
+//! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
 use near_sdk::{AccountId, CryptoHash, Promise};
 use serde::Serialize;
