@@ -13,10 +13,21 @@
 //! ## Permissions
 //!
 //! Only an authorized account is allowed to call [`Upgradable::up_stage_code`] and
-//! [`Upgradable::up_deploy_code`]. There may be several reasons to protect `deploy_code`. For
-//! example if an upgrade requires migration or initialization. In that case, it is recommended to
-//! run a batched transaction where [`Upgradable::up_deploy_code`] is called first, and then a
-//! function that executes the migration or initialization.
+//! [`Upgradable::up_deploy_code`]. There may be several reasons to protect `deploy_code`, one of
+//! them being an upgrade that requires migration.
+//!
+//! ## Upgrade that requires state migration
+//!
+//! If a contract upgrade requires state migration, it is recommended to execute the upgrade in a
+//! batch transaction that calls [`Upgradable::up_deploy_code`] followed by the migration method. To
+//! verify the migration was successful, in addition, a function that deserializes contract state
+//! might be called.
+//!
+//! Note that even if above actions are executed in a batch transaction, the staged code is still
+//! deployed in case the migration fails. This is due to the [asynchronous nature] of NEAR and the
+//! deployment ultimately being executed in a separate promise that is not affected by the outcome
+//! of the batch transaction. Still, a batch transaction helps to minimize the time between the
+//! deployment of new code and the migration of state.
 //!
 //! ## Stale staged code
 //!
@@ -41,6 +52,7 @@
 //! implementation of the trait `Upgradable`. The default implementation provided by
 //! `near-plugins-derive` does not support it.
 //!
+//! [asynchronous nature]: https://docs.near.org/concepts/basics/transactions/overview
 //! [batch transaction]: https://docs.near.org/concepts/basics/transactions/overview
 //! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
