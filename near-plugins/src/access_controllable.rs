@@ -27,6 +27,18 @@ pub trait AccessControllable {
     /// ```
     fn acl_storage_prefix() -> &'static [u8];
 
+    /// Returns the names of all variants of the enum that represents roles.
+    ///
+    /// In the default implementation provided by this crate, this enum is defined by contract
+    /// developers using the plugin and passed as an attribute to the `access_controllable` macro.
+    ///
+    /// A vector containing _all_ variant names is returned since the default implementation limits
+    /// the number of variants to [`near_plugins_derive::access_control_role::MAX_ROLE_VARIANTS`].
+    /// This allows for a simpler user experience compared to the iterator based approach of
+    /// [`Self::acl_get_admins`], for example. For custom implmentations of this it is advised to
+    /// limit the number of role variants as well.
+    fn acl_role_variants() -> Vec<&'static str>;
+
     /// Adds `account_id` as super-admin __without__ checking any permissions in
     /// case there are no super-admins. If there is already a super-admin, it
     /// has no effect. This function can be used to add a super-admin during
