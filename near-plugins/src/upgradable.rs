@@ -53,7 +53,7 @@ pub trait Upgradable {
     fn up_storage_prefix(&self) -> &'static [u8];
 
     /// Returns all staging durations and timestamps.
-    fn up_get_duration_status(&self) -> UpgradableDurationStatus;
+    fn up_get_delay_status(&self) -> UpgradableDurationStatus;
 
     /// Allows authorized account to stage some code to be potentially deployed later.
     /// If a previous code was staged but not deployed, it is discarded.
@@ -72,7 +72,7 @@ pub trait Upgradable {
     fn up_init_staging_duration(&self, staging_duration: near_sdk::Duration);
 
     /// Allows authorized account to stage update of the staging duration.
-    fn up_stage_update_staging_duration(&self, staging_duration: near_sdk::Duration);
+    fn up_stage_update_staging_duration(&self, staging_duration: Option<near_sdk::Duration>);
 
     /// Allows authorized account to apply the staging duration update.
     fn up_apply_update_staging_duration(&self);
@@ -83,7 +83,6 @@ pub struct UpgradableDurationStatus {
     pub staging_duration: Option<near_sdk::Duration>,
     pub staging_timestamp: Option<near_sdk::Timestamp>,
     pub update_staging_duration: Option<near_sdk::Duration>,
-    pub update_staging_duration_timestamp: Option<near_sdk::Timestamp>,
 }
 
 /// Event emitted when the code is staged
@@ -133,10 +132,10 @@ mod tests {
     use crate as near_plugins;
     use crate::test_utils::get_context;
     use crate::{Ownable, Upgradable};
+    use borsh::BorshSerialize;
     use near_sdk::env::sha256;
     use near_sdk::{near_bindgen, testing_env, VMContext};
     use std::convert::TryInto;
-    use borsh::BorshSerialize;
 
     #[near_bindgen]
     #[derive(Ownable, Upgradable)]
@@ -207,7 +206,7 @@ mod tests {
         let staging_timestamp = ctx.block_timestamp + staging_duration;
         counter.up_stage_code(vec![1]);
         assert_eq!(
-            counter.up_get_duration_status().staging_timestamp.unwrap(),
+            counter.up_get_delay_status().staging_timestamp.unwrap(),
             staging_timestamp
         );
 
@@ -243,7 +242,7 @@ mod tests {
         let staging_timestamp = ctx.block_timestamp + staging_duration;
         counter.up_stage_code(vec![1]);
         assert_eq!(
-            counter.up_get_duration_status().staging_timestamp.unwrap(),
+            counter.up_get_delay_status().staging_timestamp.unwrap(),
             staging_timestamp
         );
 
