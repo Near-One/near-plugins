@@ -18,9 +18,12 @@ pub struct EventMetadata<T: Serialize = ()> {
     pub data: Option<T>,
 }
 
+/// Trait to generate and emit NEAR events.
 pub trait AsEvent<T: Serialize> {
+    /// Returns the metadata that makes up the event.
     fn metadata(&self) -> EventMetadata<T>;
 
+    /// Returns the string representation of the event.
     fn event(&self) -> String {
         format!(
             "EVENT_JSON:{}",
@@ -28,6 +31,7 @@ pub trait AsEvent<T: Serialize> {
         )
     }
 
+    /// Emits the event on chain.
     fn emit(&self) {
         near_sdk::log!(self.event());
     }

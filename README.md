@@ -5,57 +5,21 @@ using near-sdk-rs and `#[near_bindgen]` macro.
 
 ## Plugins
 
-Documentation and implementation details of each plugin can be found in the source code. Events emitted by each plugin
-are also described in the source code of each macro. Each event follows [NEP-297](https://nomicon.io/Standards/EventsFormat).
+Documentation and implementation details of each plugin can be found in the source code, primarily in the [traits](/near-plugins/src/) which define plugin behavior. Events emitted by each plugin
+are also described in the [source code](/near-plugins-derive/src/) of each macro. Each event follows [NEP-297](https://nomicon.io/Standards/EventsFormat).
+
+The following sections provide an overview of all available plugins. More examples and usage patterns are available in:
+
+- [`examples/`](/examples/)
+- [`near-plugins/tests/contracts/`](/near-plugins/tests/contracts/)
 
 ### [Ownable](/near-plugins/src/ownable.rs)
 
-Basic access control mechanism that allows _only_ an authorized account id to call certain methods. Note this account
-id can belong either to a regular user, or it could be a contract (a DAO for example).
+Basic access control mechanism that allows _only_ an authorized account id to call certain methods. Note this account id can belong either to a regular user, or it could be a contract (a DAO for example).
 
-Contract example using _Ownable_ plugin.
+[This contract](/near-plugins/tests/contracts/ownable/src/lib.rs) provides an example of using `Ownable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/ownable.rs).
 
-```rust
-#[near_bindgen]
-#[derive(Ownable)]
-struct Counter {
-  counter: u64,
-}
-
-#[near_bindgen]
-impl Counter {
-  /// Specify the owner of the contract in the constructor
-  #[init]
-  fn new() -> Self {
-      let mut contract = Self { counter: 0 };
-      contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
-      contract
-  }
-
-  /// Only owner account, or the contract itself can call this method.
-  #[only(self, owner)]
-  fn protected(&mut self) {
-      self.counter += 1;
-  }
-
-  /// *Only* owner account can call this method.
-  #[only(owner)]
-  fn protected_owner(&mut self) {
-      self.counter += 1;
-  }
-
-  /// *Only* self account can call this method. This can be used even if the contract is not Ownable.
-  #[only(self)]
-  fn protected_self(&mut self) {
-      self.counter += 1;
-  }
-
-  /// Everyone can call this method
-  fn unprotected(&mut self) {
-      self.counter += 1;
-  }
-}
-```
+Documentation of all methods provided by the derived implementation of `Ownable` is available in the [definition of the trait](/near-plugins/src/ownable.rs).
 
 ### [Full Access Key Fallback](/near-plugins/src/full_access_key_fallback.rs)
 
@@ -82,75 +46,18 @@ impl Counter {
 }
 ```
 
+Documentation of all methods provided by the derived implementation of `FullAccessKeyFallback` is available in the [definition of the trait](/near-plugins/src/full_access_key_fallback.rs). More examples and guidelines for interacting with a `FullAccessKeyFallback` contract can be found [here](/examples/full-access-key-fallback-examples/README.md).
+
 ### [Pausable](/near-plugins/src/pausable.rs)
 
 Allow contracts to implement an emergency stop mechanism that can be triggered by an authorized account. Pauses can be
 used granularly to only limit certain features.
 
-Contract example using _Pausable_ plugin. Note that it requires the contract to be Ownable.
+Using the `Pausable` plugin requires the contract to be _AccessControllable_ in order to manage permissions. Roles allowing accounts to call certain methods can be granted and revoked via the _AccessControllable_ plugin.
 
-```rust
+[This contract](/near-plugins/tests/contracts/pausable/src/lib.rs) provides an example of using `Pausable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/pausable.rs).
 
-#[near_bindgen]
-#[derive(Ownable, Pausable)]
-struct Counter {
-    counter: u64,
-}
-
-#[near_bindgen]
-impl Counter {
-    /// Specify the owner of the contract in the constructor
-    #[init]
-    fn new() -> Self {
-        let mut contract = Self { counter: 0 };
-        contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
-        contract
-    }
-
-    /// Function can be paused using feature name "increase_1" or "ALL" like:
-    /// `contract.pa_pause_feature("increase_1")` or `contract.pa_pause_feature("ALL")`
-    ///
-    /// If the function is paused, all calls to it will fail. Even calls started from owner or self.
-    #[pause]
-    fn increase_1(&mut self) {
-        self.counter += 1;
-    }
-
-    /// Similar to `#[pause]` but use an explicit name for the feature. In this case the feature to be paused
-    /// is named "Increase by two". Note that trying to pause it using "increase_2" will not have any effect.
-    ///
-    /// This can be used to pause a subset of the methods at once without requiring to use "ALL".
-    #[pause(name = "Increase by two")]
-    fn increase_2(&mut self) {
-        self.counter += 2;
-    }
-
-    /// Similar to `#[pause]` but owner or self can still call this method. Any subset of {self, owner} can be specified.
-    #[pause(except(owner, self))]
-    fn increase_4(&mut self) {
-        self.counter += 4;
-    }
-
-    /// This method can only be called when "increase_1" is paused. Use this macro to create escape hatches when some
-    /// features are paused. Note that if "ALL" is specified the "increase_1" is considered to be paused.
-    #[if_paused(name = "increase_1")]
-    fn decrease_1(&mut self) {
-        self.counter -= 1;
-    }
-
-    /// Custom use of pause features. Only allow increasing the counter using `careful_increase` if it is below 10.
-    fn careful_increase(&mut self) {
-        if self.counter >= 10 {
-            assert!(
-                !self.pa_is_paused("INCREASE_BIG".to_string()),
-                "Method paused for large values of counter"
-            );
-        }
-
-        self.counter += 1;
-    }
-}
-```
+Documentation of all methods provided by `Pausable` is available in the [definition of the trait](/near-plugins/src/pausable.rs).
 
 ### [Upgradable](/near-plugins/src/upgradable.rs)
 
@@ -178,6 +85,36 @@ impl Counter {
 To upgrade the contract first call `up_stage_code` passing the binary as first argument serialized as borsh. Then call `up_deploy_code`.
 This functions must be called from the owner.
 
+Documentation of all methods provided by the derived implementation of `Upgradable` is available in the [definition of the trait](/near-plugins/src/upgradable.rs). More examples and guidelines for interacting with an `Upgradable` contract can be found [here](/examples/upgradable-examples/README.md).
+
+### [AccessControllable](/near-plugins/src/access_controllable.rs)
+
+Enables role-based access control for contract methods. A method with restricted access can only be called _successfully_ by accounts that have been granted one of the whitelisted roles. If a restricted method is called by an account with insufficient permissions, it panics.
+
+Each role is managed by admins who may grant the role to accounts and revoke it from them. In addition, there are super admins that have admin permissions for every role. The sets of accounts that are (super) admins and grantees are stored in the contract's state.
+
+[This contract](/near-plugins/tests/contracts/access_controllable/src/lib.rs) provides an example of using `AccessControllable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/access_controllable.rs).
+
+Documentation of all methods provided by `AccessControllable` is available in the [definition of the trait](/near-plugins/src/access_controllable.rs).
+
+## Internal Architecture
+
+Each plugin's functionality is described by a trait defined in `near-plugins/src/<plugin_name>.rs`. The trait's methods will be available on contracts that use the corresponding plugin, whereas the implementation of the trait is provided by procedural macros.
+
+The code that is generated for a trait implementation is based on `near-plugins-derive/src/<plugin_name.rs>`. To inspect the code generated for your particular smart contract, [`cargo-expand`](https://github.com/dtolnay/cargo-expand) can be helpful.
+
+## Testing
+
+Tests should verify that once the macros provided by this crate are expanded, the contract they are used in has the intended functionality. Integration tests are utilized for that purpose:
+
+- A contract using the plugin is contained in `near-plugins/tests/contracts/<plugin_name>/`.
+- This contract is used in `near-plugins/tests/<plugin_name>.rs` which:
+    - Compiles and deploys the contract on chain via [NEAR `workspaces`](https://docs.rs/workspaces/0.7.0/workspaces/).
+    - Sends transactions to the deployed contract to verify plugin functionality.
+
+> **Note**
+> Currently some plugins are still tested by unit tests in `near-plugins/src/<plugin_name>.rs`, not by integration tests. Migrating these unit tests to integration tests as described above is WIP.
+
 ## Contributors Notes
 
 Traits doesn't contain any implementation, even though some interfaces are self-contained enough to have it.
@@ -189,7 +126,6 @@ automatically from macros. They can be changed if the trait is manually implemen
 
 ## Roadmap
 
-- Access Control: Implement a plugin similar to [OpenZeppelin's Access Control](https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/access).
 - Factory upgrades: Allow upgrading all deployed contracts from the factory fetching binary upstream.
 - Events ergonomics. `Event` macro that can be used in the following way:
 ```rust

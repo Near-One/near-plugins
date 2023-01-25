@@ -1,0 +1,9 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: near-plugins-public
+  description: Public Near Plugins repository
+spec:
+  targets:
+    - ./**/.catalog-info.yaml

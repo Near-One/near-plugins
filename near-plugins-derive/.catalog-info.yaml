@@ -1,0 +1,19 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: near-plugins-derive
+  description: |-
+    Implementation of common patterns used for NEAR smart contracts.
+  tags:
+    - contract-library
+    - near
+  links: []
+  annotations:
+    aurora.dev/security-tier: "1"
+spec:
+  owner: protocol-team
+  type: contract-library
+  lifecycle: production
+  system: near-plugins
+  interactsWith: []

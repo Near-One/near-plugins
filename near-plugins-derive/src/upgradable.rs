@@ -12,6 +12,7 @@ struct Opts {
 
 const DEFAULT_STORAGE_PREFIX: &str = "__up__";
 
+/// Generates the token stream for the `Upgradable` macro.
 pub fn derive_upgradable(input: TokenStream) -> TokenStream {
     let cratename = cratename();
 

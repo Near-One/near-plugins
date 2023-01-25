@@ -1,3 +1,4 @@
+/// Represents permissions for the [`AccessControllable`](crate::AccessControllable) plugin.
 pub trait AccessControlRole {
     /// Returns the bitflag corresponding to the super admin permission.
     fn acl_super_admin_permission() -> u128;

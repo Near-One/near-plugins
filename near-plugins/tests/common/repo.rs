@@ -34,7 +34,7 @@ async fn add_wasm_target(project_path: &Path, toolchain: &str) -> anyhow::Result
     Ok(())
 }
 
-pub async fn compile_project(project_path: &Path) -> anyhow::Result<Vec<u8>> {
+pub async fn compile_project(project_path: &Path, package_name: &str) -> anyhow::Result<Vec<u8>> {
     let toolchain = read_toolchain(project_path).await?;
     add_wasm_target(project_path, &toolchain).await?;
     let output = tokio::process::Command::new("cargo")
@@ -47,7 +47,7 @@ pub async fn compile_project(project_path: &Path) -> anyhow::Result<Vec<u8>> {
             "--release",
             "--no-default-features",
             "-p",
-            "access_controllable",
+            package_name,
         ])
         .output()
         .await?;
@@ -58,7 +58,7 @@ pub async fn compile_project(project_path: &Path) -> anyhow::Result<Vec<u8>> {
             "target",
             "wasm32-unknown-unknown",
             "release",
-            "access_controllable.wasm",
+            format!("{}.wasm", package_name).as_str(),
         ]
         .iter()
         .collect::<PathBuf>(),
