@@ -212,7 +212,7 @@ mod tests {
 
         assert_eq!(counter.up_staged_code(), Some(vec![1]));
 
-        ctx.block_timestamp = ctx.block_timestamp + staging_duration;
+        ctx.block_timestamp = staging_duration;
         testing_env!(ctx);
 
         assert_eq!(
@@ -299,7 +299,6 @@ mod tests {
             counter.up_get_delay_status().staging_duration.unwrap(),
             new_staging_duration
         );
-
     }
 
     #[test]
