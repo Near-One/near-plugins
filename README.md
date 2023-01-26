@@ -61,7 +61,7 @@ Documentation of all methods provided by `Pausable` is available in the [definit
 
 ### [Upgradable](/near-plugins/src/upgradable.rs)
 
-Allows a contract to be upgraded by owner without having a Full Access Key.
+Allows a contract to be upgraded by owner with delay and without having a Full Access Key.
 
 Contract example using _Upgradable_ plugin. Note that it requires the contract to be Ownable.
 
@@ -77,12 +77,16 @@ impl Counter {
     fn new() -> Self {
         let mut contract = Self {};
         contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
+        contract.up_init_staging_duration(std::time::Duration::from_secs(60).as_nanos().try_into().unwrap()); // 1 minute
         contract
     }
 }
 ```
 
 To upgrade the contract first call `up_stage_code` passing the binary as first argument serialized as borsh. Then call `up_deploy_code`.
+This functions must be called from the owner.
+
+To update the staging delay first call `up_stage_update_staging_duration` passing the new delay duration. Then call `up_apply_update_staging_duration`.
 This functions must be called from the owner.
 
 Documentation of all methods provided by the derived implementation of `Upgradable` is available in the [definition of the trait](/near-plugins/src/upgradable.rs). More examples and guidelines for interacting with an `Upgradable` contract can be found [here](/examples/upgradable-examples/README.md).
