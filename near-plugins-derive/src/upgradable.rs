@@ -116,7 +116,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging timestamp isn't set"));
 
-                if staging_timestamp < near_sdk::env::block_timestamp() {
+                if near_sdk::env::block_timestamp() < staging_timestamp {
                     near_sdk::env::panic_str(
                         format!(
                             "Upgradable: Deploy code too early: staging ends on {}",
@@ -155,7 +155,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged update"));
 
-                if staging_timestamp < near_sdk::env::block_timestamp() {
+                if near_sdk::env::block_timestamp() < staging_timestamp {
                     near_sdk::env::panic_str(
                         format!(
                             "Upgradable: Update duration too early: staging ends on {}",
