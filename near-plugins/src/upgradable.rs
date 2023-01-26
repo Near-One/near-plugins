@@ -253,9 +253,91 @@ mod tests {
             Some(sha256(vec![1].as_slice()).try_into().unwrap())
         );
 
-        ctx.block_timestamp = staging_timestamp + 1;
+        ctx.block_timestamp = staging_timestamp - 1;
         testing_env!(ctx);
 
         counter.up_deploy_code();
+    }
+
+    #[test]
+    fn test_update_delay_duration() {
+        let (counter, mut ctx) = setup_basic();
+
+        ctx.predecessor_account_id = "eli.test".to_string().try_into().unwrap();
+        testing_env!(ctx.clone());
+
+        assert_eq!(counter.up_staged_code(), None);
+
+        let staging_duration: u64 = std::time::Duration::from_secs(60)
+            .as_nanos()
+            .try_into()
+            .unwrap();
+        let staging_timestamp = ctx.block_timestamp + staging_duration;    
+
+        counter.up_init_staging_duration(staging_duration);
+        assert_eq!(
+            counter.up_get_delay_status().staging_duration.unwrap(),
+            staging_duration
+        );
+
+        let new_staging_duration = staging_duration + 100;
+        counter.up_stage_update_staging_duration(Some(new_staging_duration));
+        assert_eq!(
+            counter.up_get_delay_status().staging_duration.unwrap(),
+            staging_duration
+        );
+        assert_eq!(
+            counter.up_get_delay_status().staging_timestamp.unwrap(),
+            staging_timestamp
+        );
+
+        ctx.block_timestamp = staging_timestamp;
+        testing_env!(ctx);
+
+        counter.up_apply_update_staging_duration();
+        assert_eq!(
+            counter.up_get_delay_status().staging_duration.unwrap(),
+            new_staging_duration
+        );
+
+    }
+
+    #[test]
+    #[should_panic(expected = "Upgradable: Update duration too early: staging ends on ")]
+    fn test_panic_update_delay_duration() {
+        let (counter, mut ctx) = setup_basic();
+
+        ctx.predecessor_account_id = "eli.test".to_string().try_into().unwrap();
+        testing_env!(ctx.clone());
+
+        assert_eq!(counter.up_staged_code(), None);
+
+        let staging_duration: u64 = std::time::Duration::from_secs(60)
+            .as_nanos()
+            .try_into()
+            .unwrap();
+        let staging_timestamp = ctx.block_timestamp + staging_duration;    
+
+        counter.up_init_staging_duration(staging_duration);
+        assert_eq!(
+            counter.up_get_delay_status().staging_duration.unwrap(),
+            staging_duration
+        );
+
+        let new_staging_duration = staging_duration + 100;
+        counter.up_stage_update_staging_duration(Some(new_staging_duration));
+        assert_eq!(
+            counter.up_get_delay_status().staging_duration.unwrap(),
+            staging_duration
+        );
+        assert_eq!(
+            counter.up_get_delay_status().staging_timestamp.unwrap(),
+            staging_timestamp
+        );
+
+        ctx.block_timestamp = staging_timestamp - 1;
+        testing_env!(ctx);
+
+        counter.up_apply_update_staging_duration();
     }
 }
