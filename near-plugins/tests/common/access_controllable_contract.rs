@@ -17,6 +17,14 @@ impl AccessControllableContract {
         &self.contract
     }
 
+    pub async fn acl_role_variants(&self, caller: &Account) -> anyhow::Result<Vec<String>> {
+        let res = caller
+            .call(self.contract.id(), "acl_role_variants")
+            .view()
+            .await?;
+        Ok(res.json::<Vec<String>>()?)
+    }
+
     pub async fn acl_is_super_admin(
         &self,
         caller: &Account,
