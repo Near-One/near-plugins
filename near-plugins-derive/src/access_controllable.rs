@@ -438,7 +438,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 self.#acl_field.init_super_admin(&account_id)
             }
 
-            fn acl_role_variants() -> Vec<&'static str> {
+            fn acl_role_variants(&self) -> Vec<&'static str> {
                 <#role_type>::acl_role_variants()
             }
 

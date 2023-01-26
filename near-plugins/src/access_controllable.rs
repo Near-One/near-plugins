@@ -37,7 +37,12 @@ pub trait AccessControllable {
     /// This allows for a simpler user experience compared to the iterator based approach of
     /// [`Self::acl_get_admins`], for example. For custom implmentations of this it is advised to
     /// limit the number of role variants as well.
-    fn acl_role_variants() -> Vec<&'static str>;
+    ///
+    /// Event though it might not be used, this method takes paramter `&self` to be [available in
+    /// view calls].
+    ///
+    /// [available in view calls]: https://stackoverflow.com/q/66715815
+    fn acl_role_variants(&self) -> Vec<&'static str>;
 
     /// Adds `account_id` as super-admin __without__ checking any permissions in
     /// case there are no super-admins. If there is already a super-admin, it
