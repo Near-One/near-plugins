@@ -132,7 +132,7 @@ mod tests {
     use crate as near_plugins;
     use crate::test_utils::get_context;
     use crate::{Ownable, Upgradable};
-    use borsh::BorshSerialize;
+    use borsh::{BorshDeserialize, BorshSerialize};
     use near_sdk::env::sha256;
     use near_sdk::{near_bindgen, testing_env, VMContext};
     use std::convert::TryInto;

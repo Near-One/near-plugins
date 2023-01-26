@@ -39,18 +39,26 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
         impl #ident {
             fn up_get_timestamp(&self, key: __UpgradableStorageKey) -> Option<::near_sdk::Timestamp> {
                 near_sdk::env::storage_read(self.up_storage_key(key).as_ref()).map(|timestamp_bytes| {
-                    u64::from_be_bytes(timestamp_bytes.try_into().unwrap_or_else(|_|
-                        near_sdk::env::panic_str("Upgradable: Invalid u64 timestamp format"))
+                    ::near_sdk::Timestamp::try_from_slice(&timestamp_bytes).unwrap_or_else(|_|
+                        near_sdk::env::panic_str("Upgradable: Invalid u64 timestamp format")
                     )
                 })
             }
 
             fn up_get_duration(&self, key: __UpgradableStorageKey) -> Option<::near_sdk::Duration> {
                 near_sdk::env::storage_read(self.up_storage_key(key).as_ref()).map(|duration_bytes| {
-                    u64::from_be_bytes(duration_bytes.try_into().unwrap_or_else(|_|
-                        near_sdk::env::panic_str("Upgradable: Invalid u64 Duration format"))
+                    ::near_sdk::Duration::try_from_slice(&duration_bytes).unwrap_or_else(|_|
+                            near_sdk::env::panic_str("Upgradable: Invalid u64 Duration format")
                     )
                 })
+            }
+
+            fn up_set_timestamp(&self, key: __UpgradableStorageKey, value: ::near_sdk::Timestamp) {
+                self.up_storage_write(key, &value.try_to_vec().unwrap());
+            }
+
+            fn up_set_duration(&self, key: __UpgradableStorageKey, value: ::near_sdk::Duration) {
+                self.up_storage_write(key, &value.try_to_vec().unwrap());
             }
 
             fn up_storage_key(&self, key: __UpgradableStorageKey) -> Vec<u8> {
@@ -60,12 +68,12 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 [(#storage_prefix).as_bytes(), key_vec.as_slice()].concat()
             }
 
-            fn up_storage_write(&self, key: __UpgradableStorageKey, value: &[u8]){
+            fn up_storage_write(&self, key: __UpgradableStorageKey, value: &[u8]) {
                 near_sdk::env::storage_write(self.up_storage_key(key).as_ref(), &value);
             }
 
             fn up_set_staging_duration_unchecked(&self, staging_duration: near_sdk::Duration) {
-                self.up_storage_write(__UpgradableStorageKey::StagingDuration, &staging_duration.to_be_bytes());
+                self.up_storage_write(__UpgradableStorageKey::StagingDuration, &staging_duration.try_to_vec().unwrap());
             }
         }
 
@@ -98,7 +106,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     self.up_storage_write(__UpgradableStorageKey::Code, &code);
                 }
 
-                self.up_storage_write(__UpgradableStorageKey::StagingTimestamp, &timestamp.to_be_bytes());
+                self.up_set_timestamp(__UpgradableStorageKey::StagingTimestamp, timestamp);
             }
 
             #[result_serializer(borsh)]
@@ -143,8 +151,8 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                         .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging duration isn't initialized"));
 
                     let staging_duration_timestamp = near_sdk::env::block_timestamp() + current_staging_duration;
-                    self.up_storage_write(__UpgradableStorageKey::StagingTimestamp, &staging_duration_timestamp.to_be_bytes());
-                    self.up_storage_write(__UpgradableStorageKey::UpdateStagingDuration, &staging_duration.to_be_bytes());
+                    self.up_set_timestamp(__UpgradableStorageKey::StagingTimestamp, staging_duration_timestamp);
+                    self.up_set_duration(__UpgradableStorageKey::UpdateStagingDuration, staging_duration);
                 } else {
                     near_sdk::env::storage_remove(&self.up_storage_key(__UpgradableStorageKey::UpdateStagingDuration));
                 }
@@ -169,7 +177,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged duration update"));
                 near_sdk::env::storage_remove(&self.up_storage_key(__UpgradableStorageKey::UpdateStagingDuration));
 
-                self.up_storage_write(__UpgradableStorageKey::StagingDuration, &new_duration.to_be_bytes());
+                self.up_set_duration(__UpgradableStorageKey::StagingDuration, new_duration);
             }
         }
     };
