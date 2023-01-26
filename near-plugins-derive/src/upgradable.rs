@@ -145,8 +145,8 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     let staging_duration_timestamp = near_sdk::env::block_timestamp() + current_staging_duration;
                     self.up_storage_write(__UpgradableStorageKey::StagingTimestamp, &staging_duration_timestamp.to_be_bytes());
                     self.up_storage_write(__UpgradableStorageKey::UpdateStagingDuration, &staging_duration.to_be_bytes());
-                } else { 
-                    near_sdk::env::storage_remove(&self.up_storage_key(__UpgradableStorageKey::UpdateStagingDuration));    
+                } else {
+                    near_sdk::env::storage_remove(&self.up_storage_key(__UpgradableStorageKey::UpdateStagingDuration));
                 }
             }
 

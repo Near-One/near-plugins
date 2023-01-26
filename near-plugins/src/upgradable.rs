@@ -272,7 +272,7 @@ mod tests {
             .as_nanos()
             .try_into()
             .unwrap();
-        let staging_timestamp = ctx.block_timestamp + staging_duration;    
+        let staging_timestamp = ctx.block_timestamp + staging_duration;
 
         counter.up_init_staging_duration(staging_duration);
         assert_eq!(
@@ -315,7 +315,7 @@ mod tests {
             .as_nanos()
             .try_into()
             .unwrap();
-        let staging_timestamp = ctx.block_timestamp + staging_duration;    
+        let staging_timestamp = ctx.block_timestamp + staging_duration;
 
         counter.up_init_staging_duration(staging_duration);
         assert_eq!(
