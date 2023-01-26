@@ -165,6 +165,14 @@ async fn test_acl_initialization_in_constructor() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_acl_role_variants() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let variants = setup.contract.acl_role_variants(&setup.account).await?;
+    assert_eq!(variants, ALL_ROLES);
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_acl_is_super_admin() -> anyhow::Result<()> {
     let Setup {
         contract, account, ..

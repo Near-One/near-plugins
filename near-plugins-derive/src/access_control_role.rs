@@ -167,6 +167,12 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         }
 
         impl AccessControlRole for #ident {
+            fn acl_role_variants() -> Vec<&'static str> {
+                vec![
+                    #(#variant_names,)*
+                ]
+            }
+
             fn acl_super_admin_permission() -> u128 {
                 // See module documentation.
                 1 // corresponds to safe_leftshift(1, 0)

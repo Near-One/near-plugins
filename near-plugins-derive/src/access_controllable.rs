@@ -438,6 +438,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 self.#acl_field.init_super_admin(&account_id)
             }
 
+            fn acl_role_variants(&self) -> Vec<&'static str> {
+                <#role_type>::acl_role_variants()
+            }
+
             fn acl_is_super_admin(&self, account_id: ::near_sdk::AccountId) -> bool {
                 self.#acl_field.is_super_admin(&account_id)
             }
