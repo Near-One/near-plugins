@@ -33,7 +33,8 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             Code,
             StagingTimestamp,
             StagingDuration,
-            UpdateStagingDuration,
+            NewStagingDuration,
+            NewStagingDurationTimestamp,
         }
 
         impl #ident {
@@ -87,17 +88,13 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 near_plugins::UpgradableDurationStatus {
                     staging_duration: self.up_get_duration(__UpgradableStorageKey::StagingDuration),
                     staging_timestamp: self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp),
-                    update_staging_duration: self.up_get_duration(__UpgradableStorageKey::UpdateStagingDuration),
+                    new_staging_duration: self.up_get_duration(__UpgradableStorageKey::NewStagingDuration),
+                    new_staging_duration_timestamp: self.up_get_duration(__UpgradableStorageKey::NewStagingDurationTimestamp),
                 }
             }
 
             #[#cratename::only(owner)]
             fn up_stage_code(&mut self, #[serializer(borsh)] code: Vec<u8>) {
-                near_sdk::require!(
-                    self.up_get_duration(__UpgradableStorageKey::UpdateStagingDuration).is_none(),
-                    "Upgradable: an update of staging duration is in progress"
-                );
-
                 let timestamp = near_sdk::env::block_timestamp() + self.up_get_duration(__UpgradableStorageKey::StagingDuration).unwrap_or(0);
 
                 if code.is_empty() {
@@ -145,22 +142,18 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             #[#cratename::only(owner)]
-            fn up_stage_update_staging_duration(&self, staging_duration: Option<near_sdk::Duration>) {
-                if let Some(staging_duration) = staging_duration {
-                    let current_staging_duration = self.up_get_duration(__UpgradableStorageKey::StagingDuration)
-                        .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging duration isn't initialized"));
+            fn up_stage_update_staging_duration(&self, staging_duration: near_sdk::Duration) {
+                let current_staging_duration = self.up_get_duration(__UpgradableStorageKey::StagingDuration)
+                    .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging duration isn't initialized"));
 
-                    let staging_duration_timestamp = near_sdk::env::block_timestamp() + current_staging_duration;
-                    self.up_set_timestamp(__UpgradableStorageKey::StagingTimestamp, staging_duration_timestamp);
-                    self.up_set_duration(__UpgradableStorageKey::UpdateStagingDuration, staging_duration);
-                } else {
-                    near_sdk::env::storage_remove(&self.up_storage_key(__UpgradableStorageKey::UpdateStagingDuration));
-                }
+                self.up_set_duration(__UpgradableStorageKey::NewStagingDuration, staging_duration);
+                let staging_duration_timestamp = near_sdk::env::block_timestamp() + current_staging_duration;
+                self.up_set_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp, staging_duration_timestamp);
             }
 
             #[#cratename::only(owner)]
             fn up_apply_update_staging_duration(&self) {
-                let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp)
+                let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged update"));
 
                 if near_sdk::env::block_timestamp() < staging_timestamp {
@@ -173,9 +166,8 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     );
                 }
 
-                let new_duration = self.up_get_duration(__UpgradableStorageKey::UpdateStagingDuration)
+                let new_duration = self.up_get_duration(__UpgradableStorageKey::NewStagingDuration)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged duration update"));
-                near_sdk::env::storage_remove(&self.up_storage_key(__UpgradableStorageKey::UpdateStagingDuration));
 
                 self.up_set_duration(__UpgradableStorageKey::StagingDuration, new_duration);
             }

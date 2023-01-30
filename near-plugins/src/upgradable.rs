@@ -72,7 +72,7 @@ pub trait Upgradable {
     fn up_init_staging_duration(&self, staging_duration: near_sdk::Duration);
 
     /// Allows authorized account to stage update of the staging duration.
-    fn up_stage_update_staging_duration(&self, staging_duration: Option<near_sdk::Duration>);
+    fn up_stage_update_staging_duration(&self, staging_duration: near_sdk::Duration);
 
     /// Allows authorized account to apply the staging duration update.
     fn up_apply_update_staging_duration(&self);
@@ -82,7 +82,8 @@ pub trait Upgradable {
 pub struct UpgradableDurationStatus {
     pub staging_duration: Option<near_sdk::Duration>,
     pub staging_timestamp: Option<near_sdk::Timestamp>,
-    pub update_staging_duration: Option<near_sdk::Duration>,
+    pub new_staging_duration: Option<near_sdk::Duration>,
+    pub new_staging_duration_timestamp: Option<near_sdk::Duration>,
 }
 
 /// Event emitted when the code is staged
@@ -281,13 +282,16 @@ mod tests {
         );
 
         let new_staging_duration = staging_duration + 100;
-        counter.up_stage_update_staging_duration(Some(new_staging_duration));
+        counter.up_stage_update_staging_duration(new_staging_duration);
         assert_eq!(
             counter.up_get_delay_status().staging_duration.unwrap(),
             staging_duration
         );
         assert_eq!(
-            counter.up_get_delay_status().staging_timestamp.unwrap(),
+            counter
+                .up_get_delay_status()
+                .new_staging_duration_timestamp
+                .unwrap(),
             staging_timestamp
         );
 
@@ -324,13 +328,16 @@ mod tests {
         );
 
         let new_staging_duration = staging_duration + 100;
-        counter.up_stage_update_staging_duration(Some(new_staging_duration));
+        counter.up_stage_update_staging_duration(new_staging_duration);
         assert_eq!(
             counter.up_get_delay_status().staging_duration.unwrap(),
             staging_duration
         );
         assert_eq!(
-            counter.up_get_delay_status().staging_timestamp.unwrap(),
+            counter
+                .up_get_delay_status()
+                .new_staging_duration_timestamp
+                .unwrap(),
             staging_timestamp
         );
 
