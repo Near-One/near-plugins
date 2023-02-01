@@ -410,6 +410,17 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 set.iter().skip(skip).take(limit).cloned().collect()
             }
 
+            /// Returns _all_ bearers of `permission`. In this implementation of
+            /// `AccessControllable` there is no upper bound on the number of bearers per
+            /// permission, so gas limits should be considered when calling this function.
+            fn get_all_bearers(&self, permission: #bitflags_type) -> Vec<::near_sdk::AccountId> {
+                let set = match self.bearers.get(&permission) {
+                    Some(set) => set,
+                    None => return vec![],
+                };
+                set.iter().cloned().collect()
+            }
+
             /// Removes `account_id` from the set of `permission` bearers.
             fn remove_bearer(&mut self, permission: #bitflags_type, account_id: &::near_sdk::AccountId) {
                 // If `permission` is invalid (more than one active bit), this
@@ -419,6 +430,47 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     None => return,
                 };
                 set.remove(account_id);
+            }
+
+            /// Provides the implementation of `AccessControllable::acl_get_permissioned_accounts`.
+            ///
+            /// Uniqueness of account ids in returned vectors is guaranteed by the ids being
+            /// retrieved from bearer sets.
+            fn get_permissioned_accounts(&self) -> #cratename::access_controllable::PermissionedAccounts {
+                // Get super admins.
+                let permission = <#bitflags_type>::from_bits(
+                    <#role_type>::acl_super_admin_permission()
+                )
+                .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
+                let super_admins = self.get_all_bearers(permission);
+
+                // Get admins and grantees per role.
+                let roles = <#role_type>::acl_role_variants();
+                let mut map = ::std::collections::HashMap::new();
+                for role in roles {
+                    let role: #role_type = ::std::convert::TryFrom::try_from(role)
+                        .unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
+                    let admin_permission = <#bitflags_type>::from_bits(role.acl_admin_permission())
+                        .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
+                    let admins = self.get_all_bearers(admin_permission);
+
+                    let grantee_permission = <#bitflags_type>::from_bits(role.acl_permission())
+                        .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
+                    let grantees = self.get_all_bearers(grantee_permission);
+
+                    map.insert(
+                        role.into(),
+                        #cratename::access_controllable::PermissionedAccountsPerRole {
+                            admins,
+                            grantees,
+                        }
+                    );
+                }
+
+                #cratename::access_controllable::PermissionedAccounts {
+                    super_admins,
+                    roles: map,
+                }
             }
         }
 
@@ -517,6 +569,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 let permission = <#bitflags_type>::from_bits(role.acl_permission())
                     .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
                 self.#acl_field.get_bearers(permission, skip, limit)
+            }
+
+            fn acl_get_permissioned_accounts(&self) -> #cratename::access_controllable::PermissionedAccounts {
+                self.#acl_field.get_permissioned_accounts()
             }
         }
     };
