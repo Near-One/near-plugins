@@ -1,3 +1,5 @@
+use near_plugins::access_controllable::PermissionedAccounts;
+
 use near_sdk::serde_json::json;
 use workspaces::result::ExecutionFinalResult;
 use workspaces::{Account, AccountId, Contract};
@@ -383,5 +385,16 @@ impl AccessControllableContract {
             .into_result()?
             .json::<Vec<AccountId>>()?;
         Ok(res)
+    }
+
+    pub async fn acl_get_permissioned_accounts(
+        &self,
+        caller: &Account,
+    ) -> anyhow::Result<PermissionedAccounts> {
+        let res = caller
+            .call(self.contract.id(), "acl_get_permissioned_accounts")
+            .view()
+            .await?;
+        Ok(res.json::<PermissionedAccounts>()?)
     }
 }
