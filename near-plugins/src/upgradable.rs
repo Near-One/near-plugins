@@ -69,13 +69,13 @@ pub trait Upgradable {
     fn up_deploy_code(&mut self) -> Promise;
 
     /// Initialize the duration of the delay for deploying the staged code.
-    fn up_init_staging_duration(&self, staging_duration: near_sdk::Duration);
+    fn up_init_staging_duration(&mut self, staging_duration: near_sdk::Duration);
 
     /// Allows authorized account to stage update of the staging duration.
-    fn up_stage_update_staging_duration(&self, staging_duration: near_sdk::Duration);
+    fn up_stage_update_staging_duration(&mut self, staging_duration: near_sdk::Duration);
 
     /// Allows authorized account to apply the staging duration update.
-    fn up_apply_update_staging_duration(&self);
+    fn up_apply_update_staging_duration(&mut self);
 }
 
 #[derive(Serialize)]
@@ -262,7 +262,7 @@ mod tests {
 
     #[test]
     fn test_update_delay_duration() {
-        let (counter, mut ctx) = setup_basic();
+        let (mut counter, mut ctx) = setup_basic();
 
         ctx.predecessor_account_id = "eli.test".to_string().try_into().unwrap();
         testing_env!(ctx.clone());
@@ -308,7 +308,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Upgradable: Update duration too early: staging ends on ")]
     fn test_panic_update_delay_duration() {
-        let (counter, mut ctx) = setup_basic();
+        let (mut counter, mut ctx) = setup_basic();
 
         ctx.predecessor_account_id = "eli.test".to_string().try_into().unwrap();
         testing_env!(ctx.clone());

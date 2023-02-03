@@ -136,13 +136,13 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             #[#cratename::only(owner)]
-            fn up_init_staging_duration(&self, staging_duration: near_sdk::Duration) {
+            fn up_init_staging_duration(&mut self, staging_duration: near_sdk::Duration) {
                 near_sdk::require!(self.up_get_duration(__UpgradableStorageKey::StagingDuration).is_none(), "Upgradable: staging duration was already initialized");
                 self.up_set_staging_duration_unchecked(staging_duration);
             }
 
             #[#cratename::only(owner)]
-            fn up_stage_update_staging_duration(&self, staging_duration: near_sdk::Duration) {
+            fn up_stage_update_staging_duration(&mut self, staging_duration: near_sdk::Duration) {
                 let current_staging_duration = self.up_get_duration(__UpgradableStorageKey::StagingDuration)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging duration isn't initialized"));
 
@@ -152,7 +152,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             #[#cratename::only(owner)]
-            fn up_apply_update_staging_duration(&self) {
+            fn up_apply_update_staging_duration(&mut self) {
                 let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged update"));
 
