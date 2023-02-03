@@ -95,15 +95,14 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
 
             #[#cratename::only(owner)]
             fn up_stage_code(&mut self, #[serializer(borsh)] code: Vec<u8>) {
-                let timestamp = near_sdk::env::block_timestamp() + self.up_get_duration(__UpgradableStorageKey::StagingDuration).unwrap_or(0);
-
                 if code.is_empty() {
                     near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::Code).as_ref());
+                    near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::StagingTimestamp).as_ref());
                 } else {
+                    let timestamp = near_sdk::env::block_timestamp() + self.up_get_duration(__UpgradableStorageKey::StagingDuration).unwrap_or(0);
                     self.up_storage_write(__UpgradableStorageKey::Code, &code);
+                    self.up_set_timestamp(__UpgradableStorageKey::StagingTimestamp, timestamp);
                 }
-
-                self.up_set_timestamp(__UpgradableStorageKey::StagingTimestamp, timestamp);
             }
 
             #[result_serializer(borsh)]
