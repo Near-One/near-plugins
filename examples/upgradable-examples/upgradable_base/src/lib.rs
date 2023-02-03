@@ -15,6 +15,7 @@ impl Counter {
     pub fn new() -> Self {
         let mut contract = Self { counter: 0 };
         contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
+        contract.up_init_staging_duration(std::time::Duration::from_secs(60).as_nanos().try_into().unwrap()); // 1 minute
         contract
     }
 

@@ -33,9 +33,12 @@ async fn main() {
 
     let contract: Account = match &*args.network {
         "testnet" => get_contract!(testnet, args.path_to_key),
-        "mainnet" =>  get_contract!(mainnet, args.path_to_key),
+        "mainnet" => get_contract!(mainnet, args.path_to_key),
         "betanet" => get_contract!(betanet, args.path_to_key),
-        network => panic!("Unknown network {}. Possible networks: testnet, mainnet, betanet", network)
+        network => panic!(
+            "Unknown network {}. Possible networks: testnet, mainnet, betanet",
+            network
+        ),
     };
 
     let wasm = std::fs::read(&args.wasm).unwrap();
