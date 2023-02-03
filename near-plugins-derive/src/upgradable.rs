@@ -89,7 +89,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     staging_duration: self.up_get_duration(__UpgradableStorageKey::StagingDuration),
                     staging_timestamp: self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp),
                     new_staging_duration: self.up_get_duration(__UpgradableStorageKey::NewStagingDuration),
-                    new_staging_duration_timestamp: self.up_get_duration(__UpgradableStorageKey::NewStagingDurationTimestamp),
+                    new_staging_duration_timestamp: self.up_get_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp),
                 }
             }
 

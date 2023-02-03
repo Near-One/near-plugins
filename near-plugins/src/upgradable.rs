@@ -83,7 +83,7 @@ pub struct UpgradableDurationStatus {
     pub staging_duration: Option<near_sdk::Duration>,
     pub staging_timestamp: Option<near_sdk::Timestamp>,
     pub new_staging_duration: Option<near_sdk::Duration>,
-    pub new_staging_duration_timestamp: Option<near_sdk::Duration>,
+    pub new_staging_duration_timestamp: Option<near_sdk::Timestamp>,
 }
 
 /// Event emitted when the code is staged
