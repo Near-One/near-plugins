@@ -1,7 +1,17 @@
 use near_sdk::serde::de::DeserializeOwned;
 use std::cmp::PartialEq;
 use std::fmt::Debug;
+use std::str::FromStr;
 use workspaces::result::ExecutionFinalResult;
+use workspaces::AccountId;
+
+/// Converts `account_id` to a `near_sdk::AccountId` and panics on failure.
+///
+/// Only available in tests, hence favoring simplicity over efficiency.
+pub fn as_sdk_account_id(account_id: &AccountId) -> near_sdk::AccountId {
+    near_sdk::AccountId::from_str(account_id.as_str())
+        .expect("Conversion to near_sdk::AccountId should succeed")
+}
 
 /// Asserts execution was successful and returned `()`.
 pub fn assert_success_with_unit_return(res: ExecutionFinalResult) {

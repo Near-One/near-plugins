@@ -1,4 +1,6 @@
+use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::AccountId;
+use std::collections::HashMap;
 
 /// # Representation of roles
 ///
@@ -218,6 +220,80 @@ pub trait AccessControllable {
     /// Enables paginated retrieval of grantees of `role`. It returns up to
     /// `limit` grantees and skips the first `skip` grantees.
     fn acl_get_grantees(&self, role: String, skip: u64, limit: u64) -> Vec<AccountId>;
+
+    /// Convenience method that returns all [`PermissionedAccounts`].
+    ///
+    /// # Gas limits
+    ///
+    /// This function is eligible for view calls and while view calls are free for users, the
+    /// underlying transaction is still subject to a [gas limit] defined by the RPC node.
+    ///
+    /// In use cases where gas cost matters, the data returned by this function can be retrieved
+    /// more efficiently by a combination of the following:
+    ///
+    /// * Get roles with [`Self::acl_get_roles`].
+    /// * Get (a subset) of permissioned accounts with [`Self::acl_get_super_admins`],
+    /// [`Self::acl_get_admins`], or [`Self::acl_get_grantees`].
+    ///
+    /// [gas limit]: https://github.com/near/nearcore/pull/4381
+    fn acl_get_permissioned_accounts(&self) -> PermissionedAccounts;
+}
+
+/// Collects super admin accounts and accounts that have been granted permissions defined by
+/// `AccessControlRole`.
+///
+/// # Data structure
+///
+/// Assume `AccessControlRole` is derived for the following enum, which is then passed as `role`
+/// attribute to `AccessControllable`.
+///
+/// ```rust
+/// pub enum Role {
+///     PauseManager,
+///     UnpauseManager,
+/// }
+/// ```
+///
+/// Then the returned data has the following structure:
+///
+/// ```ignore
+/// PermissionedAccounts {
+///     super_admins: vec!["acc1.near", "acc2.near"],
+///     roles: HashMap::from([
+///         ("PauseManager", PermissionedAccountsPerRole {
+///             admins: vec!["acc3.near", "acc4.near"],
+///             grantees: vec!["acc5.near", "acc6.near"],
+///         }),
+///         ("UnpauseManager", PermissionedAccountsPerRole {
+///             admins: vec!["acc7.near", "acc8.near"],
+///             grantees: vec!["acc9.near", "acc10.near"],
+///         }),
+///     ])
+/// }
+/// ```
+///
+/// # Uniqueness and ordering
+///
+/// Account ids returned in vectors are unique but not ordered.
+#[derive(Deserialize, Serialize, Debug)]
+pub struct PermissionedAccounts {
+    /// The accounts that have super admin permissions.
+    pub super_admins: Vec<AccountId>,
+    /// The admins and grantees of all roles.
+    pub roles: HashMap<String, PermissionedAccountsPerRole>,
+}
+
+/// Collects all admins and grantees of a role.
+///
+/// # Uniqueness and ordering
+///
+/// Account ids returned in vectors are unique but not ordered.
+#[derive(Deserialize, Serialize, Debug)]
+pub struct PermissionedAccountsPerRole {
+    /// The accounts that have admin permissions for the role.
+    pub admins: Vec<AccountId>,
+    /// The accounts that have been granted the role.
+    pub grantees: Vec<AccountId>,
 }
 
 pub mod events {
