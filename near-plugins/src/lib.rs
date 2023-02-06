@@ -18,6 +18,7 @@ pub use near_plugins_derive::{
 pub use ownable::Ownable;
 pub use pausable::Pausable;
 pub use upgradable::Upgradable;
+pub use upgradable::UpgradableDurationStatus;
 
 // Re-exporting these dependencies avoids requiring contracts to depend on them.
 // For example, without re-exporting `bitflags` a contract using the access
