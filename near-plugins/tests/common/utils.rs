@@ -1,9 +1,11 @@
 use near_sdk::serde::de::DeserializeOwned;
+use near_sdk::Duration;
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 use std::str::FromStr;
-use workspaces::result::ExecutionFinalResult;
-use workspaces::AccountId;
+use workspaces::network::Sandbox;
+use workspaces::result::{ExecutionFinalResult, ExecutionOutcome};
+use workspaces::{AccountId, Block, Worker};
 
 /// Converts `account_id` to a `near_sdk::AccountId` and panics on failure.
 ///
@@ -13,13 +15,25 @@ pub fn as_sdk_account_id(account_id: &AccountId) -> near_sdk::AccountId {
         .expect("Conversion to near_sdk::AccountId should succeed")
 }
 
+/// Convenience function to create a new `near_sdk::Duration`. Panics if the conversion fails.
+pub fn sdk_duration_from_secs(seconds: u64) -> Duration {
+    std::time::Duration::from_secs(seconds)
+        .as_nanos()
+        .try_into()
+        .expect("Conversion from std Duration to near_sdk Duration should succeed")
+}
+
 /// Asserts execution was successful and returned `()`.
 pub fn assert_success_with_unit_return(res: ExecutionFinalResult) {
-    assert!(res.is_success(), "Transaction should have succeeded");
-    assert!(
-        res.raw_bytes().unwrap().is_empty(),
-        "Unexpected return value"
-    );
+    match res.into_result() {
+        Ok(res) => {
+            assert!(
+                res.raw_bytes().unwrap().is_empty(),
+                "Unexpected return value"
+            );
+        }
+        Err(err) => panic!("Transaction should have succeeded but failed with: {err}"),
+    }
 }
 
 /// Asserts execution was successful and returned the `expected` value.
@@ -145,4 +159,45 @@ pub fn assert_failure_with(res: ExecutionFinalResult, must_contain: &str) {
         must_contain,
         err,
     );
+}
+
+/// Returns the block timestamp in nanoseconds. Panics on failure.
+async fn block_timestamp(worker: &Worker<Sandbox>) -> u64 {
+    worker
+        .view_block()
+        .await
+        .expect("Should view block")
+        .timestamp()
+}
+
+/// Returns the block in which a transaction or receipt was included.
+pub async fn get_transaction_block(
+    worker: &Worker<Sandbox>,
+    result: &ExecutionOutcome,
+) -> workspaces::Result<Block> {
+    let block_hash = result.block_hash;
+    worker.view_block().block_hash(block_hash).await
+}
+
+/// [Time travels] `worker` forward by at least `duration`. This is achieved by a very naive
+/// approach: fast forward blocks until `duration` has passed. Keeping it simple since this function
+/// is available only in tests.
+///
+/// Due to this approach, it is recommended to pass only relatively small values as `duration`. Fast
+/// forwarding provided by this function is reasonly fast in our tests for durations that correspond
+/// to less than 100 seconds.
+///
+/// [Time travels]: https://github.com/near/workspaces-rs#time-traveling
+pub async fn fast_forward_beyond(worker: &Worker<Sandbox>, duration: Duration) {
+    let initial_timestamp = block_timestamp(worker).await;
+
+    // Estimating a number of blocks to skip based on `duration` and calling `fast_forward` only
+    // once seems more efficient. However, that leads to jittery tests as `fast_forward` may _not_
+    // forward the block timestamp significantly.
+    while block_timestamp(worker).await - initial_timestamp < duration {
+        worker
+            .fast_forward(1)
+            .await
+            .expect("Fast forward should succeed");
+    }
 }
