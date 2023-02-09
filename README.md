@@ -112,9 +112,6 @@ Tests should verify that once the macros provided by this crate are expanded, th
     - Compiles and deploys the contract on chain via [NEAR `workspaces`](https://docs.rs/workspaces/0.7.0/workspaces/).
     - Sends transactions to the deployed contract to verify plugin functionality.
 
-> **Note**
-> Currently some plugins are still tested by unit tests in `near-plugins/src/<plugin_name>.rs`, not by integration tests. Migrating these unit tests to integration tests as described above is WIP.
-
 ## Contributors Notes
 
 Traits doesn't contain any implementation, even though some interfaces are self-contained enough to have it.

@@ -44,8 +44,8 @@
 //! [batch transaction]: https://docs.near.org/concepts/basics/transactions/overview
 //! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
+use near_sdk::serde::Serialize;
 use near_sdk::{AccountId, CryptoHash, Promise};
-use serde::Serialize;
 
 /// Trait describing the functionality of the _Upgradable_ plugin.
 pub trait Upgradable {
@@ -104,68 +104,5 @@ impl AsEvent<DeployCode> for DeployCode {
             event: "deploy_code".to_string(),
             data: Some(self.clone()),
         }
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-#[cfg(test)]
-mod tests {
-    // TODO: Make simulation test that verifies code is deployed
-    use crate as near_plugins;
-    use crate::test_utils::get_context;
-    use crate::{Ownable, Upgradable};
-    use near_sdk::env::sha256;
-    use near_sdk::{near_bindgen, testing_env, VMContext};
-    use std::convert::TryInto;
-
-    #[near_bindgen]
-    #[derive(Ownable, Upgradable)]
-    struct Counter;
-
-    #[near_bindgen]
-    impl Counter {
-        /// Specify the owner of the contract in the constructor
-        #[init]
-        fn new() -> Self {
-            let mut contract = Self {};
-            contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
-            contract
-        }
-    }
-
-    /// Setup basic account. Owner of the account is `eli.test`
-    fn setup_basic() -> (Counter, VMContext) {
-        let ctx = get_context();
-        testing_env!(ctx.clone());
-        let mut counter = Counter::new();
-        counter.owner_set(Some("eli.test".to_string().try_into().unwrap()));
-        (counter, ctx)
-    }
-
-    #[test]
-    #[should_panic(expected = r#"Ownable: Method must be called from owner"#)]
-    fn test_stage_code_not_owner() {
-        let (mut counter, _) = setup_basic();
-        counter.up_stage_code(vec![1]);
-    }
-
-    #[test]
-    fn test_stage_code() {
-        let (mut counter, mut ctx) = setup_basic();
-
-        ctx.predecessor_account_id = "eli.test".to_string().try_into().unwrap();
-        testing_env!(ctx);
-
-        assert_eq!(counter.up_staged_code(), None);
-        counter.up_stage_code(vec![1]);
-
-        assert_eq!(counter.up_staged_code(), Some(vec![1]));
-
-        assert_eq!(
-            counter.up_staged_code_hash(),
-            Some(sha256(vec![1].as_slice()).try_into().unwrap())
-        );
-
-        counter.up_deploy_code();
     }
 }
