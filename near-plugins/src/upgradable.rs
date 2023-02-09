@@ -44,8 +44,8 @@
 //! [batch transaction]: https://docs.near.org/concepts/basics/transactions/overview
 //! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
+use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{AccountId, CryptoHash, Promise};
-use serde::Serialize;
 
 /// Trait describing the functionality of the _Upgradable_ plugin.
 pub trait Upgradable {
@@ -78,7 +78,7 @@ pub trait Upgradable {
     fn up_apply_update_staging_duration(&mut self);
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct UpgradableDurationStatus {
     pub staging_duration: Option<near_sdk::Duration>,
     pub staging_timestamp: Option<near_sdk::Timestamp>,
