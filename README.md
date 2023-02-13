@@ -63,7 +63,7 @@ Documentation of all methods provided by `Pausable` is available in the [definit
 
 Allows a contract to be upgraded by owner without having a Full Access Key.
 
-Contract example using _Upgradable_ plugin. Note that it requires the contract to be Ownable.
+Using the `Upgradable` plugin requires a contract to be `Ownable`.
 
 ```rust
 #[near_bindgen]
@@ -82,10 +82,11 @@ impl Counter {
 }
 ```
 
-To upgrade the contract first call `up_stage_code` passing the binary as first argument serialized as borsh. Then call `up_deploy_code`.
-This functions must be called from the owner.
+To upgrade the contract first call `up_stage_code` passing the binary as first argument serialized as borsh. Then call `up_deploy_code`. Both functions must be called by the owner of the contract.
 
-Documentation of all methods provided by the derived implementation of `Upgradable` is available in the [definition of the trait](/near-plugins/src/upgradable.rs). More examples and guidelines for interacting with an `Upgradable` contract can be found [here](/examples/upgradable-examples/README.md).
+[This contract](/near-plugins/tests/contracts/upgradable/src/lib.rs) provides an example of using `Upgradable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/upgradable.rs).
+
+Documentation of all methods provided by `Upgradable` is available in the [definition of the trait](/near-plugins/src/upgradable.rs).
 
 ### [AccessControllable](/near-plugins/src/access_controllable.rs)
 

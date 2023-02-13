@@ -3,6 +3,4 @@
 members = [
   "full-access-key-fallback-examples/full_access_key_fallback_base",
   "near-plugins-test-utils",
-  "upgradable-examples/upgradable_base",
-  "upgradable-examples/up_stage_code",
 ]
