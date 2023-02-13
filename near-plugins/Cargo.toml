@@ -13,10 +13,3 @@ bitflags.workspace = true
 near-sdk.workspace = true
 near-plugins-derive.workspace = true
 serde.workspace = true
-
-[dev-dependencies]
-anyhow.workspace = true
-borsh.workspace = true
-tokio.workspace = true
-workspaces.workspace = true
-toml.workspace = true
