@@ -11,13 +11,13 @@ are also described in the [source code](/near-plugins-derive/src/) of each macro
 The following sections provide an overview of all available plugins. More examples and usage patterns are available in:
 
 - [`examples/`](/examples/)
-- [`near-plugins/tests/contracts/`](/near-plugins/tests/contracts/)
+- [`near-plugins-derive/tests/contracts/`](/near-plugins-derive/tests/contracts/)
 
 ### [Ownable](/near-plugins/src/ownable.rs)
 
 Basic access control mechanism that allows _only_ an authorized account id to call certain methods. Note this account id can belong either to a regular user, or it could be a contract (a DAO for example).
 
-[This contract](/near-plugins/tests/contracts/ownable/src/lib.rs) provides an example of using `Ownable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/ownable.rs).
+[This contract](/near-plugins-derive/tests/contracts/ownable/src/lib.rs) provides an example of using `Ownable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins-derive/tests/ownable.rs).
 
 Documentation of all methods provided by the derived implementation of `Ownable` is available in the [definition of the trait](/near-plugins/src/ownable.rs).
 
@@ -55,7 +55,7 @@ used granularly to only limit certain features.
 
 Using the `Pausable` plugin requires the contract to be _AccessControllable_ in order to manage permissions. Roles allowing accounts to call certain methods can be granted and revoked via the _AccessControllable_ plugin.
 
-[This contract](/near-plugins/tests/contracts/pausable/src/lib.rs) provides an example of using `Pausable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/pausable.rs).
+[This contract](/near-plugins-derive/tests/contracts/pausable/src/lib.rs) provides an example of using `Pausable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins-derive/tests/pausable.rs).
 
 Documentation of all methods provided by `Pausable` is available in the [definition of the trait](/near-plugins/src/pausable.rs).
 
@@ -69,7 +69,7 @@ To upgrade the contract first call `up_stage_code` passing the binary as first a
 
 To set a staging duration, call `up_stage_init_staging_duration`. After initialization the staging duration can be updated by calling `up_stage_update_staging_duration` followed by `up_apply_update_staging_duration`. Updating the staging duration is itself subject to a delay: at least the currently set staging duration must pass before a staged update can be applied. The functions mentioned in this paragraph must be called by the owner of the contract.
 
-[This contract](/near-plugins/tests/contracts/upgradable/src/lib.rs) provides an example of using `Upgradable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/upgradable.rs).
+[This contract](/near-plugins-derive/tests/contracts/upgradable/src/lib.rs) provides an example of using `Upgradable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins-derive/tests/upgradable.rs).
 
 Documentation of all methods provided by `Upgradable` is available in the [definition of the trait](/near-plugins/src/upgradable.rs).
 
@@ -79,7 +79,7 @@ Enables role-based access control for contract methods. A method with restricted
 
 Each role is managed by admins who may grant the role to accounts and revoke it from them. In addition, there are super admins that have admin permissions for every role. The sets of accounts that are (super) admins and grantees are stored in the contract's state.
 
-[This contract](/near-plugins/tests/contracts/access_controllable/src/lib.rs) provides an example of using `AccessControllable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/access_controllable.rs).
+[This contract](/near-plugins-derive/tests/contracts/access_controllable/src/lib.rs) provides an example of using `AccessControllable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins-derive/tests/access_controllable.rs).
 
 Documentation of all methods provided by `AccessControllable` is available in the [definition of the trait](/near-plugins/src/access_controllable.rs).
 
@@ -93,8 +93,8 @@ The code that is generated for a trait implementation is based on `near-plugins-
 
 Tests should verify that once the macros provided by this crate are expanded, the contract they are used in has the intended functionality. Integration tests are utilized for that purpose:
 
-- A contract using the plugin is contained in `near-plugins/tests/contracts/<plugin_name>/`.
-- This contract is used in `near-plugins/tests/<plugin_name>.rs` which:
+- A contract using the plugin is contained in `near-plugins-derive/tests/contracts/<plugin_name>/`.
+- This contract is used in `near-plugins-derive/tests/<plugin_name>.rs` which:
     - Compiles and deploys the contract on chain via [NEAR `workspaces`](https://docs.rs/workspaces/0.7.0/workspaces/).
     - Sends transactions to the deployed contract to verify plugin functionality.
 
