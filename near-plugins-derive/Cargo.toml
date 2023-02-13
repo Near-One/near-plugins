@@ -14,3 +14,12 @@ proc-macro2.workspace = true
 quote.workspace = true
 syn.workspace = true
 proc-macro-crate.workspace = true
+
+[dev-dependencies]
+anyhow.workspace = true
+borsh.workspace = true
+near-plugins.workspace = true
+near-sdk.workspace = true
+tokio.workspace = true
+workspaces.workspace = true
+toml.workspace = true

@@ -30,6 +30,7 @@ fn pk_sdk_to_workspaces(public_key: near_sdk::PublicKey) -> PublicKey {
     // Going via json since there seems to be no direct conversion, see this issue:
     // https://github.com/near/workspaces-rs/issues/262
     #[derive(Deserialize)]
+    #[serde(crate = "near_sdk::serde")]
     struct Wrapper {
         public_key: PublicKey,
     }
