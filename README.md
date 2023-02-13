@@ -61,35 +61,17 @@ Documentation of all methods provided by `Pausable` is available in the [definit
 
 ### [Upgradable](/near-plugins/src/upgradable.rs)
 
-Allows a contract to be upgraded by owner with delay and without having a Full Access Key.
+Allows a contract to be upgraded by the owner without requiring a full access key. Optionally a staging duration can be set, which defines the minimum duration that must pass before staged code can be deployed. The staging duration is a safety mechanism to protect users that interact with the contract, giving them time to opt-out before an unfavorable update is deployed.
 
-Contract example using _Upgradable_ plugin. Note that it requires the contract to be Ownable.
+Using the `Upgradable` plugin requires a contract to be `Ownable`.
 
-```rust
-#[near_bindgen]
-#[derive(Ownable, Upgradable)]
-struct Counter;
+To upgrade the contract first call `up_stage_code` passing the binary as first argument serialized as borsh. Then call `up_deploy_code`. Both functions must be called by the owner of the contract.
 
-#[near_bindgen]
-impl Counter {
-    /// Specify the owner of the contract in the constructor
-    #[init]
-    fn new() -> Self {
-        let mut contract = Self {};
-        contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
-        contract.up_init_staging_duration(std::time::Duration::from_secs(60).as_nanos().try_into().unwrap()); // 1 minute
-        contract
-    }
-}
-```
+To set a staging duration, call `up_stage_init_staging_duration`. After initialization the staging duration can be updated by calling `up_stage_update_staging_duration` followed by `up_apply_update_staging_duration`. Updating the staging duration is itself subject to a delay: at least the currently set staging duration must pass before a staged update can be applied. The functions mentioned in this paragraph must be called by the owner of the contract.
 
-To upgrade the contract first call `up_stage_code` passing the binary as first argument serialized as borsh. Then call `up_deploy_code`.
-This functions must be called from the owner.
+[This contract](/near-plugins/tests/contracts/upgradable/src/lib.rs) provides an example of using `Upgradable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins/tests/upgradable.rs).
 
-To update the staging delay first call `up_stage_update_staging_duration` passing the new delay duration. Then call `up_apply_update_staging_duration`.
-This functions must be called from the owner.
-
-Documentation of all methods provided by the derived implementation of `Upgradable` is available in the [definition of the trait](/near-plugins/src/upgradable.rs). More examples and guidelines for interacting with an `Upgradable` contract can be found [here](/examples/upgradable-examples/README.md).
+Documentation of all methods provided by `Upgradable` is available in the [definition of the trait](/near-plugins/src/upgradable.rs).
 
 ### [AccessControllable](/near-plugins/src/access_controllable.rs)
 

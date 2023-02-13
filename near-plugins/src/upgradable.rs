@@ -50,6 +50,14 @@ use near_sdk::{AccountId, CryptoHash, Promise};
 /// Trait describing the functionality of the _Upgradable_ plugin.
 pub trait Upgradable {
     /// Returns the storage prefix for slots related to upgradable.
+    ///
+    /// Attribute `storage_prefix` can be used to set a different prefix:
+    ///
+    /// ```ignore
+    /// #[derive(Upgradable)]
+    /// #[upgradable(storage_prefix="CUSTOM_KEY")]
+    /// struct Contract { /* ... */}
+    /// ```
     fn up_storage_prefix(&self) -> &'static [u8];
 
     /// Returns all staging durations and timestamps.
