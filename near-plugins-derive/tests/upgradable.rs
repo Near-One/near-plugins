@@ -5,17 +5,19 @@ pub mod common;
 use anyhow::Ok;
 use common::upgradable_contract::UpgradableContract;
 use common::utils::{
-    assert_failure_with, assert_only_owner_permission_failure, assert_success_with_unit_return,
-    fast_forward_beyond, get_transaction_block, sdk_duration_from_secs,
+    assert_failure_with, assert_only_owner_permission_failure, assert_success_with,
+    assert_success_with_unit_return, fast_forward_beyond, get_transaction_block,
+    sdk_duration_from_secs,
 };
 use near_sdk::serde_json::json;
 use near_sdk::{CryptoHash, Duration, Timestamp};
 use std::path::Path;
 use workspaces::network::Sandbox;
 use workspaces::result::ExecutionFinalResult;
-use workspaces::{Account, AccountId, Worker};
+use workspaces::{Account, AccountId, Contract, Worker};
 
 const PROJECT_PATH: &str = "./tests/contracts/upgradable";
+const PROJECT_PATH_2: &str = "./tests/contracts/upgradable_2";
 
 const ERR_MSG_NO_STAGING_TS: &str = "Upgradable: staging timestamp isn't set";
 const ERR_MSG_DEPLOY_CODE_TOO_EARLY: &str = "Upgradable: Deploy code too early: staging ends on";
@@ -27,6 +29,8 @@ const ERR_MSG_UPDATE_DURATION_TOO_EARLY: &str =
 struct Setup {
     /// The worker interacting with the current sandbox.
     worker: Worker<Sandbox>,
+    /// A deployed instance of the contract.
+    contract: Contract,
     /// Wrapper around the deployed contract that facilitates interacting with methods provided by
     /// the `Upgradable` plugin.
     upgradable_contract: UpgradableContract,
@@ -64,6 +68,7 @@ impl Setup {
         let unauth_account = worker.dev_create_account().await?;
         Ok(Self {
             worker,
+            contract,
             upgradable_contract,
             unauth_account,
         })
@@ -142,6 +147,17 @@ impl Setup {
             .await
             .expect("Call to up_get_delay_status should succeed");
         assert_eq!(status.new_staging_duration_timestamp, expected_timestamp);
+    }
+
+    async fn call_is_upgraded(&self, caller: &Account) -> workspaces::Result<ExecutionFinalResult> {
+        // `is_upgraded` could be called via `view`, however here it is called via `transact` so we
+        // get an `ExecutionFinalResult` that can be passed to `assert_*` methods from
+        // `common::utils`. It is acceptable since all we care about is whether the method exists.
+        caller
+            .call(self.contract.id(), "is_upgraded")
+            .max_gas()
+            .transact()
+            .await
     }
 }
 
@@ -379,8 +395,39 @@ async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// TODO stage code that corresponds to a valid contract. Call a method of that contract to verify
-/// the staged code was deployed.
+/// Verifies the upgrade was successful by calling a method that's available only on the upgraded
+/// contract. Ensures the new contract can be deployed and state migration succeeds.
+#[tokio::test]
+async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox().await?;
+    let owner = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(owner.id().clone()), None).await?;
+
+    // Verify function `is_upgraded` is not defined in the initial contract.
+    let res = setup.call_is_upgraded(&setup.unauth_account).await?;
+    assert_failure_with(res, "Action #0: MethodResolveError(MethodNotFound)");
+
+    // Compile the other version of the contract and stage its code.
+    let code = common::repo::compile_project(Path::new(PROJECT_PATH_2), "upgradable_2").await?;
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&owner, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(code)).await;
+
+    // Deploy staged code.
+    let res = setup.upgradable_contract.up_deploy_code(&owner).await?;
+    assert_success_with_unit_return(res);
+
+    // The newly deployed contract defines the function `is_upgraded`. Calling it successfully
+    // verifies the staged contract is deployed and there are no issues with state migration.
+    let res = setup.call_is_upgraded(&setup.unauth_account).await?;
+    assert_success_with(res, true);
+
+    Ok(())
+}
+
 #[tokio::test]
 async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
