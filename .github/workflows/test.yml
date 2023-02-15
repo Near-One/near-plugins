@@ -14,11 +14,6 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
       - uses: Swatinem/rust-cache@v1
         with:
           cache-on-failure: true
@@ -35,12 +30,6 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v1
         with:
