@@ -12,5 +12,6 @@ name: "Contract Security Analysis"
 jobs:
   contract_analysis:
     name: "Shared"
+    runs-on: self-hosted
     uses: aurora-is-near/.github/.github/workflows/contract_analysis.yml@master
     secrets: inherit
