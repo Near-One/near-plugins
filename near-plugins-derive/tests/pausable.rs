@@ -2,18 +2,16 @@
 // https://users.rust-lang.org/t/invalid-dead-code-warning-for-submodule-in-integration-test/80259
 pub mod common;
 
-use common::access_controllable_contract::AccessControllableContract;
 use common::pausable_contract::PausableContract;
 use common::utils::{
-    assert_failure_with, assert_insufficient_acl_permissions, assert_method_is_paused,
+    assert_failure_with, assert_method_is_paused, assert_only_owner_permission_failure,
     assert_success_with_unit_return,
 };
 use near_sdk::serde_json::json;
 use std::collections::HashSet;
 use std::path::Path;
-use workspaces::network::Sandbox;
 use workspaces::result::ExecutionFinalResult;
-use workspaces::{Account, AccountId, Contract, Worker};
+use workspaces::{Account, Contract};
 
 const PROJECT_PATH: &str = "./tests/contracts/pausable";
 
@@ -21,16 +19,11 @@ const MESSAGE_METHOD_NOT_PAUSED: &str = "Pausable: Method must be paused";
 
 /// Bundles resources required in tests.
 struct Setup {
-    /// The worker interacting with the current sandbox.
-    worker: Worker<Sandbox>,
     // Instance of the deployed contract.
     contract: Contract,
     /// Wrapper around the deployed contract that facilitates interacting with
     /// methods provided by the `Pausable` plugin.
     pausable_contract: PausableContract,
-    /// Wrapper around the deployed contract that facilitates interacting with
-    /// methods provided by the `AccessControllable` plugin.
-    acl_contract: AccessControllableContract,
     /// An account with permission to pause and unpause features.
     pause_manager: Account,
     /// A newly created account without any `AccessControllable` permissions.
@@ -45,14 +38,13 @@ impl Setup {
         let wasm = common::repo::compile_project(Path::new(PROJECT_PATH), "pausable").await?;
         let contract = worker.dev_deploy(&wasm).await?;
         let pausable_contract = PausableContract::new(contract.clone());
-        let acl_contract = AccessControllableContract::new(contract.clone());
 
         // Call the contract's constructor.
         let pause_manager = worker.dev_create_account().await?;
         contract
             .call("new")
             .args_json(json!({
-                "pause_manager": pause_manager.id(),
+                "owner": pause_manager.id(),
             }))
             .max_gas()
             .transact()
@@ -61,24 +53,11 @@ impl Setup {
 
         let unauth_account = worker.dev_create_account().await?;
         Ok(Self {
-            worker,
             contract,
             pausable_contract,
-            acl_contract,
             pause_manager,
             unauth_account,
         })
-    }
-
-    /// Grants `role` to `account_id`. Panics if the role is not successfully granted.
-    async fn must_grant_acl_role(&self, role: &str, account_id: &AccountId) {
-        // The contract itself is made super admin in the constructor, hence this should succeed.
-        let result = self
-            .acl_contract
-            .acl_grant_role(self.contract.as_account(), role, account_id)
-            .await
-            .unwrap();
-        assert_eq!(result, Some(true));
     }
 
     /// Calls `get_counter` from an account without acl permissions. This method isn't restricted by
@@ -160,16 +139,12 @@ async fn test_pause_feature_from_pause_manager() -> anyhow::Result<()> {
 }
 
 /// Asserts `pa_pause_feature` fails due to insufficient acl permissions when called by `caller`.
-async fn assert_pause_feature_acl_failure(contract: &PausableContract, caller: &Account) {
+async fn assert_pause_feature_permissions_failure(contract: &PausableContract, caller: &Account) {
     let result = contract
         .pa_pause_feature(caller, "increase_1")
         .await
         .unwrap();
-    assert_insufficient_acl_permissions(
-        result,
-        "pa_pause_feature",
-        vec!["PauseManager".to_string()],
-    );
+    assert_only_owner_permission_failure(result);
 }
 
 #[tokio::test]
@@ -180,7 +155,7 @@ async fn test_pause_not_allowed_from_unauthorized_account() -> anyhow::Result<()
         unauth_account,
         ..
     } = Setup::new().await?;
-    assert_pause_feature_acl_failure(&pausable_contract, &unauth_account).await;
+    assert_pause_feature_permissions_failure(&pausable_contract, &unauth_account).await;
     Ok(())
 }
 
@@ -192,21 +167,17 @@ async fn test_pause_not_allowed_from_self() -> anyhow::Result<()> {
         pausable_contract,
         ..
     } = Setup::new().await?;
-    assert_pause_feature_acl_failure(&pausable_contract, contract.as_account()).await;
+    assert_pause_feature_permissions_failure(&pausable_contract, contract.as_account()).await;
     Ok(())
 }
 
 /// Asserts `pa_unpause_feature` fails due to insufficient acl permissions when called by `caller`.
-async fn assert_unpause_feature_acl_failure(contract: &PausableContract, caller: &Account) {
+async fn assert_unpause_feature_permissions_failure(contract: &PausableContract, caller: &Account) {
     let result = contract
         .pa_unpause_feature(caller, "increase_1")
         .await
         .unwrap();
-    assert_insufficient_acl_permissions(
-        result,
-        "pa_unpause_feature",
-        vec!["PauseManager".to_string()],
-    );
+    assert_only_owner_permission_failure(result);
 }
 
 #[tokio::test]
@@ -217,7 +188,7 @@ async fn test_unpause_not_allowed_from_unauthorized_account() -> anyhow::Result<
         unauth_account,
         ..
     } = Setup::new().await?;
-    assert_unpause_feature_acl_failure(&pausable_contract, &unauth_account).await;
+    assert_unpause_feature_permissions_failure(&pausable_contract, &unauth_account).await;
     Ok(())
 }
 
@@ -229,7 +200,7 @@ async fn test_unpause_not_allowed_from_self() -> anyhow::Result<()> {
         pausable_contract,
         ..
     } = Setup::new().await?;
-    assert_unpause_feature_acl_failure(&pausable_contract, contract.as_account()).await;
+    assert_unpause_feature_permissions_failure(&pausable_contract, contract.as_account()).await;
     Ok(())
 }
 
@@ -258,13 +229,8 @@ async fn test_pause_with_all_allows_except() -> anyhow::Result<()> {
         .await?
         .into_result()?;
 
-    let exempted_account = setup.unauth_account.clone();
-    setup
-        .must_grant_acl_role("Unrestricted4Increaser", exempted_account.id())
-        .await;
-
     let res = setup
-        .call_counter_modifier(&exempted_account, "increase_4")
+        .call_counter_modifier(setup.contract.as_account(), "increase_4")
         .await?;
     assert_success_with_unit_return(res);
     assert_eq!(setup.get_counter().await?, 4);
@@ -471,25 +437,12 @@ async fn test_pause_except_ok() -> anyhow::Result<()> {
         .await?
         .into_result()?;
 
-    // Grantee of `Role::Unrestricted4Increaser` is exempted.
-    let increaser = setup.worker.dev_create_account().await?;
-    setup
-        .must_grant_acl_role("Unrestricted4Increaser", increaser.id())
-        .await;
+    // Self is exempted.
     let res = setup
-        .call_counter_modifier(&increaser, "increase_4")
+        .call_counter_modifier(setup.contract.as_account(), "increase_4")
         .await?;
     assert_success_with_unit_return(res);
     assert_eq!(setup.get_counter().await?, 4);
-
-    // Grantee of `Role::Unrestricted4Modifier` is exempted.
-    let modifier = setup.worker.dev_create_account().await?;
-    setup
-        .must_grant_acl_role("Unrestricted4Modifier", modifier.id())
-        .await;
-    let res = setup.call_counter_modifier(&modifier, "increase_4").await?;
-    assert_success_with_unit_return(res);
-    assert_eq!(setup.get_counter().await?, 8);
 
     Ok(())
 }

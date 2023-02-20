@@ -1,29 +1,11 @@
 use near_plugins::{
-    access_control, if_paused, pause, AccessControlRole, AccessControllable, Pausable,
+    if_paused, pause, Ownable, Pausable,
 };
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault};
+use near_sdk::{near_bindgen, AccountId, PanicOnDefault};
 
-/// Define roles for access control of `Pausable` features. Accounts which are
-/// granted a role are authorized to execute the corresponding action.
-#[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
-#[serde(crate = "near_sdk::serde")]
-pub enum Role {
-    /// May pause and unpause features.
-    PauseManager,
-    /// May call `increase_4` even when it is paused.
-    Unrestricted4Increaser,
-    /// May call `decrease_4` even when `increase_4` is not paused.
-    Unrestricted4Decreaser,
-    /// May always call both `increase_4` and `decrease_4`.
-    Unrestricted4Modifier,
-}
-
-#[access_control(role_type(Role))]
 #[near_bindgen]
-#[derive(Pausable, PanicOnDefault, BorshDeserialize, BorshSerialize)]
-#[pausable(manager_roles(Role::PauseManager))]
+#[derive(Pausable, Ownable, PanicOnDefault, BorshDeserialize, BorshSerialize)]
 pub struct Counter {
     counter: u64,
 }
@@ -37,23 +19,11 @@ impl Counter {
     ///
     /// For a general overview of access control, please refer to the `AccessControllable` plugin.
     #[init]
-    pub fn new(pause_manager: AccountId) -> Self {
+    pub fn new(owner: AccountId) -> Self {
         let mut contract = Self {
             counter: 0,
-            __acl: Default::default(),
         };
-
-        // Make the contract itself super admin. This allows us to grant any role in the
-        // constructor.
-        near_sdk::require!(
-            contract.acl_init_super_admin(env::current_account_id()),
-            "Failed to initialize super admin",
-        );
-
-        // Grant `Role::PauseManager` to the provided account.
-        let result = contract.acl_grant_role(Role::PauseManager.into(), pause_manager);
-        near_sdk::require!(Some(true) == result, "Failed to grant role");
-
+        contract.owner_set(Some(owner));
         contract
     }
 
@@ -84,7 +54,7 @@ impl Counter {
 
     /// Similar to `#[pause]` but roles passed as argument may still successfully call this method
     /// even when the corresponding feature is paused.
-    #[pause(except(roles(Role::Unrestricted4Increaser, Role::Unrestricted4Modifier)))]
+    #[pause(except(owner, self))]
     pub fn increase_4(&mut self) {
         self.counter += 4;
     }
@@ -95,13 +65,6 @@ impl Counter {
     #[if_paused(name = "increase_1")]
     pub fn decrease_1(&mut self) {
         self.counter -= 1;
-    }
-
-    /// Similar to `#[if_paused]` but roles passed as argument may successfully call the method even
-    /// when the feature is _not_ paused.
-    #[if_paused(name = "increase_4", except(roles(Role::Unrestricted4Decreaser)))]
-    pub fn decrease_4(&mut self) {
-        self.counter -= 4;
     }
 
     /// Custom use of pause features. Only allow increasing the counter using `careful_increase` if
