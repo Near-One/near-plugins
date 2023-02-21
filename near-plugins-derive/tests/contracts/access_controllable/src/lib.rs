@@ -37,9 +37,7 @@ impl Counter {
     /// identifier of the enum variant, i.e. `"Updater"` for `Role::Updater`.
     #[init]
     pub fn new(admins: HashMap<String, AccountId>, grantees: HashMap<String, AccountId>) -> Self {
-        let mut contract = Self {
-            counter: 0,
-        };
+        let mut contract = Self { counter: 0 };
         contract.acl_init_storage();
 
         if admins.len() > 0 || grantees.len() > 0 {
@@ -154,7 +152,8 @@ impl Counter {
 
     #[private]
     pub fn acl_revoke_role_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.acl_get().revoke_role_unchecked(role.into(), &account_id)
+        self.acl_get()
+            .revoke_role_unchecked(role.into(), &account_id)
     }
 
     #[private]

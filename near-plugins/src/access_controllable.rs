@@ -29,7 +29,6 @@ pub trait AccessControllable {
     /// ```
     fn acl_storage_prefix() -> &'static [u8];
 
-
     /// Initialize the access control storage.
     fn acl_init_storage(&self);
 
