@@ -96,7 +96,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         }
 
         impl #ident {
-            fn acl_get_field(&self) -> Option<#acl_type> {
+            fn acl_get_storage(&self) -> Option<#acl_type> {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 near_sdk::env::storage_read(&__acl_storage_prefix(
                     base_prefix,
@@ -109,7 +109,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             fn acl_get(&self) -> #acl_type {
-                self.acl_get_field().unwrap_or_else(|| ::near_sdk::env::panic_str("ACL: storage isn't initialized"))
+                self.acl_get_storage().unwrap_or_else(|| ::near_sdk::env::panic_str("ACL: storage isn't initialized"))
             }
 
             fn acl_init_storage_unchecked(&self) {
@@ -508,7 +508,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             fn acl_init_storage(&self) {
-                ::near_sdk::require!(self.acl_get_field().is_none(), "ACL: storage was already initialized");
+                ::near_sdk::require!(self.acl_get_storage().is_none(), "ACL: storage was already initialized");
                 self.acl_init_storage_unchecked();
             }
 
