@@ -84,7 +84,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             Permissions,
             Bearers,
             BearersSet { permission: #bitflags_type },
-            AclField,
+            AclStorage,
         }
 
         /// Generates a prefix by concatenating the input parameters.
@@ -100,10 +100,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 near_sdk::env::storage_read(&__acl_storage_prefix(
                     base_prefix,
-                    __AclStorageKey::AclField,
+                    __AclStorageKey::AclStorage,
                 ))
-                .map(|acl_field_bytes| {
-                    #acl_type::try_from_slice(&acl_field_bytes)
+                .map(|acl_storage_bytes| {
+                    #acl_type::try_from_slice(&acl_storage_bytes)
                         .unwrap_or_else(|_| near_sdk::env::panic_str("ACL: invalid acl storage format"))
                 })
             }
@@ -114,10 +114,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
             fn acl_init_storage_unchecked(&self) {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
-                let acl_field: #acl_type = Default::default();
+                let acl_storage: #acl_type = Default::default();
                 near_sdk::env::storage_write(
-                    &__acl_storage_prefix(base_prefix, __AclStorageKey::AclField),
-                    &acl_field.try_to_vec().unwrap(),
+                    &__acl_storage_prefix(base_prefix, __AclStorageKey::AclStorage),
+                    &acl_storage.try_to_vec().unwrap(),
                 );
             }
         }
