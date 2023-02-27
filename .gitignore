@@ -1,8 +1,9 @@
 /target
 Cargo.lock
 near-plugins-derive/tests/contracts/*/target
+near-plugins/tests/contracts/*/target
 examples/target
-**/target/**
+
 # Ignore IDE data
 .vscode/
 .idea/
