@@ -29,9 +29,6 @@ pub trait AccessControllable {
     /// ```
     fn acl_storage_prefix() -> &'static [u8];
 
-    /// Initialize the access control storage.
-    fn acl_init_storage(&self);
-
     /// Returns the names of all variants of the enum that represents roles.
     ///
     /// In the default implementation provided by this crate, this enum is defined by contract

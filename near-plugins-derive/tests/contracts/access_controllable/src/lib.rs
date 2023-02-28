@@ -38,7 +38,6 @@ impl Counter {
     #[init]
     pub fn new(admins: HashMap<String, AccountId>, grantees: HashMap<String, AccountId>) -> Self {
         let mut contract = Self { counter: 0 };
-        contract.acl_init_storage();
 
         if admins.len() > 0 || grantees.len() > 0 {
             // First we make the contract itself super admin to allow it adding admin and grantees.
@@ -65,11 +64,11 @@ impl Counter {
             // granting roles, for example:
             //
             // ```
-            // contract.acl_get().add_admin_unchecked(role, account_id);
-            // contract.acl_get().grant_role_unchecked(role, account_id);
+            // contract.acl_get_or_init().add_admin_unchecked(role, account_id);
+            // contract.acl_get_or_init().grant_role_unchecked(role, account_id);
             // ```
             //
-            // **Attention**: for security reasons, `acl_get().*_unchecked` methods should only be called
+            // **Attention**: for security reasons, `acl_get_or_init().*_unchecked` methods should only be called
             // from within methods with attribute `#[init]` or `#[private]`.
         }
 
@@ -133,7 +132,7 @@ impl Counter {
             self.acl_is_super_admin(env::predecessor_account_id()),
             "Only super admins are allowed to add other super admins."
         );
-        self.acl_get().add_super_admin_unchecked(&account_id)
+        self.acl_get_or_init().add_super_admin_unchecked(&account_id)
     }
 }
 
@@ -142,32 +141,32 @@ impl Counter {
 impl Counter {
     #[private]
     pub fn acl_add_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
-        self.acl_get().add_super_admin_unchecked(&account_id)
+        self.acl_get_or_init().add_super_admin_unchecked(&account_id)
     }
 
     #[private]
     pub fn acl_revoke_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
-        self.acl_get().revoke_super_admin_unchecked(&account_id)
+        self.acl_get_or_init().revoke_super_admin_unchecked(&account_id)
     }
 
     #[private]
     pub fn acl_revoke_role_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.acl_get()
+        self.acl_get_or_init()
             .revoke_role_unchecked(role.into(), &account_id)
     }
 
     #[private]
     pub fn acl_add_admin_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.acl_get().add_admin_unchecked(role, &account_id)
+        self.acl_get_or_init().add_admin_unchecked(role, &account_id)
     }
 
     #[private]
     pub fn acl_revoke_admin_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.acl_get().revoke_admin_unchecked(role, &account_id)
+        self.acl_get_or_init().revoke_admin_unchecked(role, &account_id)
     }
 
     #[private]
     pub fn acl_grant_role_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.acl_get().grant_role_unchecked(role, &account_id)
+        self.acl_get_or_init().grant_role_unchecked(role, &account_id)
     }
 }

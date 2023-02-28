@@ -41,7 +41,6 @@ impl Counter {
         let mut contract = Self {
             counter: 0,
         };
-        contract.acl_init_storage();
 
         // Make the contract itself super admin. This allows us to grant any role in the
         // constructor.
