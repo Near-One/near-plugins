@@ -1,5 +1,6 @@
 use crate::utils::cratename;
-use darling::FromDeriveInput;
+use darling::util::PathList;
+use darling::{FromDeriveInput, FromMeta};
 use proc_macro::{self, TokenStream};
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
@@ -7,7 +8,60 @@ use syn::{parse_macro_input, DeriveInput};
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(upgradable), forward_attrs(allow, doc, cfg))]
 struct Opts {
+    /// Storage prefix under which this plugin stores its state. If it is `None` the default value
+    /// will be used.
     storage_prefix: Option<String>,
+    /// Roles which are permitted to call protected methods.
+    access_control_roles: AccessControlRoles,
+}
+
+/// Specifies which `AccessControlRole`s may call protected methods.
+///
+/// All field names need to be passed to calls of `check_roles_specified_for!`.
+#[derive(Default, FromMeta, Debug)]
+#[darling(default)]
+struct AccessControlRoles {
+    /// Grantess of these roles may successfully call `Upgradable::up_stage_code`.
+    code_stagers: PathList,
+    /// Grantess of these roles may successfully call `Upgradable::up_deploy_code`.
+    code_deployers: PathList,
+    /// Grantess of these roles may successfully call `Upgradable::up_init_staging_duration`.
+    duration_initializers: PathList,
+    /// Grantess of these roles may successfully call `Upgradable::up_stage_update_staging_duration`.
+    duration_update_stagers: PathList,
+    /// Grantess of these roles may successfully call `Upgradable::up_apply_update_staging_duration`.
+    duration_update_appliers: PathList,
+}
+
+impl AccessControlRoles {
+    /// Validates the roles provided by the plugin user and panics if they are invalid.
+    fn validate(&self) {
+        // Ensure at least one role is provided for every field of `AccessControlRoles`.
+        let mut missing_roles = vec![];
+
+        macro_rules! check_roles_specified_for {
+            ($($field_name:ident),+) => (
+                $(
+                if self.$field_name.len() == 0 {
+                    missing_roles.push(stringify!($field_name));
+                }
+                )+
+            )
+        }
+
+        check_roles_specified_for!(
+            code_stagers,
+            code_deployers,
+            duration_initializers,
+            duration_update_stagers,
+            duration_update_appliers
+        );
+        assert!(
+            missing_roles.is_empty(),
+            "Specify access_control_roles for: {:?}",
+            missing_roles,
+        );
+    }
 }
 
 const DEFAULT_STORAGE_PREFIX: &str = "__up__";
@@ -23,6 +77,16 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
     let storage_prefix = opts
         .storage_prefix
         .unwrap_or_else(|| DEFAULT_STORAGE_PREFIX.to_string());
+    let acl_roles = opts.access_control_roles;
+    acl_roles.validate();
+
+    // To use fields of a struct inside `quote!`, they must be lifted into variables, see
+    // https://github.com/dtolnay/quote/pull/88#pullrequestreview-180577592
+    let acl_roles_code_stagers = acl_roles.code_stagers;
+    let acl_roles_code_deployers = acl_roles.code_deployers;
+    let acl_roles_duration_initializers = acl_roles.duration_initializers;
+    let acl_roles_duration_update_stagers = acl_roles.duration_update_stagers;
+    let acl_roles_duration_update_appliers = acl_roles.duration_update_appliers;
 
     let output = quote! {
         /// Used to make storage prefixes unique. Not to be used directly,
@@ -93,7 +157,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 }
             }
 
-            #[#cratename::only(owner)]
+            #[#cratename::access_control_any(roles(#(#acl_roles_code_stagers),*))]
             fn up_stage_code(&mut self, #[serializer(borsh)] code: Vec<u8>) {
                 if code.is_empty() {
                     near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::Code).as_ref());
@@ -115,7 +179,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     .map(|code| std::convert::TryInto::try_into(near_sdk::env::sha256(code.as_ref())).unwrap())
             }
 
-            #[#cratename::only(owner)]
+            #[#cratename::access_control_any(roles(#(#acl_roles_code_deployers),*))]
             fn up_deploy_code(&mut self) -> near_sdk::Promise {
                 let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging timestamp isn't set"));
@@ -134,13 +198,13 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     .deploy_contract(self.up_staged_code().unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged code")))
             }
 
-            #[#cratename::only(owner)]
+            #[#cratename::access_control_any(roles(#(#acl_roles_duration_initializers),*))]
             fn up_init_staging_duration(&mut self, staging_duration: near_sdk::Duration) {
                 near_sdk::require!(self.up_get_duration(__UpgradableStorageKey::StagingDuration).is_none(), "Upgradable: staging duration was already initialized");
                 self.up_set_staging_duration_unchecked(staging_duration);
             }
 
-            #[#cratename::only(owner)]
+            #[#cratename::access_control_any(roles(#(#acl_roles_duration_update_stagers),*))]
             fn up_stage_update_staging_duration(&mut self, staging_duration: near_sdk::Duration) {
                 let current_staging_duration = self.up_get_duration(__UpgradableStorageKey::StagingDuration)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging duration isn't initialized"));
@@ -150,7 +214,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 self.up_set_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp, staging_duration_timestamp);
             }
 
-            #[#cratename::only(owner)]
+            #[#cratename::access_control_any(roles(#(#acl_roles_duration_update_appliers),*))]
             fn up_apply_update_staging_duration(&mut self) {
                 let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged update"));
