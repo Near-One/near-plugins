@@ -122,7 +122,7 @@ impl Counter {
     /// The implementation of `AccessControllable` provided by `near-plugins`
     /// adds further methods to the contract which are not part of the trait.
     /// Most of them are implemented for the type that holds the plugin's state,
-    /// here `__acl`.
+    /// which can be accessed with `self.acl_get_or_init()`.
     ///
     /// This function shows how these methods can be exposed on the contract.
     /// Usually this should involve security checks, for example requiring the
