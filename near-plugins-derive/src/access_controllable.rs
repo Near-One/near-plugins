@@ -108,11 +108,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 })
             }
 
-            fn acl_get_or_init(&self) -> #acl_type {
+            fn acl_get_or_init(&mut self) -> #acl_type {
                 self.acl_get_storage().unwrap_or_else(|| self.acl_init_storage_unchecked())
             }
 
-            fn acl_init_storage_unchecked(&self) -> #acl_type {
+            fn acl_init_storage_unchecked(&mut self) -> #acl_type {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 let acl_storage: #acl_type = Default::default();
                 near_sdk::env::storage_write(
