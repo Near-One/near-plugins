@@ -52,12 +52,17 @@ impl Contract {
             __acl: Default::default(), // TODO remove after merging #84
         };
 
+        // Make the contract itself access control super admin, allowing it to grant and revoke
+        // permissions.
+        near_sdk::require!(
+            contract.acl_init_super_admin(env::current_account_id()),
+            "Failed to initialize super admin",
+        );
+
+        // Optionally grant `Role::DAO`.
         if let Some(account_id) = dao {
-            // TODO add warning regarding `*_unchecked()`
-            let res = contract
-                .__acl
-                .grant_role_unchecked(Role::DAO.into(), &account_id);
-            assert_eq!(true, res, "Failed to grant role");
+            let res = contract.acl_grant_role(Role::DAO.into(), account_id);
+            assert_eq!(Some(true), res, "Failed to grant role");
         }
 
         // Optionally initialize the staging duration.
