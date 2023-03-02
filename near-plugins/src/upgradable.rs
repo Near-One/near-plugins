@@ -2,21 +2,31 @@
 //!
 //! Upgradable trait inspired by [NEP123](https://github.com/near/NEPs/pull/123).
 //!
-//! To upgrade the contract, first the code needs to be staged, and then it can be deployed.
+//! Using the `Upgradable` plugin requires a contract to be `AccessControllable`.
 //!
-//! ## Default implementation
+//! To upgrade the contract, first the code needs to be staged via [`Upgradable::up_stage_code`].
+//! Staged code can then be deployed by calling [`Upgradable::up_deploy_code`]. Optionally a staging
+//! duration can be set, which defines the minimum duration that must pass before staged code can be
+//! deployed.
 //!
-//! Only owner or self can call [`Upgradable::up_stage_code`] and [`Upgradable::up_deploy_code`].
-//!
-//! There is no timer or staging duration implemented by default.
+//! The staging duration defaults to zero, allowing staged code to be deployed immediately. To set a
+//! staging duration, call [`Upgradable::up_init_staging_duration`]. After initialization the
+//! staging duration can be updated by calling [`Upgradable::up_stage_update_staging_duration`]
+//! followed by [`Upgradable::up_apply_update_staging_duration`]. Updating the staging duration is
+//! itself subject to a delay: at least the currently set staging duration must pass before a staged
+//! update can be applied.
 //!
 //! ## Permissions
 //!
-//! Only an authorized account is allowed to call [`Upgradable::up_stage_code`] and
-//! [`Upgradable::up_deploy_code`]. There may be several reasons to protect `deploy_code`. For
-//! example if an upgrade requires migration or initialization. In that case, it is recommended to
-//! run a batched transaction where [`Upgradable::up_deploy_code`] is called first, and then a
-//! function that executes the migration or initialization.
+//! The `Upgradable` methods mentioned above are protected by `AccessControllable`. Only accounts
+//! that have been granted one of the whitelisted roles may successfully call the corresponding
+//! method. The documentation of these methods and the [example contract] explain how to define and
+//! whitelist roles to manage authorization for the `Upgradable` plugin.
+//!
+//! There may be several reasons to protect `deploy_code`. For example if an upgrade requires
+//! migration or initialization. In that case, it is recommended to run a batched transaction where
+//! [`Upgradable::up_deploy_code`] is called first, and then a function that executes the migration
+//! or initialization.
 //!
 //! ## Stale staged code
 //!
@@ -30,17 +40,19 @@
 //! exploits the vulnerability before its fix is deployed.
 //!
 //! To avoid that, the upgrade can be executed by calling [`Upgradable::up_stage_code`] and
-//! [`Upgradable::up_deploy_code`] in a [batch transaction]. Since [`Upgradable::up_deploy_code`]
-//! returns a promise that ultimately deploys the new contract code, a theoretical risk remains.
-//! However, the [time between scheduling and execution] of a promise hardly allows an attacker to
-//! exploit a vulnerability: they would have to retrieve the bytes of the staged code, reverse
-//! engineer the new contract, build an exploit and finally execute it. Therefore, we consider that
-//! risk of an exploit in case of a batched upgrade negligible.
+//! [`Upgradable::up_deploy_code`] in a [batch transaction] in case no staging duration is set.
+//! Since [`Upgradable::up_deploy_code`] returns a promise that ultimately deploys the new contract
+//! code, a theoretical risk remains. However, the [time between scheduling and execution] of a
+//! promise hardly allows an attacker to exploit a vulnerability: they would have to retrieve the
+//! bytes of the staged code, reverse engineer the new contract, build an exploit and finally
+//! execute it. Therefore, we consider that risk of an exploit in case of a batched upgrade
+//! negligible.
 //!
 //! Another defense mechanism is staging encrypted code, though this requires your own
 //! implementation of the trait `Upgradable`. The default implementation provided by
 //! `near-plugins-derive` does not support it.
 //!
+//! [example contract]: ../../near-plugins-derive/tests/contracts/upgradable/src/lib.rs
 //! [batch transaction]: https://docs.near.org/concepts/basics/transactions/overview
 //! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
@@ -63,26 +75,70 @@ pub trait Upgradable {
     /// Returns all staging durations and timestamps.
     fn up_get_delay_status(&self) -> UpgradableDurationStatus;
 
-    /// Allows authorized account to stage some code to be potentially deployed later.
-    /// If a previous code was staged but not deployed, it is discarded.
+    /// Allows an authorized account to stage code to be potentially deployed later. It sets the
+    /// staging timestamp, which is the earliest time at which `code` may be deployed. The staging
+    /// timestamp is calculated as the block timestamp plus the staging duration. Any code that was
+    /// staged previously is discarded.
+    ///
+    /// If `code` is empty, previously staged code and the corresponding staging timestamp are
+    /// removed.
+    ///
+    /// In the default implementation, this method is protected by access control provided by the
+    /// `AccessControllable` plugin. The roles which may successfully call this method are
+    /// specified via the `code_stagers` field of the `Upgradable` macro's `access_control_roles`
+    /// attribute. The example contract (accessible via the `README`) shows how access control roles
+    /// can be defined and passed on to the `Upgradable` macro.
     fn up_stage_code(&mut self, code: Vec<u8>);
 
-    /// Returns staged code.
+    /// Returns the staged code.
     fn up_staged_code(&self) -> Option<Vec<u8>>;
 
-    /// Returns hash of the staged code
+    /// Returns the hash of the staged code
     fn up_staged_code_hash(&self) -> Option<CryptoHash>;
 
-    /// Allows authorized account to deploy staged code. If no code is staged the method fails.
+    /// Allows an authorized account to deploy the staged code. It panics if no code is staged.
+    ///
+    /// In the default implementation, this method is protected by access control provided by the
+    /// `AccessControllable` plugin. The roles which may successfully call this method are
+    /// specified via the `code_deployers` field of the `Upgradable` macro's `access_control_roles`
+    /// attribute. The example contract (accessible via the `README`) shows how access control roles
+    /// can be defined and passed on to the `Upgradable` macro.
     fn up_deploy_code(&mut self) -> Promise;
 
-    /// Initialize the duration of the delay for deploying the staged code.
+    /// Initializes the duration of the delay for deploying the staged code. It defaults to zero if
+    /// code is staged before the staging duration is initialized. Once the staging duration has
+    /// been initialized, this method panics. For subsequent updates of the staging duration,
+    /// [`Self::up_stage_update_staging_duration`] and [`Self::up_apply_update_staging_duration`]
+    /// can be used.
+    ///
+    /// In the default implementation, this method is protected by access control provided by the
+    /// `AccessControllable` plugin. The roles which may successfully call this method are
+    /// specified via the `duration_initializers` field of the `Upgradable` macro's
+    /// `access_control_roles` attribute. The example contract (accessible via the `README`) shows
+    /// how access control roles can be defined and passed on to the `Upgradable` macro.
     fn up_init_staging_duration(&mut self, staging_duration: near_sdk::Duration);
 
-    /// Allows authorized account to stage update of the staging duration.
+    /// Allows an authorized account to stage an update of the staging duration. It panics if the
+    /// staging duration was not previously initialized with [`Self::up_init_staging_duration`]. It
+    /// sets the timestamp for the new staging duration, which is the earliest time at which the
+    /// update may be applied. The new staging duration timestamp is calculated as the block
+    /// timestamp plus the current staging duration.
+    ///
+    /// In the default implementation, this method is protected by access control provided by the
+    /// `AccessControllable` plugin. The roles which may successfully call this method are specified
+    /// via the `duration_update_stagers` field of the `Upgradable` macro's `access_control_roles`
+    /// attribute. The example contract (accessible via the `README`) shows how access control roles
+    /// can be defined and passed on to the `Upgradable` macro.
     fn up_stage_update_staging_duration(&mut self, staging_duration: near_sdk::Duration);
 
-    /// Allows authorized account to apply the staging duration update.
+    /// Allows an authorized account to apply the staged update of the staging duration. It fails if
+    /// no staging duration update is staged.
+    ///
+    /// In the default implementation, this method is protected by access control provided by the
+    /// `AccessControllable` plugin. The roles which may successfully call this method are specified
+    /// via the `duration_update_appliers` field of the `Upgradable` macro's `access_control_roles`
+    /// attribute. The example contract (accessible via the `README`) shows how access control roles
+    /// can be defined and passed on to the `Upgradable` macro.
     fn up_apply_update_staging_duration(&mut self);
 }
 
