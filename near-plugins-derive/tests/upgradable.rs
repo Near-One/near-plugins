@@ -807,7 +807,7 @@ async fn test_acl_permission_scope() -> anyhow::Result<()> {
     let code_stager = worker.dev_create_account().await?;
     let granted = setup
         .acl_contract
-        .acl_grant_role(&setup.contract.as_account(), "CodeStager", code_stager.id())
+        .acl_grant_role(setup.contract.as_account(), "CodeStager", code_stager.id())
         .await?;
     assert_eq!(Some(true), granted);
 
