@@ -3,6 +3,7 @@
 pub mod common;
 
 use anyhow::Ok;
+use common::access_controllable_contract::AccessControllableContract;
 use common::upgradable_contract::UpgradableContract;
 use common::utils::{
     assert_failure_with, assert_insufficient_acl_permissions, assert_success_with,
@@ -34,7 +35,10 @@ struct Setup {
     /// Wrapper around the deployed contract that facilitates interacting with methods provided by
     /// the `Upgradable` plugin.
     upgradable_contract: UpgradableContract,
-    /// A newly created account without any `Ownable` permissions.
+    /// Wrapper around the deployed contract that facilitates interacting with methods provided by
+    /// the `AccessControllable` plugin.
+    acl_contract: AccessControllableContract,
+    /// A newly created account without any `AccessControllable` permissions.
     unauth_account: Account,
 }
 
@@ -55,6 +59,7 @@ impl Setup {
         let wasm = common::repo::compile_project(Path::new(PROJECT_PATH), "upgradable").await?;
         let contract = worker.dev_deploy(&wasm).await?;
         let upgradable_contract = UpgradableContract::new(contract.clone());
+        let acl_contract = AccessControllableContract::new(contract.clone());
 
         // Call the contract's constructor.
         contract
@@ -73,6 +78,7 @@ impl Setup {
             worker,
             contract,
             upgradable_contract,
+            acl_contract,
             unauth_account,
         })
     }
@@ -162,6 +168,19 @@ impl Setup {
             .transact()
             .await
     }
+
+    /// Calls the contract's `is_set_up` method and asserts it returns `true`. Panics on failure.
+    async fn assert_is_set_up(&self, caller: &Account) {
+        let res = caller
+            .call(self.contract.id(), "is_set_up")
+            .view()
+            .await
+            .expect("Function call should succeed");
+        let is_set_up = res
+            .json::<bool>()
+            .expect("Should be able to deserialize the result");
+        assert!(is_set_up);
+    }
 }
 
 /// Panics if the conversion fails.
@@ -175,7 +194,8 @@ fn convert_code_to_crypto_hash(code: &[u8]) -> CryptoHash {
 #[tokio::test]
 async fn test_setup() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let _ = Setup::new(worker, None, None).await?;
+    let setup = Setup::new(worker, None, None).await?;
+    setup.assert_is_set_up(&setup.unauth_account).await;
 
     Ok(())
 }
@@ -505,6 +525,15 @@ async fn test_deploy_code_permission_failure() -> anyhow::Result<()> {
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(dao.id().clone()), None).await?;
 
+    // Stage some code.
+    let code = vec![1, 2, 3];
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(code)).await;
+
     // Only the roles passed as `code_deployers` to the `Upgradable` derive macro may successfully
     // call this method.
     let res = setup
@@ -516,6 +545,10 @@ async fn test_deploy_code_permission_failure() -> anyhow::Result<()> {
         "up_deploy_code",
         vec!["CodeDeployer".to_string(), "DAO".to_string()],
     );
+
+    // Verify `code` wasn't deployed by calling a function that is defined only in the initial
+    // contract but not in the contract contract corresponding to `code`.
+    setup.assert_is_set_up(&setup.unauth_account).await;
 
     Ok(())
 }
@@ -759,6 +792,50 @@ async fn test_apply_update_staging_duration_failure_too_early() -> anyhow::Resul
         .up_apply_update_staging_duration(&dao)
         .await?;
     assert_failure_with(res, ERR_MSG_UPDATE_DURATION_TOO_EARLY);
+
+    Ok(())
+}
+
+/// An account that has been granted an access control role `r` may not successfully call a method
+/// that whitelists only roles other than `r`.
+#[tokio::test]
+async fn test_acl_permission_scope() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox().await?;
+    let setup = Setup::new(worker.clone(), None, None).await?;
+
+    // Create an account and grant it `Role::CodeStager`.
+    let code_stager = worker.dev_create_account().await?;
+    let granted = setup
+        .acl_contract
+        .acl_grant_role(&setup.contract.as_account(), "CodeStager", code_stager.id())
+        .await?;
+    assert_eq!(Some(true), granted);
+
+    // Stage some code. Account `code_stager` is authorized to do this.
+    let code = vec![1, 2, 3];
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&code_stager, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(code)).await;
+
+    // Verify `code_stager` is not authorized to deploy staged code. Only grantees of at least one
+    // of the roles passed as `code_deployers` to the `Upgradable` derive macro are authorized to
+    // deploy code.
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&setup.unauth_account)
+        .await?;
+    assert_insufficient_acl_permissions(
+        res,
+        "up_deploy_code",
+        vec!["CodeDeployer".to_string(), "DAO".to_string()],
+    );
+
+    // Verify `code` wasn't deployed by calling a function that is defined only in the initial
+    // contract but not in the contract corresponding to `code`.
+    setup.assert_is_set_up(&setup.unauth_account).await;
 
     Ok(())
 }

@@ -1,5 +1,6 @@
 use near_plugins::{access_control, AccessControlRole, AccessControllable, Upgradable};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::env;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{near_bindgen, AccountId, Duration, PanicOnDefault};
 
@@ -67,6 +68,8 @@ impl Contract {
 
         // Optionally initialize the staging duration.
         if let Some(staging_duration) = staging_duration {
+            // TODO grant DurationManager, call init_dur, revoke DurationManager
+            // To get rid of _unchecked method
             // The owner (set above) might be an account other than the contract itself. In that
             // case `Upgradable::up_init_staging_duration` would fail, since only the Owner may call
             // it successfully. Therefore we are using an (internal) unchecked method here.
@@ -80,5 +83,10 @@ impl Contract {
         }
 
         contract
+    }
+
+    /// Function to verify the contract was deployed and initialized successfully.
+    pub fn is_set_up(&self) -> bool {
+        true
     }
 }
