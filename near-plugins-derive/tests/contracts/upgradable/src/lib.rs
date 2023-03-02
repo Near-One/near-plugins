@@ -26,9 +26,7 @@ pub enum Role {
     duration_update_stagers(Role::DurationManager, Role::DAO),
     duration_update_appliers(Role::DurationManager, Role::DAO),
 ))]
-pub struct Contract {
-    dummy: u64, // TODO remove after `__acl` field was removed (#84)
-}
+pub struct Contract;
 
 #[near_bindgen]
 impl Contract {
@@ -48,10 +46,7 @@ impl Contract {
     /// deployment in a batch transaction.
     #[init]
     pub fn new(dao: Option<AccountId>, staging_duration: Option<Duration>) -> Self {
-        let mut contract = Self {
-            dummy: 0,
-            __acl: Default::default(), // TODO remove after merging #84
-        };
+        let mut contract = Self;
 
         // Make the contract itself access control super admin, allowing it to grant and revoke
         // permissions.

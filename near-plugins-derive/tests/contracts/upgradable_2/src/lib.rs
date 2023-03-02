@@ -30,9 +30,7 @@ pub enum Role {
     duration_update_stagers(Role::DurationManager, Role::DAO),
     duration_update_appliers(Role::DurationManager, Role::DAO),
 ))]
-pub struct Contract {
-    dummy: u64, // TODO remove after `__acl` was remove field removed (#84)
-}
+pub struct Contract;
 
 #[near_bindgen]
 impl Contract {
