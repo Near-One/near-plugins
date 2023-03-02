@@ -5,7 +5,6 @@ use darling::FromMeta;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::parse::Parser;
 use syn::{parse_macro_input, AttributeArgs, ItemFn, ItemStruct};
 
 /// Defines attributes for the `access_controllable` macro.
@@ -17,7 +16,6 @@ pub struct MacroArgs {
 }
 
 const DEFAULT_STORAGE_PREFIX: &str = "__acl";
-const DEFAULT_ACL_FIELD_NAME: &str = "__acl";
 const DEFAULT_ACL_TYPE_NAME: &str = "__Acl";
 
 const ERR_PARSE_BITFLAG: &str = "Value does not correspond to a permission";
@@ -27,13 +25,9 @@ const ERR_PARSE_ROLE: &str = "Value does not correspond to a role";
 pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let cratename = cratename();
     let attr_args = parse_macro_input!(attrs as AttributeArgs);
-    let mut input: ItemStruct = parse_macro_input!(item);
-    let acl_field = syn::Ident::new(DEFAULT_ACL_FIELD_NAME, Span::call_site());
+    let input: ItemStruct = parse_macro_input!(item);
     let acl_type = syn::Ident::new(DEFAULT_ACL_TYPE_NAME, Span::call_site());
     let bitflags_type = new_bitflags_type_ident(Span::call_site());
-    if let Err(e) = inject_acl_field(&mut input, &acl_field, &acl_type) {
-        return TokenStream::from(e.to_compile_error());
-    }
     let ItemStruct { ident, .. } = input.clone();
 
     let macro_args = match MacroArgs::from_list(&attr_args) {
@@ -90,6 +84,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             Permissions,
             Bearers,
             BearersSet { permission: #bitflags_type },
+            AclStorage,
         }
 
         /// Generates a prefix by concatenating the input parameters.
@@ -98,6 +93,34 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 .try_to_vec()
                 .unwrap_or_else(|_| ::near_sdk::env::panic_str("Storage key should be serializable"));
             [base, specifier.as_slice()].concat()
+        }
+
+        impl #ident {
+            fn acl_get_storage(&self) -> Option<#acl_type> {
+                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
+                near_sdk::env::storage_read(&__acl_storage_prefix(
+                    base_prefix,
+                    __AclStorageKey::AclStorage,
+                ))
+                .map(|acl_storage_bytes| {
+                    #acl_type::try_from_slice(&acl_storage_bytes)
+                        .unwrap_or_else(|_| near_sdk::env::panic_str("ACL: invalid acl storage format"))
+                })
+            }
+
+            fn acl_get_or_init(&mut self) -> #acl_type {
+                self.acl_get_storage().unwrap_or_else(|| self.acl_init_storage_unchecked())
+            }
+
+            fn acl_init_storage_unchecked(&mut self) -> #acl_type {
+                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
+                let acl_storage: #acl_type = Default::default();
+                near_sdk::env::storage_write(
+                    &__acl_storage_prefix(base_prefix, __AclStorageKey::AclStorage),
+                    &acl_storage.try_to_vec().unwrap(),
+                );
+                acl_storage
+            }
         }
 
         impl #acl_type {
@@ -474,6 +497,39 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
         }
 
+        fn get_default_permissioned_accounts() -> #cratename::access_controllable::PermissionedAccounts {
+            let roles = <#role_type>::acl_role_variants();
+            let mut map = ::std::collections::HashMap::new();
+            for role in roles {
+                let role: #role_type = ::std::convert::TryFrom::try_from(role)
+                    .unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
+
+                map.insert(
+                    role.into(),
+                    #cratename::access_controllable::PermissionedAccountsPerRole {
+                        admins: Default::default(),
+                        grantees: Default::default(),
+                    }
+                );
+            }
+
+            #cratename::access_controllable::PermissionedAccounts {
+                super_admins: Default::default(),
+                roles: map,
+            }
+        }
+
+        macro_rules! return_if_none {
+            ($res:expr, $default_value:expr) => {
+                match $res {
+                    Some(val) => val,
+                    None => {
+                        return $default_value;
+                    }
+                }
+            };
+        }
+
         // Note that `#[near-bindgen]` exposes non-public functions in trait
         // implementations. This is [documented] behavior. Therefore some
         // functions are made `#[private]` despite _not_ being public.
@@ -487,7 +543,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
             #[private]
             fn acl_init_super_admin(&mut self, account_id: ::near_sdk::AccountId) -> bool {
-                self.#acl_field.init_super_admin(&account_id)
+                self.acl_get_or_init().init_super_admin(&account_id)
             }
 
             fn acl_role_variants(&self) -> Vec<&'static str> {
@@ -495,48 +551,48 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             fn acl_is_super_admin(&self, account_id: ::near_sdk::AccountId) -> bool {
-                self.#acl_field.is_super_admin(&account_id)
+                return_if_none!(self.acl_get_storage(), false).is_super_admin(&account_id)
             }
 
             fn acl_add_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
-                self.#acl_field.add_admin(role, &account_id)
+                self.acl_get_or_init().add_admin(role, &account_id)
             }
 
             fn acl_is_admin(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
-                self.#acl_field.is_admin(role, &account_id)
+                return_if_none!(self.acl_get_storage(), false).is_admin(role, &account_id)
             }
 
             fn acl_revoke_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
-                self.#acl_field.revoke_admin(role, &account_id)
+                self.acl_get_or_init().revoke_admin(role, &account_id)
             }
 
             fn acl_renounce_admin(&mut self, role: String) -> bool {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
-                self.#acl_field.renounce_admin(role)
+                self.acl_get_or_init().renounce_admin(role)
             }
 
             fn acl_revoke_role(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
-                self.#acl_field.revoke_role(role, &account_id)
+                self.acl_get_or_init().revoke_role(role, &account_id)
             }
 
             fn acl_renounce_role(&mut self, role: String) -> bool {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
-                self.#acl_field.renounce_role(role)
+                self.acl_get_or_init().renounce_role(role)
             }
 
             fn acl_grant_role(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
-                self.#acl_field.grant_role(role, &account_id)
+                self.acl_get_or_init().grant_role(role, &account_id)
             }
 
 
             fn acl_has_role(&self, role: String, account_id: ::near_sdk::AccountId) -> bool {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
-                self.#acl_field.has_role(role, &account_id)
+                return_if_none!(self.acl_get_storage(), false).has_role(role, &account_id)
             }
 
             fn acl_has_any_role(&self, roles: Vec<String>, account_id: ::near_sdk::AccountId) -> bool {
@@ -546,7 +602,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                         ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE))
                     })
                     .collect();
-                self.#acl_field.has_any_role(roles, &account_id)
+                return_if_none!(self.acl_get_storage(), false).has_any_role(roles, &account_id)
             }
 
             fn acl_get_super_admins(&self, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
@@ -554,51 +610,30 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     <#role_type>::acl_super_admin_permission()
                 )
                 .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
-                self.#acl_field.get_bearers(permission, skip, limit)
+                return_if_none!(self.acl_get_storage(), vec![]).get_bearers(permission, skip, limit)
             }
 
             fn acl_get_admins(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 let permission = <#bitflags_type>::from_bits(role.acl_admin_permission())
                     .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
-                self.#acl_field.get_bearers(permission, skip, limit)
+                return_if_none!(self.acl_get_storage(), vec![]).get_bearers(permission, skip, limit)
             }
 
             fn acl_get_grantees(&self, role: String, skip: u64, limit: u64) -> Vec<::near_sdk::AccountId> {
                 let role: #role_type = ::std::convert::TryFrom::try_from(role.as_str()).unwrap_or_else(|_| ::near_sdk::env::panic_str(#ERR_PARSE_ROLE));
                 let permission = <#bitflags_type>::from_bits(role.acl_permission())
                     .unwrap_or_else(|| ::near_sdk::env::panic_str(#ERR_PARSE_BITFLAG));
-                self.#acl_field.get_bearers(permission, skip, limit)
+                return_if_none!(self.acl_get_storage(), vec![]).get_bearers(permission, skip, limit)
             }
 
             fn acl_get_permissioned_accounts(&self) -> #cratename::access_controllable::PermissionedAccounts {
-                self.#acl_field.get_permissioned_accounts()
+                return_if_none!(self.acl_get_storage(), get_default_permissioned_accounts()).get_permissioned_accounts()
             }
         }
     };
 
     output.into()
-}
-
-fn inject_acl_field(
-    item: &mut ItemStruct,
-    field_name: &syn::Ident,
-    acl_type: &syn::Ident,
-) -> Result<(), syn::Error> {
-    let fields = match item.fields {
-        syn::Fields::Named(ref mut fields) => fields,
-        _ => {
-            return Err(syn::Error::new(
-                item.ident.span(),
-                "Expected to have named fields",
-            ))
-        }
-    };
-
-    fields.named.push(syn::Field::parse_named.parse2(quote! {
-        #field_name: #acl_type
-    })?);
-    Ok(())
 }
 
 /// Defines attributes for the `access_control_any` macro.

@@ -40,7 +40,6 @@ impl Counter {
     pub fn new(pause_manager: AccountId) -> Self {
         let mut contract = Self {
             counter: 0,
-            __acl: Default::default(),
         };
 
         // Make the contract itself super admin. This allows us to grant any role in the

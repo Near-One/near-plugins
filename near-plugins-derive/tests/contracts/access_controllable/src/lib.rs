@@ -37,11 +37,7 @@ impl Counter {
     /// identifier of the enum variant, i.e. `"Updater"` for `Role::Updater`.
     #[init]
     pub fn new(admins: HashMap<String, AccountId>, grantees: HashMap<String, AccountId>) -> Self {
-        let mut contract = Self {
-            counter: 0,
-            // Initialize `AccessControllable` plugin state.
-            __acl: Default::default(),
-        };
+        let mut contract = Self { counter: 0 };
 
         if admins.len() > 0 || grantees.len() > 0 {
             // First we make the contract itself super admin to allow it adding admin and grantees.
@@ -68,11 +64,11 @@ impl Counter {
             // granting roles, for example:
             //
             // ```
-            // contract.__acl.add_admin_unchecked(role, account_id);
-            // contract.__acl.grant_role_unchecked(role, account_id);
+            // contract.acl_get_or_init().add_admin_unchecked(role, account_id);
+            // contract.acl_get_or_init().grant_role_unchecked(role, account_id);
             // ```
             //
-            // **Attention**: for security reasons, `__acl.*_unchecked` methods should only be called
+            // **Attention**: for security reasons, `acl_get_or_init().*_unchecked` methods should only be called
             // from within methods with attribute `#[init]` or `#[private]`.
         }
 
@@ -126,7 +122,7 @@ impl Counter {
     /// The implementation of `AccessControllable` provided by `near-plugins`
     /// adds further methods to the contract which are not part of the trait.
     /// Most of them are implemented for the type that holds the plugin's state,
-    /// here `__acl`.
+    /// which can be accessed with `self.acl_get_or_init()`.
     ///
     /// This function shows how these methods can be exposed on the contract.
     /// Usually this should involve security checks, for example requiring the
@@ -136,7 +132,7 @@ impl Counter {
             self.acl_is_super_admin(env::predecessor_account_id()),
             "Only super admins are allowed to add other super admins."
         );
-        self.__acl.add_super_admin_unchecked(&account_id)
+        self.acl_get_or_init().add_super_admin_unchecked(&account_id)
     }
 }
 
@@ -145,31 +141,32 @@ impl Counter {
 impl Counter {
     #[private]
     pub fn acl_add_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
-        self.__acl.add_super_admin_unchecked(&account_id)
+        self.acl_get_or_init().add_super_admin_unchecked(&account_id)
     }
 
     #[private]
     pub fn acl_revoke_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
-        self.__acl.revoke_super_admin_unchecked(&account_id)
+        self.acl_get_or_init().revoke_super_admin_unchecked(&account_id)
     }
 
     #[private]
     pub fn acl_revoke_role_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.__acl.revoke_role_unchecked(role.into(), &account_id)
+        self.acl_get_or_init()
+            .revoke_role_unchecked(role.into(), &account_id)
     }
 
     #[private]
     pub fn acl_add_admin_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.__acl.add_admin_unchecked(role, &account_id)
+        self.acl_get_or_init().add_admin_unchecked(role, &account_id)
     }
 
     #[private]
     pub fn acl_revoke_admin_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.__acl.revoke_admin_unchecked(role, &account_id)
+        self.acl_get_or_init().revoke_admin_unchecked(role, &account_id)
     }
 
     #[private]
     pub fn acl_grant_role_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.__acl.grant_role_unchecked(role, &account_id)
+        self.acl_get_or_init().grant_role_unchecked(role, &account_id)
     }
 }
