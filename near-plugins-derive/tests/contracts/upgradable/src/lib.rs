@@ -84,18 +84,12 @@ impl Contract {
 
         // Optionally initialize the staging duration.
         if let Some(staging_duration) = staging_duration {
-            // TODO grant DurationManager, call init_dur, revoke DurationManager
-            // To get rid of _unchecked method
-            // The owner (set above) might be an account other than the contract itself. In that
-            // case `Upgradable::up_init_staging_duration` would fail, since only the Owner may call
-            // it successfully. Therefore we are using an (internal) unchecked method here.
-            //
-            // Avoid using `*_unchecked` functions in public contract methods that are not protected
-            // by access control. Otherwise there is a risk of unwanted state changes carried out by
-            // malicious users. For this example, we assume the constructor is called in a batch
-            // transaction together with code deployment.
-            // TODO try using up_init_staging_duration
-            contract.up_set_staging_duration_unchecked(staging_duration);
+            // Temporarily grant `Role::DurationManager` to the contract to authorize it for
+            // initializing the staging duration. Granting and revoking the role is possible since
+            // the contract was made super admin above.
+            contract.acl_grant_role(Role::DurationManager.into(), env::current_account_id());
+            contract.up_init_staging_duration(staging_duration);
+            contract.acl_revoke_role(Role::DurationManager.into(), env::current_account_id());
         }
 
         contract
