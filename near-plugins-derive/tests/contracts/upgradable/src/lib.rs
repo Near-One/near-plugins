@@ -4,18 +4,42 @@ use near_sdk::env;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{near_bindgen, AccountId, Duration, PanicOnDefault};
 
-// TODO add doc comments
+/// Defines roles for access control of protected methods provided by the `Upgradable` plugin.
 #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub enum Role {
-    // May do anything
+    /// May successfully call any of the protected `Upgradable` methods since below it is passed to
+    /// every attribute of `access_control_roles`.
+    ///
+    /// Using this pattern grantees of a single role are authorized to call all `Upgradable`methods.
     DAO,
+    /// May successfully call `Upgradable::up_stage_code`, but none of the other protected methods,
+    /// since below is passed only to the `code_stagers` attribute.
+    ///
+    /// Using this pattern grantees of a role are authorized to call only one particular protected
+    /// `Upgradable` method.
     CodeStager,
+    /// May successfully call `Upgradable::up_deploy_code`, but none of the other protected methods,
+    /// since below is passed only to the `code_deployers` attribute.
+    ///
+    /// Using this pattern grantees of a role are authorized to call only one particular protected
+    /// `Upgradable` method.
     CodeDeployer,
+    /// May successfully call `Upgradable` methods to initialize and update the staging duration
+    /// since below it is passed to the attributes `duration_initializers`,
+    /// `duration_update_stagers`, and `duration_update_appliers`.
+    ///
+    /// Using this pattern grantees of a single role are authorized to call multiple (but not all)
+    /// protected `Upgradable` methods.
     DurationManager,
 }
 
 /// Deriving `Upgradable` requires the contract to be `AccessControllable`.
+///
+/// Variants of `Role` are passed to `upgradables`'s `access_control_roles` attribute to specify
+/// which roles are authorized to successfully call protected `Upgradable` methods. A protected
+/// method panics if it is called by an account which is not a grantee of at least one of the
+/// whitelisted roles.
 #[access_control(role_type(Role))]
 #[near_bindgen]
 #[derive(Upgradable, PanicOnDefault, BorshDeserialize, BorshSerialize)]
@@ -30,10 +54,10 @@ pub struct Contract;
 
 #[near_bindgen]
 impl Contract {
-    // TODO update docs and comments
-    /// Parameter `owner` allows setting the owner in the constructor if an `AccountId` is provided.
-    /// If `owner` is `None`, no owner will be set in the constructor. After contract initialization
-    /// it is possible to set an owner with `Ownable::owner_set`.
+    /// Makes the contract itself `AccessControllable` super admin to allow it granting and revoking
+    /// permissions. If parameter `dao` is `Some(account_id)`, then `account_id` is granted
+    /// `Role::DAO`. After initialization permissions can be managed using the methods provided by
+    /// `AccessControllable`.
     ///
     /// Parameter `staging_duration` allows initializing the time that is required to pass between
     /// staging and deploying code. This delay provides a safety mechanism to protect users against
@@ -41,9 +65,6 @@ impl Contract {
     /// will be set in the constructor. It is possible to set it later using
     /// `Upgradable::up_init_staging_duration`. If no staging duration is set, it defaults to zero,
     /// allowing immediate deployments of staged code.
-    ///
-    /// Since this constructor uses an `*_unchecked` method, it should be combined with code
-    /// deployment in a batch transaction.
     #[init]
     pub fn new(dao: Option<AccountId>, staging_duration: Option<Duration>) -> Self {
         let mut contract = Self;
