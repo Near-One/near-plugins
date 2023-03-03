@@ -61,13 +61,13 @@ Documentation of all methods provided by `Pausable` is available in the [definit
 
 ### [Upgradable](/near-plugins/src/upgradable.rs)
 
-Allows a contract to be upgraded by the owner without requiring a full access key. Optionally a staging duration can be set, which defines the minimum duration that must pass before staged code can be deployed. The staging duration is a safety mechanism to protect users that interact with the contract, giving them time to opt-out before an unfavorable update is deployed.
+Allows a contract to be upgraded without requiring a full access key. Optionally a staging duration can be set, which defines the minimum duration that must pass before staged code can be deployed. The staging duration is a safety mechanism to protect users that interact with the contract, giving them time to opt-out before an unfavorable update is deployed.
 
-Using the `Upgradable` plugin requires a contract to be `Ownable`.
+Using the `Upgradable` plugin requires a contract to be `AccessControllable` to handle authorization for calling `Upgradable` methods to stage or deploy updates (listed below). 
 
-To upgrade the contract first call `up_stage_code` passing the binary as first argument serialized as borsh. Then call `up_deploy_code`. Both functions must be called by the owner of the contract.
+To upgrade the contract, first call `up_stage_code` passing the binary as first argument serialized as borsh. Then call `up_deploy_code`.
 
-To set a staging duration, call `up_stage_init_staging_duration`. After initialization the staging duration can be updated by calling `up_stage_update_staging_duration` followed by `up_apply_update_staging_duration`. Updating the staging duration is itself subject to a delay: at least the currently set staging duration must pass before a staged update can be applied. The functions mentioned in this paragraph must be called by the owner of the contract.
+To set a staging duration, call `up_init_staging_duration`. After initialization the staging duration can be updated by calling `up_stage_update_staging_duration` followed by `up_apply_update_staging_duration`. Updating the staging duration is itself subject to a delay: at least the currently set staging duration must pass before a staged update can be applied.
 
 [This contract](/near-plugins-derive/tests/contracts/upgradable/src/lib.rs) provides an example of using `Upgradable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins-derive/tests/upgradable.rs).
 

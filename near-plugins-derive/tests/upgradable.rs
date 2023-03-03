@@ -3,9 +3,10 @@
 pub mod common;
 
 use anyhow::Ok;
+use common::access_controllable_contract::AccessControllableContract;
 use common::upgradable_contract::UpgradableContract;
 use common::utils::{
-    assert_failure_with, assert_only_owner_permission_failure, assert_success_with,
+    assert_failure_with, assert_insufficient_acl_permissions, assert_success_with,
     assert_success_with_unit_return, fast_forward_beyond, get_transaction_block,
     sdk_duration_from_secs,
 };
@@ -34,30 +35,37 @@ struct Setup {
     /// Wrapper around the deployed contract that facilitates interacting with methods provided by
     /// the `Upgradable` plugin.
     upgradable_contract: UpgradableContract,
-    /// A newly created account without any `Ownable` permissions.
+    /// Wrapper around the deployed contract that facilitates interacting with methods provided by
+    /// the `AccessControllable` plugin.
+    acl_contract: AccessControllableContract,
+    /// A newly created account without any `AccessControllable` permissions.
     unauth_account: Account,
 }
 
 impl Setup {
-    /// Deploys and initializes the contract in [`PROJECT_PATH`] and returns a new `Setup`.
+    /// Deploys and initializes the test contract in [`PROJECT_PATH`] and returns a new `Setup`.
     ///
-    /// The `owner` and `staging_duration` parameters are passed to the contract's constructor,
-    /// allowing to optionally set these values during initialization.
+    /// The `dao` and `staging_duration` parameters are passed to the contract's constructor,
+    /// allowing to optionally grant the `DAO` role and initialize the staging duration.
+    ///
+    /// Grantees of the `DAO` role are authorized to call all protected `Upgradable` methods of the
+    /// test contract, which facilitates testing.
     async fn new(
         worker: Worker<Sandbox>,
-        owner: Option<AccountId>,
+        dao: Option<AccountId>,
         staging_duration: Option<Duration>,
     ) -> anyhow::Result<Self> {
         // Compile and deploy the contract.
         let wasm = common::repo::compile_project(Path::new(PROJECT_PATH), "upgradable").await?;
         let contract = worker.dev_deploy(&wasm).await?;
         let upgradable_contract = UpgradableContract::new(contract.clone());
+        let acl_contract = AccessControllableContract::new(contract.clone());
 
         // Call the contract's constructor.
         contract
             .call("new")
             .args_json(json!({
-                "owner": owner,
+                "dao": dao,
                 "staging_duration": staging_duration,
             }))
             .max_gas()
@@ -70,6 +78,7 @@ impl Setup {
             worker,
             contract,
             upgradable_contract,
+            acl_contract,
             unauth_account,
         })
     }
@@ -159,6 +168,19 @@ impl Setup {
             .transact()
             .await
     }
+
+    /// Calls the contract's `is_set_up` method and asserts it returns `true`. Panics on failure.
+    async fn assert_is_set_up(&self, caller: &Account) {
+        let res = caller
+            .call(self.contract.id(), "is_set_up")
+            .view()
+            .await
+            .expect("Function call should succeed");
+        let is_set_up = res
+            .json::<bool>()
+            .expect("Should be able to deserialize the result");
+        assert!(is_set_up);
+    }
 }
 
 /// Panics if the conversion fails.
@@ -172,7 +194,8 @@ fn convert_code_to_crypto_hash(code: &[u8]) -> CryptoHash {
 #[tokio::test]
 async fn test_setup() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let _ = Setup::new(worker, None, None).await?;
+    let setup = Setup::new(worker, None, None).await?;
+    setup.assert_is_set_up(&setup.unauth_account).await;
 
     Ok(())
 }
@@ -180,20 +203,27 @@ async fn test_setup() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_stage_code_permission_failure() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker,
-        Some(owner.id().clone()),
+        Some(dao.id().clone()),
         Some(sdk_duration_from_secs(42)),
     )
     .await?;
 
+    // Only the roles passed as `code_stagers` to the `Upgradable` derive macro may successfully
+    // call this method.
     let res = setup
         .upgradable_contract
         .up_stage_code(&setup.unauth_account, vec![])
         .await?;
-    assert_only_owner_permission_failure(res);
+    assert_insufficient_acl_permissions(
+        res,
+        "up_stage_code",
+        vec!["CodeStager".to_string(), "DAO".to_string()],
+    );
 
+    // Verify no code was staged.
     setup.assert_staged_code(None).await;
 
     Ok(())
@@ -202,14 +232,14 @@ async fn test_stage_code_permission_failure() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_stage_code_without_delay() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
-    let setup = Setup::new(worker, Some(owner.id().clone()), None).await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker, Some(dao.id().clone()), None).await?;
 
     // Stage code.
     let code = vec![1, 2, 3];
     let res = setup
         .upgradable_contract
-        .up_stage_code(&owner, code.clone())
+        .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res.clone());
 
@@ -233,15 +263,15 @@ async fn test_stage_code_without_delay() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_stage_code_with_delay() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(42);
-    let setup = Setup::new(worker, Some(owner.id().clone()), Some(staging_duration)).await?;
+    let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
 
     // Stage code.
     let code = vec![1, 2, 3];
     let res = setup
         .upgradable_contract
-        .up_stage_code(&owner, code.clone())
+        .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res.clone());
 
@@ -267,10 +297,10 @@ async fn test_stage_code_with_delay() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_staging_empty_code_clears_storage() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker,
-        Some(owner.id().clone()),
+        Some(dao.id().clone()),
         Some(sdk_duration_from_secs(42)),
     )
     .await?;
@@ -279,7 +309,7 @@ async fn test_staging_empty_code_clears_storage() -> anyhow::Result<()> {
     let code = vec![1, 2, 3];
     let res = setup
         .upgradable_contract
-        .up_stage_code(&owner, code.clone())
+        .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
     setup.assert_staged_code(Some(code)).await;
@@ -287,7 +317,7 @@ async fn test_staging_empty_code_clears_storage() -> anyhow::Result<()> {
     // Verify staging empty code removes it.
     let res = setup
         .upgradable_contract
-        .up_stage_code(&owner, vec![])
+        .up_stage_code(&dao, vec![])
         .await?;
     assert_success_with_unit_return(res);
     setup.assert_staged_code(None).await;
@@ -301,10 +331,10 @@ async fn test_staging_empty_code_clears_storage() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_staged_code() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker,
-        Some(owner.id().clone()),
+        Some(dao.id().clone()),
         Some(sdk_duration_from_secs(42)),
     )
     .await?;
@@ -320,7 +350,7 @@ async fn test_staged_code() -> anyhow::Result<()> {
     let code = vec![1, 2, 3];
     let res = setup
         .upgradable_contract
-        .up_stage_code(&owner, code.clone())
+        .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
 
@@ -338,10 +368,10 @@ async fn test_staged_code() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_staged_code_hash() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker,
-        Some(owner.id().clone()),
+        Some(dao.id().clone()),
         Some(sdk_duration_from_secs(42)),
     )
     .await?;
@@ -357,7 +387,7 @@ async fn test_staged_code_hash() -> anyhow::Result<()> {
     let code = vec![1, 2, 3];
     let res = setup
         .upgradable_contract
-        .up_stage_code(&owner, code.clone())
+        .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
 
@@ -376,20 +406,20 @@ async fn test_staged_code_hash() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
-    let setup = Setup::new(worker.clone(), Some(owner.id().clone()), None).await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
     // Stage some code.
     let code = vec![1, 2, 3];
     let res = setup
         .upgradable_contract
-        .up_stage_code(&owner, code.clone())
+        .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
     setup.assert_staged_code(Some(code)).await;
 
     // Deploy staged code.
-    let res = setup.upgradable_contract.up_deploy_code(&owner).await?;
+    let res = setup.upgradable_contract.up_deploy_code(&dao).await?;
     assert_success_with_unit_return(res);
 
     Ok(())
@@ -400,8 +430,8 @@ async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
-    let setup = Setup::new(worker.clone(), Some(owner.id().clone()), None).await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
     // Verify function `is_upgraded` is not defined in the initial contract.
     let res = setup.call_is_upgraded(&setup.unauth_account).await?;
@@ -411,13 +441,13 @@ async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
     let code = common::repo::compile_project(Path::new(PROJECT_PATH_2), "upgradable_2").await?;
     let res = setup
         .upgradable_contract
-        .up_stage_code(&owner, code.clone())
+        .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
     setup.assert_staged_code(Some(code)).await;
 
     // Deploy staged code.
-    let res = setup.upgradable_contract.up_deploy_code(&owner).await?;
+    let res = setup.upgradable_contract.up_deploy_code(&dao).await?;
     assert_success_with_unit_return(res);
 
     // The newly deployed contract defines the function `is_upgraded`. Calling it successfully
@@ -431,11 +461,11 @@ async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(3);
     let setup = Setup::new(
         worker.clone(),
-        Some(owner.id().clone()),
+        Some(dao.id().clone()),
         Some(staging_duration),
     )
     .await?;
@@ -444,7 +474,7 @@ async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
     let code = vec![1, 2, 3];
     let res = setup
         .upgradable_contract
-        .up_stage_code(&owner, code.clone())
+        .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
     setup.assert_staged_code(Some(code)).await;
@@ -453,7 +483,7 @@ async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
     fast_forward_beyond(&worker, staging_duration).await;
 
     // Deploy staged code.
-    let res = setup.upgradable_contract.up_deploy_code(&owner).await?;
+    let res = setup.upgradable_contract.up_deploy_code(&dao).await?;
     assert_success_with_unit_return(res);
 
     Ok(())
@@ -462,10 +492,10 @@ async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_deploy_code_with_delay_failure_too_early() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker.clone(),
-        Some(owner.id().clone()),
+        Some(dao.id().clone()),
         Some(sdk_duration_from_secs(1024)),
     )
     .await?;
@@ -474,7 +504,7 @@ async fn test_deploy_code_with_delay_failure_too_early() -> anyhow::Result<()> {
     let code = vec![1, 2, 3];
     let res = setup
         .upgradable_contract
-        .up_stage_code(&owner, code.clone())
+        .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
     setup.assert_staged_code(Some(code)).await;
@@ -483,7 +513,7 @@ async fn test_deploy_code_with_delay_failure_too_early() -> anyhow::Result<()> {
     fast_forward_beyond(&worker, sdk_duration_from_secs(1)).await;
 
     // Verify trying to deploy staged code fails.
-    let res = setup.upgradable_contract.up_deploy_code(&owner).await?;
+    let res = setup.upgradable_contract.up_deploy_code(&dao).await?;
     assert_failure_with(res, ERR_MSG_DEPLOY_CODE_TOO_EARLY);
 
     Ok(())
@@ -492,14 +522,33 @@ async fn test_deploy_code_with_delay_failure_too_early() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_deploy_code_permission_failure() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
-    let setup = Setup::new(worker, Some(owner.id().clone()), None).await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker, Some(dao.id().clone()), None).await?;
 
+    // Stage some code.
+    let code = vec![1, 2, 3];
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(code)).await;
+
+    // Only the roles passed as `code_deployers` to the `Upgradable` derive macro may successfully
+    // call this method.
     let res = setup
         .upgradable_contract
         .up_deploy_code(&setup.unauth_account)
         .await?;
-    assert_only_owner_permission_failure(res);
+    assert_insufficient_acl_permissions(
+        res,
+        "up_deploy_code",
+        vec!["CodeDeployer".to_string(), "DAO".to_string()],
+    );
+
+    // Verify `code` wasn't deployed by calling a function that is defined only in the initial
+    // contract but not in the contract contract corresponding to `code`.
+    setup.assert_is_set_up(&setup.unauth_account).await;
 
     Ok(())
 }
@@ -508,10 +557,10 @@ async fn test_deploy_code_permission_failure() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_deploy_code_empty_failure() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker,
-        Some(owner.id().clone()),
+        Some(dao.id().clone()),
         Some(sdk_duration_from_secs(42)),
     )
     .await?;
@@ -528,7 +577,7 @@ async fn test_deploy_code_empty_failure() -> anyhow::Result<()> {
     // The staging timestamp is set when staging code and removed when unstaging code. So when there
     // is no code staged, there is no staging timestamp. Hence the error message regarding a missing
     // staging timestamp is expected.
-    let res = setup.upgradable_contract.up_deploy_code(&owner).await?;
+    let res = setup.upgradable_contract.up_deploy_code(&dao).await?;
     assert_failure_with(res, ERR_MSG_NO_STAGING_TS);
 
     Ok(())
@@ -537,14 +586,20 @@ async fn test_deploy_code_empty_failure() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_init_staging_duration_permission_failure() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
-    let setup = Setup::new(worker, Some(owner.id().clone()), None).await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker, Some(dao.id().clone()), None).await?;
 
+    // Only the roles passed as `duration_initializers` to the `Upgradable` derive macro may
+    // successfully call this method.
     let res = setup
         .upgradable_contract
         .up_init_staging_duration(&setup.unauth_account, sdk_duration_from_secs(23))
         .await?;
-    assert_only_owner_permission_failure(res);
+    assert_insufficient_acl_permissions(
+        res,
+        "up_init_staging_duration",
+        vec!["DurationManager".to_string(), "DAO".to_string()],
+    );
 
     setup.assert_staging_duration(None).await;
 
@@ -554,8 +609,8 @@ async fn test_init_staging_duration_permission_failure() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_init_staging_duration() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
-    let setup = Setup::new(worker, Some(owner.id().clone()), None).await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker, Some(dao.id().clone()), None).await?;
 
     // Verify the contract was initialized without staging duration.
     setup.assert_staging_duration(None).await;
@@ -564,7 +619,7 @@ async fn test_init_staging_duration() -> anyhow::Result<()> {
     let staging_duration = sdk_duration_from_secs(42);
     let res = setup
         .upgradable_contract
-        .up_init_staging_duration(&owner, staging_duration)
+        .up_init_staging_duration(&dao, staging_duration)
         .await?;
     assert_success_with_unit_return(res.clone());
 
@@ -577,16 +632,23 @@ async fn test_init_staging_duration() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_stage_update_staging_duration_permission_failure() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(42);
-    let setup = Setup::new(worker, Some(owner.id().clone()), Some(staging_duration)).await?;
+    let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
 
+    // Only the roles passed as `duration_update_stagers` to the `Upgradable` derive macro may
+    // successfully call this method.
     let res = setup
         .upgradable_contract
         .up_stage_update_staging_duration(&setup.unauth_account, sdk_duration_from_secs(23))
         .await?;
-    assert_only_owner_permission_failure(res);
+    assert_insufficient_acl_permissions(
+        res,
+        "up_stage_update_staging_duration",
+        vec!["DurationManager".to_string(), "DAO".to_string()],
+    );
 
+    // Verify no duration was staged.
     setup.assert_new_staging_duration(None).await;
 
     Ok(())
@@ -595,9 +657,9 @@ async fn test_stage_update_staging_duration_permission_failure() -> anyhow::Resu
 #[tokio::test]
 async fn test_stage_update_staging_duration() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(42);
-    let setup = Setup::new(worker, Some(owner.id().clone()), Some(staging_duration)).await?;
+    let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
 
     // Initially there's no new staging duration staged and no timestamp set.
     setup.assert_new_staging_duration(None).await;
@@ -607,7 +669,7 @@ async fn test_stage_update_staging_duration() -> anyhow::Result<()> {
     let new_staging_duration = sdk_duration_from_secs(23);
     let res = setup
         .upgradable_contract
-        .up_stage_update_staging_duration(&owner, new_staging_duration)
+        .up_stage_update_staging_duration(&dao, new_staging_duration)
         .await?;
     assert_success_with_unit_return(res.clone());
 
@@ -630,9 +692,9 @@ async fn test_stage_update_staging_duration() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_apply_update_staging_duration_permission_failure() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(21);
-    let setup = Setup::new(worker, Some(owner.id().clone()), Some(staging_duration)).await?;
+    let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
 
     // Verify the initial staging duration.
     setup.assert_staging_duration(Some(staging_duration)).await;
@@ -641,19 +703,26 @@ async fn test_apply_update_staging_duration_permission_failure() -> anyhow::Resu
     let new_staging_duration = sdk_duration_from_secs(23);
     let res = setup
         .upgradable_contract
-        .up_stage_update_staging_duration(&owner, new_staging_duration)
+        .up_stage_update_staging_duration(&dao, new_staging_duration)
         .await?;
     assert_success_with_unit_return(res.clone());
 
     // Let the staging duration pass.
     fast_forward_beyond(&setup.worker, staging_duration).await;
 
-    // Verify applying the update fails due to missing permission.
+    // Only the roles passed as `duration_update_appliers` to the `Upgradable` derive macro may
+    // successfully call this method.
     let res = setup
         .upgradable_contract
         .up_apply_update_staging_duration(&setup.unauth_account)
         .await?;
-    assert_only_owner_permission_failure(res);
+    assert_insufficient_acl_permissions(
+        res,
+        "up_apply_update_staging_duration",
+        vec!["DurationManager".to_string(), "DAO".to_string()],
+    );
+
+    // Verify the update was not applied.
     setup.assert_staging_duration(Some(staging_duration)).await;
     setup
         .assert_new_staging_duration(Some(new_staging_duration))
@@ -665,9 +734,9 @@ async fn test_apply_update_staging_duration_permission_failure() -> anyhow::Resu
 #[tokio::test]
 async fn test_apply_update_staging_duration() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(21);
-    let setup = Setup::new(worker, Some(owner.id().clone()), Some(staging_duration)).await?;
+    let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
 
     // Verify the initial staging duration.
     setup.assert_staging_duration(Some(staging_duration)).await;
@@ -676,7 +745,7 @@ async fn test_apply_update_staging_duration() -> anyhow::Result<()> {
     let new_staging_duration = sdk_duration_from_secs(12);
     let res = setup
         .upgradable_contract
-        .up_stage_update_staging_duration(&owner, new_staging_duration)
+        .up_stage_update_staging_duration(&dao, new_staging_duration)
         .await?;
     assert_success_with_unit_return(res.clone());
 
@@ -686,7 +755,7 @@ async fn test_apply_update_staging_duration() -> anyhow::Result<()> {
     // Apply the update and verify the new duration was set.
     let res = setup
         .upgradable_contract
-        .up_apply_update_staging_duration(&owner)
+        .up_apply_update_staging_duration(&dao)
         .await?;
     assert_success_with_unit_return(res);
     setup
@@ -699,9 +768,9 @@ async fn test_apply_update_staging_duration() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_apply_update_staging_duration_failure_too_early() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
-    let owner = worker.dev_create_account().await?;
+    let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(1024);
-    let setup = Setup::new(worker, Some(owner.id().clone()), Some(staging_duration)).await?;
+    let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
 
     // Verify the initial staging duration.
     setup.assert_staging_duration(Some(staging_duration)).await;
@@ -710,7 +779,7 @@ async fn test_apply_update_staging_duration_failure_too_early() -> anyhow::Resul
     let new_staging_duration = sdk_duration_from_secs(42);
     let res = setup
         .upgradable_contract
-        .up_stage_update_staging_duration(&owner, new_staging_duration)
+        .up_stage_update_staging_duration(&dao, new_staging_duration)
         .await?;
     assert_success_with_unit_return(res.clone());
 
@@ -720,9 +789,53 @@ async fn test_apply_update_staging_duration_failure_too_early() -> anyhow::Resul
     // Verify trying to apply the new duration fails.
     let res = setup
         .upgradable_contract
-        .up_apply_update_staging_duration(&owner)
+        .up_apply_update_staging_duration(&dao)
         .await?;
     assert_failure_with(res, ERR_MSG_UPDATE_DURATION_TOO_EARLY);
+
+    Ok(())
+}
+
+/// An account that has been granted an access control role `r` may not successfully call a method
+/// that whitelists only roles other than `r`.
+#[tokio::test]
+async fn test_acl_permission_scope() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox().await?;
+    let setup = Setup::new(worker.clone(), None, None).await?;
+
+    // Create an account and grant it `Role::CodeStager`.
+    let code_stager = worker.dev_create_account().await?;
+    let granted = setup
+        .acl_contract
+        .acl_grant_role(setup.contract.as_account(), "CodeStager", code_stager.id())
+        .await?;
+    assert_eq!(Some(true), granted);
+
+    // Stage some code. Account `code_stager` is authorized to do this.
+    let code = vec![1, 2, 3];
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&code_stager, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(code)).await;
+
+    // Verify `code_stager` is not authorized to deploy staged code. Only grantees of at least one
+    // of the roles passed as `code_deployers` to the `Upgradable` derive macro are authorized to
+    // deploy code.
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&setup.unauth_account)
+        .await?;
+    assert_insufficient_acl_permissions(
+        res,
+        "up_deploy_code",
+        vec!["CodeDeployer".to_string(), "DAO".to_string()],
+    );
+
+    // Verify `code` wasn't deployed by calling a function that is defined only in the initial
+    // contract but not in the contract corresponding to `code`.
+    setup.assert_is_set_up(&setup.unauth_account).await;
 
     Ok(())
 }
