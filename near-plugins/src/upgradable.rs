@@ -57,7 +57,7 @@
 //! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{AccountId, CryptoHash, Promise};
+use near_sdk::{AccountId, Balance, CryptoHash, Gas, Promise};
 
 /// Trait describing the functionality of the _Upgradable_ plugin.
 pub trait Upgradable {
@@ -103,7 +103,7 @@ pub trait Upgradable {
     /// specified via the `code_deployers` field of the `Upgradable` macro's `access_control_roles`
     /// attribute. The example contract (accessible via the `README`) shows how access control roles
     /// can be defined and passed on to the `Upgradable` macro.
-    fn up_deploy_code(&mut self) -> Promise;
+    fn up_deploy_code(&mut self, function_call_args: Option<FunctionCallArgs>) -> Promise;
 
     /// Initializes the duration of the delay for deploying the staged code. It defaults to zero if
     /// code is staged before the staging duration is initialized. Once the staging duration has
@@ -148,6 +148,15 @@ pub struct UpgradableDurationStatus {
     pub staging_timestamp: Option<near_sdk::Timestamp>,
     pub new_staging_duration: Option<near_sdk::Duration>,
     pub new_staging_duration_timestamp: Option<near_sdk::Timestamp>,
+}
+
+// TODO add docs
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FunctionCallArgs {
+    pub function_name: String,
+    pub arguments: Vec<u8>,
+    pub amount: Balance,
+    pub gas: Gas,
 }
 
 /// Event emitted when the code is staged

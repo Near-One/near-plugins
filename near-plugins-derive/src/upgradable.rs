@@ -180,7 +180,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_code_deployers),*))]
-            fn up_deploy_code(&mut self) -> near_sdk::Promise {
+            fn up_deploy_code(&mut self, function_call_args: Option<#cratename::upgradable::FunctionCallArgs>) -> near_sdk::Promise {
                 let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging timestamp isn't set"));
 
@@ -194,8 +194,18 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     );
                 }
 
-                near_sdk::Promise::new(near_sdk::env::current_account_id())
-                    .deploy_contract(self.up_staged_code().unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged code")))
+                let code = self.up_staged_code().unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged code"));
+                let promise = near_sdk::Promise::new(near_sdk::env::current_account_id())
+                    .deploy_contract(code);
+                match function_call_args {
+                    None => promise,
+                    Some(args) => {
+                        // Execute the `DeployContract` and `FunctionCall` actions in a batch
+                        // transaction to make a failure of the function call roll back the code
+                        // deployment.
+                        promise.function_call(args.function_name, args.arguments, args.amount, args.gas)
+                    },
+                }
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_duration_initializers),*))]
