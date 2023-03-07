@@ -2,7 +2,6 @@ use proc_macro::{self, TokenStream};
 
 mod access_control_role;
 mod access_controllable;
-mod full_access_key_fallback;
 mod ownable;
 mod pausable;
 mod upgradable;
@@ -24,12 +23,6 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_derive(Upgradable, attributes(upgradable))]
 pub fn derive_upgradable(input: TokenStream) -> TokenStream {
     upgradable::derive_upgradable(input)
-}
-
-/// Defines the derive macro for `FullAccessKeyFallback`.
-#[proc_macro_derive(FullAccessKeyFallback)]
-pub fn derive_fak_fallback(input: TokenStream) -> TokenStream {
-    full_access_key_fallback::derive_fak_fallback(input)
 }
 
 /// Defines the derive macro for `Pausable`.
