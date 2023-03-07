@@ -1,4 +1,4 @@
-use near_plugins::upgradable::UpgradableDurationStatus;
+use near_plugins::upgradable::{FunctionCallArgs, UpgradableDurationStatus};
 
 use near_sdk::serde_json::json;
 use near_sdk::CryptoHash;
@@ -71,9 +71,13 @@ impl UpgradableContract {
     pub async fn up_deploy_code(
         &self,
         caller: &Account,
+        function_call_args: Option<FunctionCallArgs>,
     ) -> workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "up_deploy_code")
+            .args_json(json!({
+                "function_call_args": function_call_args,
+            }))
             .max_gas()
             .transact()
             .await

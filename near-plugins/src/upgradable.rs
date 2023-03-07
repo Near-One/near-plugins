@@ -23,10 +23,13 @@
 //! method. The documentation of these methods and the [example contract] explain how to define and
 //! whitelist roles to manage authorization for the `Upgradable` plugin.
 //!
-//! There may be several reasons to protect `deploy_code`. For example if an upgrade requires
-//! migration or initialization. In that case, it is recommended to run a batched transaction where
-//! [`Upgradable::up_deploy_code`] is called first, and then a function that executes the migration
-//! or initialization.
+//! ## State migration
+//!
+//! Upgrading a contract might require [state migration]. The `Upgradable` plugin allows to attach a
+//! function call to code deployments. Using this mechanism, state migration can be carried out by
+//! calling a migration function. If the function fails, the deployment is rolled back and the
+//! initial code remains active. More detailed information is available in the documentation of
+//! [`Upgradable::up_deploy_code`].
 //!
 //! ## Stale staged code
 //!
@@ -53,11 +56,12 @@
 //! `near-plugins-derive` does not support it.
 //!
 //! [example contract]: ../../near-plugins-derive/tests/contracts/upgradable/src/lib.rs
+//! [state migration]: https://docs.near.org/develop/upgrade#migrating-the-state
 //! [batch transaction]: https://docs.near.org/concepts/basics/transactions/overview
 //! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{AccountId, CryptoHash, Promise};
+use near_sdk::{AccountId, Balance, CryptoHash, Gas, Promise};
 
 /// Trait describing the functionality of the _Upgradable_ plugin.
 pub trait Upgradable {
@@ -98,12 +102,25 @@ pub trait Upgradable {
 
     /// Allows an authorized account to deploy the staged code. It panics if no code is staged.
     ///
+    /// If `function_call_args` are provided, code is deployed in a batch promise that contains the
+    /// `DeployContractAction` followed by `FunctionCallAction`. In case the function call fails,
+    /// the deployment is rolled back and the initial code remains active. For this purpose,
+    /// batching the actions mentioned above is required due to the [asynchronous design] of NEAR.
+    ///
+    /// Attaching a function call can be useful, for example, if deploying the staged code requires
+    /// [state migration]. It can be achieved by calling a migration function defined in the new
+    /// version of the contract. A failure during state migration can leave the contract in a broken
+    /// state, which is avoided by the roleback mechanism described above.
+    ///
     /// In the default implementation, this method is protected by access control provided by the
     /// `AccessControllable` plugin. The roles which may successfully call this method are
     /// specified via the `code_deployers` field of the `Upgradable` macro's `access_control_roles`
     /// attribute. The example contract (accessible via the `README`) shows how access control roles
     /// can be defined and passed on to the `Upgradable` macro.
-    fn up_deploy_code(&mut self) -> Promise;
+    ///
+    /// [asynchronous design]: https://docs.near.org/concepts/basics/transactions/overview
+    /// [state migration]: https://docs.near.org/develop/upgrade#migrating-the-state
+    fn up_deploy_code(&mut self, function_call_args: Option<FunctionCallArgs>) -> Promise;
 
     /// Initializes the duration of the delay for deploying the staged code. It defaults to zero if
     /// code is staged before the staging duration is initialized. Once the staging duration has
@@ -148,6 +165,20 @@ pub struct UpgradableDurationStatus {
     pub staging_timestamp: Option<near_sdk::Timestamp>,
     pub new_staging_duration: Option<near_sdk::Duration>,
     pub new_staging_duration_timestamp: Option<near_sdk::Timestamp>,
+}
+
+/// Specifies a function call to be appended to the actions of a promise via
+/// [`near_sdk::Promise::function_call`]).
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FunctionCallArgs {
+    /// The name of the function to call.
+    pub function_name: String,
+    /// The arguments to pass to the function.
+    pub arguments: Vec<u8>,
+    /// The amount of tokens to transfer to the receiver.
+    pub amount: Balance,
+    /// The gas limit for the function call.
+    pub gas: Gas,
 }
 
 /// Event emitted when the code is staged
