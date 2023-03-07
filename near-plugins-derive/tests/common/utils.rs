@@ -49,6 +49,11 @@ where
     assert_eq!(actual, expected);
 }
 
+/// Asserts transaction failure due `MethodNotFound` error.
+pub fn assert_method_not_found_failure(res: ExecutionFinalResult) {
+    assert_failure_with(res, "Action #0: MethodResolveError(MethodNotFound)");
+}
+
 /// Asserts transaction failure due to `method` being `#[private]`.
 pub fn assert_private_method_failure(res: ExecutionFinalResult, method: &str) {
     let err = res

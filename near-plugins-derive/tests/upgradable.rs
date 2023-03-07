@@ -6,12 +6,13 @@ use anyhow::Ok;
 use common::access_controllable_contract::AccessControllableContract;
 use common::upgradable_contract::UpgradableContract;
 use common::utils::{
-    assert_failure_with, assert_insufficient_acl_permissions, assert_success_with,
-    assert_success_with_unit_return, fast_forward_beyond, get_transaction_block,
-    sdk_duration_from_secs,
+    assert_failure_with, assert_insufficient_acl_permissions, assert_method_not_found_failure,
+    assert_success_with, assert_success_with_unit_return, fast_forward_beyond,
+    get_transaction_block, sdk_duration_from_secs,
 };
+use near_plugins::upgradable::FunctionCallArgs;
 use near_sdk::serde_json::json;
-use near_sdk::{CryptoHash, Duration, Timestamp};
+use near_sdk::{CryptoHash, Duration, Gas, Timestamp};
 use std::path::Path;
 use workspaces::network::Sandbox;
 use workspaces::result::ExecutionFinalResult;
@@ -19,6 +20,7 @@ use workspaces::{Account, AccountId, Contract, Worker};
 
 const PROJECT_PATH: &str = "./tests/contracts/upgradable";
 const PROJECT_PATH_2: &str = "./tests/contracts/upgradable_2";
+const PROJECT_PATH_STATE_MIGRATION: &str = "./tests/contracts/upgradable_state_migration";
 
 const ERR_MSG_NO_STAGING_TS: &str = "Upgradable: staging timestamp isn't set";
 const ERR_MSG_DEPLOY_CODE_TOO_EARLY: &str = "Upgradable: Deploy code too early: staging ends on";
@@ -164,6 +166,18 @@ impl Setup {
         // `common::utils`. It is acceptable since all we care about is whether the method exists.
         caller
             .call(self.contract.id(), "is_upgraded")
+            .max_gas()
+            .transact()
+            .await
+    }
+
+    async fn call_is_migrated(&self, caller: &Account) -> workspaces::Result<ExecutionFinalResult> {
+        // `is_migrated` could be called via `view`, however here it is called via `transact` so we
+        // get an `ExecutionFinalResult` that can be passed to `assert_*` methods from
+        // `common::utils`. It is acceptable since all we care about is whether the method exists
+        // and can be called successfully.
+        caller
+            .call(self.contract.id(), "is_migrated")
             .max_gas()
             .transact()
             .await
@@ -426,7 +440,8 @@ async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
 }
 
 /// Verifies the upgrade was successful by calling a method that's available only on the upgraded
-/// contract. Ensures the new contract can be deployed and state migration succeeds.
+/// contract. Ensures the new contract can be deployed and state remains valid without
+/// explicit state migration.
 #[tokio::test]
 async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
@@ -435,7 +450,7 @@ async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
 
     // Verify function `is_upgraded` is not defined in the initial contract.
     let res = setup.call_is_upgraded(&setup.unauth_account).await?;
-    assert_failure_with(res, "Action #0: MethodResolveError(MethodNotFound)");
+    assert_method_not_found_failure(res);
 
     // Compile the other version of the contract and stage its code.
     let code = common::repo::compile_project(Path::new(PROJECT_PATH_2), "upgradable_2").await?;
@@ -454,6 +469,94 @@ async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
     // verifies the staged contract is deployed and there are no issues with state migration.
     let res = setup.call_is_upgraded(&setup.unauth_account).await?;
     assert_success_with(res, true);
+
+    Ok(())
+}
+
+/// Deploys a new version of the contract that requires state migration and verifies the migration
+/// succeeded.
+#[tokio::test]
+async fn test_deploy_code_with_migration() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox().await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
+
+    // Verify function `is_migrated` is not defined in the initial contract.
+    let res = setup.call_is_migrated(&setup.unauth_account).await?;
+    assert_method_not_found_failure(res);
+
+    // Compile the other version of the contract and stage its code.
+    let code = common::repo::compile_project(
+        Path::new(PROJECT_PATH_STATE_MIGRATION),
+        "upgradable_state_migration",
+    )
+    .await?;
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(code)).await;
+
+    // Deploy staged code and call the new contract's `migrate` method.
+    let function_call_args = FunctionCallArgs {
+        function_name: "migrate".to_string(),
+        arguments: Vec::new(),
+        amount: 0,
+        gas: Gas::ONE_TERA,
+    };
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, Some(function_call_args))
+        .await?;
+    assert_success_with_unit_return(res);
+
+    // The newly deployed contract defines the function `is_migrated`. Calling it successfully
+    // verifies the staged contract is deployed and state migration succeeded.
+    let res = setup.call_is_migrated(&setup.unauth_account).await?;
+    assert_success_with(res, true);
+
+    Ok(())
+}
+
+/// Deploys a new version of the contract and, batched with the `DeployContractAction`, calls a
+/// migration method that fails. Verifies the failure rolls back the deployment, i.e. the initial
+/// code remains active.
+#[tokio::test]
+async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox().await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
+
+    // Compile the other version of the contract and stage its code.
+    let code = common::repo::compile_project(
+        Path::new(PROJECT_PATH_STATE_MIGRATION),
+        "upgradable_state_migration",
+    )
+    .await?;
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(code)).await;
+
+    // Deploy staged code and call the new contract's `migrate_with_failure` method.
+    let function_call_args = FunctionCallArgs {
+        function_name: "migrate_with_failure".to_string(),
+        arguments: Vec::new(),
+        amount: 0,
+        gas: Gas::ONE_TERA,
+    };
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, Some(function_call_args))
+        .await?;
+    assert_failure_with(res, "Failing migration on purpose");
+
+    // Verify `code` wasn't deployed by calling a function that is defined only in the initial
+    // contract but not in the contract contract corresponding to `code`.
+    setup.assert_is_set_up(&setup.unauth_account).await;
 
     Ok(())
 }
@@ -515,6 +618,10 @@ async fn test_deploy_code_with_delay_failure_too_early() -> anyhow::Result<()> {
     // Verify trying to deploy staged code fails.
     let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
     assert_failure_with(res, ERR_MSG_DEPLOY_CODE_TOO_EARLY);
+
+    // Verify `code` wasn't deployed by calling a function that is defined only in the initial
+    // contract but not in the contract contract corresponding to `code`.
+    setup.assert_is_set_up(&setup.unauth_account).await;
 
     Ok(())
 }
