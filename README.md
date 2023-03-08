@@ -21,33 +21,6 @@ Basic access control mechanism that allows _only_ an authorized account id to ca
 
 Documentation of all methods provided by the derived implementation of `Ownable` is available in the [definition of the trait](/near-plugins/src/ownable.rs).
 
-### [Full Access Key Fallback](/near-plugins/src/full_access_key_fallback.rs)
-
-Allows an authorized account to attach a Full Access Key to the contract.
-
-Contract example using _Full Access Key Fallback_ plugin. Note that it requires the contract to be Ownable.
-
-```rust
-#[near_bindgen]
-#[derive(Ownable, FullAccessKeyFallback)]
-struct Counter {
-  counter: u64
-}
-
-#[near_bindgen]
-impl Counter {
-  /// Specify the owner of the contract in the constructor
-  #[init]
-  fn new() -> Self {
-    let contract = Self { counter: 0 };
-    contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
-    contract
-  }
-}
-```
-
-Documentation of all methods provided by the derived implementation of `FullAccessKeyFallback` is available in the [definition of the trait](/near-plugins/src/full_access_key_fallback.rs). More examples and guidelines for interacting with a `FullAccessKeyFallback` contract can be found [here](/examples/full-access-key-fallback-examples/README.md).
-
 ### [Pausable](/near-plugins/src/pausable.rs)
 
 Allow contracts to implement an emergency stop mechanism that can be triggered by an authorized account. Pauses can be
