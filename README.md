@@ -8,10 +8,7 @@ using near-sdk-rs and `#[near_bindgen]` macro.
 Documentation and implementation details of each plugin can be found in the source code, primarily in the [traits](/near-plugins/src/) which define plugin behavior. Events emitted by each plugin
 are also described in the [source code](/near-plugins-derive/src/) of each macro. Each event follows [NEP-297](https://nomicon.io/Standards/EventsFormat).
 
-The following sections provide an overview of all available plugins. More examples and usage patterns are available in:
-
-- [`examples/`](/examples/)
-- [`near-plugins-derive/tests/contracts/`](/near-plugins-derive/tests/contracts/)
+The following sections provide an overview of all available plugins. More examples and usage patterns are available in [tests](/near-plugins-derive/tests) and [demo contracts](/near-plugins-derive/tests/contracts/).
 
 ### [Ownable](/near-plugins/src/ownable.rs)
 
