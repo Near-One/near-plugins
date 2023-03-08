@@ -102,6 +102,8 @@ pub trait Upgradable {
 
     /// Allows an authorized account to deploy the staged code. It panics if no code is staged.
     ///
+    /// # Attaching a function call
+    ///
     /// If `function_call_args` are provided, code is deployed in a batch promise that contains the
     /// `DeployContractAction` followed by `FunctionCallAction`. In case the function call fails,
     /// the deployment is rolled back and the initial code remains active. For this purpose,
@@ -112,6 +114,19 @@ pub trait Upgradable {
     /// version of the contract. A failure during state migration can leave the contract in a broken
     /// state, which is avoided by the roleback mechanism described above.
     ///
+    /// # Removal of staged code
+    ///
+    /// After deployment, staged code remains in storage. It is not removed automatically as this
+    /// would cost extra gas and therefore increase the risk of the transaction hitting NEAR's gas
+    /// limit. Moreover, in case the deployment is roled back due to a failure in the attached
+    /// function call, the staged code might still be required.
+    ///
+    /// Once staged code is no longer needed, it can be removed by passing the appropriate arguments
+    /// to [`Self::up_stage_code`]. Removing staged code allows to [unstake tokens] that are storage
+    /// staked.
+    ///
+    /// # Permissions
+    ///
     /// In the default implementation, this method is protected by access control provided by the
     /// `AccessControllable` plugin. The roles which may successfully call this method are
     /// specified via the `code_deployers` field of the `Upgradable` macro's `access_control_roles`
@@ -120,6 +135,7 @@ pub trait Upgradable {
     ///
     /// [asynchronous design]: https://docs.near.org/concepts/basics/transactions/overview
     /// [state migration]: https://docs.near.org/develop/upgrade#migrating-the-state
+    /// [storage staked]: https://docs.near.org/concepts/storage/storage-staking#btw-you-can-remove-data-to-unstake-some-tokens
     fn up_deploy_code(&mut self, function_call_args: Option<FunctionCallArgs>) -> Promise;
 
     /// Initializes the duration of the delay for deploying the staged code. It defaults to zero if
