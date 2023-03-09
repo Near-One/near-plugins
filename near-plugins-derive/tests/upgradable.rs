@@ -561,6 +561,78 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
     Ok(())
 }
 
+/// Deploys staged code in a batch transaction with two function call actions:
+///
+/// 1. `up_deploy_code` with a function call to a migration method that fails
+/// 2. `up_stage_code` to remove staged code from storage
+///
+/// The pitfall is that a failure in the promise returned by 1 does _not_ make the transaction fail
+/// and 2 executes anyway.
+#[tokio::test]
+async fn test_deploy_code_with_batched_removal_pitfall() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox().await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
+
+    // Compile the other version of the contract and stage its code.
+    let code = common::repo::compile_project(
+        Path::new(PROJECT_PATH_STATE_MIGRATION),
+        "upgradable_state_migration",
+    )
+    .await?;
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(code)).await;
+
+    // Construct the function call actions to be executed in a batch transaction.
+    // Note that we are attaching a call to `migrate_with_failure`, which will fail.
+    let fn_call_deploy = workspaces::operations::Function::new("up_deploy_code")
+        .args_json(json!({ "function_call_args": FunctionCallArgs {
+        function_name: "migrate_with_failure".to_string(),
+        arguments: Vec::new(),
+        amount: 0,
+        gas: Gas::ONE_TERA,
+    } }))
+        .gas(Gas::ONE_TERA.0 * 200);
+    let fn_call_remove_code = workspaces::operations::Function::new("up_stage_code")
+        .args_borsh(Vec::<u8>::new())
+        .gas(Gas::ONE_TERA.0 * 90);
+
+    let res = dao
+        .batch(setup.contract.id())
+        .call(fn_call_deploy)
+        .call(fn_call_remove_code)
+        .transact()
+        .await?;
+
+    // Here is the pitfall: Despite the failure of `migrate_with_failure`, the transaction succeeds.
+    // This is due to `fn_call_deploy` _successfully_ returning a promise `p`. The promise `p`
+    // fails, however that does not affect the result of the transaction.
+    assert_success_with_unit_return(res.clone());
+
+    // Verify the promise resulting from `fn_call_deploy` failed. There seems to be no public API to
+    // get the status of an `ExecutionOutcome`, hence `is_failure` is used in combination with debug
+    // formatting. Since this is test code we can use debug formatting for this purpose.
+    let fn_call_deploy_receipt = res
+        .receipt_outcomes()
+        .get(1)
+        .expect("There should be at least two receipts");
+    assert!(fn_call_deploy_receipt.is_failure());
+    assert!(format!("{:?}", fn_call_deploy_receipt).contains("Failing migration on purpose"));
+
+    // Verify `code` wasn't deployed by calling a function that is defined only in the initial
+    // contract but not in the contract corresponding to `code`.
+    setup.assert_is_set_up(&setup.unauth_account).await;
+
+    // However the staged code was removed, i.e. `fn_call_remove_code` was executed anyway.
+    setup.assert_staged_code(None).await;
+
+    Ok(())
+}
+
 #[tokio::test]
 async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
