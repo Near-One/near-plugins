@@ -569,7 +569,7 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
 /// The pitfall is that a failure in the promise returned by 1 does _not_ make the transaction fail
 /// and 2 executes anyway.
 #[tokio::test]
-async fn test_deploy_code_with_batched_removal_pitfall() -> anyhow::Result<()> {
+async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;

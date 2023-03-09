@@ -33,8 +33,9 @@
 //!
 //! ## Stale staged code
 //!
-//! After the code is deployed, it should be removed from staging. This will prevent old code with a
-//! security vulnerability to be deployed.
+//! After the code is deployed, it should be removed from staging. This prevents deploying old code
+//! that might contain a security vulnerability and avoids the issues described in
+//! [`Self::up_deploy_code`].
 //!
 //! ## Upgrading code that contains a security vulnerability
 //!
@@ -124,6 +125,13 @@ pub trait Upgradable {
     /// Once staged code is no longer needed, it can be removed by passing the appropriate arguments
     /// to [`Self::up_stage_code`]. Removing staged code allows to [unstake tokens] that are storage
     /// staked.
+    ///
+    /// It is recommended to remove staged code as soon as possible to avoid deploying code and
+    /// executing an attached function call multiple times. Using batch transaction for this purpose
+    /// can be dangerous. Since `up_deploy_code` returns a promise, there can be unexpected outcomes
+    /// when it is combined in a batch transaction with another function call that removes code from
+    /// storage. This is demonstrated in the `Upgradable` test
+    /// `test_deploy_code_in_batch_transaction_pitfall`.
     ///
     /// # Permissions
     ///
