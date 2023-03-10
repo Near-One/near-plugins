@@ -83,6 +83,31 @@ pub trait AccessControllable {
     /// grantee of any role.
     fn acl_is_super_admin(&self, account_id: AccountId) -> bool;
 
+    /// Revoke super-admin permissions from `account_id` provided that the
+    /// predecessor has sufficient permissions, i.e. is a super-admin as defined
+    /// by [`acl_is_super_admin`]. This means a super-admin may revoke
+    /// super-admin permissions from any other super-admin.
+    ///
+    /// In case of sufficient permissions, the returned `Some(bool)` indicates
+    /// whether `account_id` was a super-admin. Without permissions, `None` is
+    /// returned and internal state is not modified.
+    ///
+    /// If super-admin permissions are revoked, the following event will be
+    /// emitted:
+    ///
+    /// ```json
+    /// {
+    ///    "standard":"AccessControllable",
+    ///    "version":"1.0.0",
+    ///    "event":"super_admin_revoked",
+    ///    "data":{
+    ///       "account":"<PREVIOUSLY_SUPER_ADMIN>",
+    ///       "by":"<SUPER_ADMIN>"
+    ///    }
+    /// }
+    /// ```
+    fn acl_revoke_super_admin(&mut self, account_id: AccountId) -> Option<bool>;
+
     /// Makes `account_id` an admin provided that the predecessor has sufficient
     /// permissions, i.e. is an admin as defined by [`acl_is_admin`].
     ///
