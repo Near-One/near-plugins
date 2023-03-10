@@ -447,20 +447,61 @@ async fn test_super_admin_may_revoke_any_admin() -> anyhow::Result<()> {
             .assert_acl_is_admin(false, role, admin.id())
             .await;
     }
+
     Ok(())
 }
 
 /// Verify that a super-admin may grant every role.
 #[tokio::test]
 async fn test_super_admin_may_grant_any_role() -> anyhow::Result<()> {
-    // TODO once acl_grant_role is implemented
+    let setup = Setup::new().await?;
+    let super_admin = setup.new_super_admin_account().await?;
+
+    for role in ALL_ROLES {
+        let account = setup.worker.dev_create_account().await?;
+        setup
+            .contract
+            .assert_acl_has_role(false, role, account.id())
+            .await;
+
+        let res = setup
+            .contract
+            .acl_grant_role(&super_admin, role, account.id())
+            .await?;
+        assert_eq!(res, Some(true));
+        setup
+            .contract
+            .assert_acl_has_role(true, role, account.id())
+            .await;
+    }
+
     Ok(())
 }
 
 /// Verify that a super-admin may revoke every role.
 #[tokio::test]
 async fn test_super_admin_may_revoke_any_role() -> anyhow::Result<()> {
-    // TODO once acl_revoke_role is implemented
+    let setup = Setup::new().await?;
+    let super_admin = setup.new_super_admin_account().await?;
+
+    for role in ALL_ROLES {
+        let grantee = setup.new_account_with_roles(&[role]).await?;
+        setup
+            .contract
+            .assert_acl_has_role(true, role, grantee.id())
+            .await;
+
+        let res = setup
+            .contract
+            .acl_revoke_role(&super_admin, role, grantee.id())
+            .await?;
+        assert_eq!(res, Some(true));
+        setup
+            .contract
+            .assert_acl_has_role(false, role, grantee.id())
+            .await;
+    }
+
     Ok(())
 }
 
