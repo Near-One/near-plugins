@@ -8,10 +8,7 @@ using near-sdk-rs and `#[near_bindgen]` macro.
 Documentation and implementation details of each plugin can be found in the source code, primarily in the [traits](/near-plugins/src/) which define plugin behavior. Events emitted by each plugin
 are also described in the [source code](/near-plugins-derive/src/) of each macro. Each event follows [NEP-297](https://nomicon.io/Standards/EventsFormat).
 
-The following sections provide an overview of all available plugins. More examples and usage patterns are available in:
-
-- [`examples/`](/examples/)
-- [`near-plugins-derive/tests/contracts/`](/near-plugins-derive/tests/contracts/)
+The following sections provide an overview of all available plugins. More examples and usage patterns are available in [tests](/near-plugins-derive/tests) and [demo contracts](/near-plugins-derive/tests/contracts/).
 
 ### [Ownable](/near-plugins/src/ownable.rs)
 
@@ -20,33 +17,6 @@ Basic access control mechanism that allows _only_ an authorized account id to ca
 [This contract](/near-plugins-derive/tests/contracts/ownable/src/lib.rs) provides an example of using `Ownable`. It is compiled, deployed on chain and interacted with in [integration tests](/near-plugins-derive/tests/ownable.rs).
 
 Documentation of all methods provided by the derived implementation of `Ownable` is available in the [definition of the trait](/near-plugins/src/ownable.rs).
-
-### [Full Access Key Fallback](/near-plugins/src/full_access_key_fallback.rs)
-
-Allows an authorized account to attach a Full Access Key to the contract.
-
-Contract example using _Full Access Key Fallback_ plugin. Note that it requires the contract to be Ownable.
-
-```rust
-#[near_bindgen]
-#[derive(Ownable, FullAccessKeyFallback)]
-struct Counter {
-  counter: u64
-}
-
-#[near_bindgen]
-impl Counter {
-  /// Specify the owner of the contract in the constructor
-  #[init]
-  fn new() -> Self {
-    let contract = Self { counter: 0 };
-    contract.owner_set(Some(near_sdk::env::predecessor_account_id()));
-    contract
-  }
-}
-```
-
-Documentation of all methods provided by the derived implementation of `FullAccessKeyFallback` is available in the [definition of the trait](/near-plugins/src/full_access_key_fallback.rs). More examples and guidelines for interacting with a `FullAccessKeyFallback` contract can be found [here](/examples/full-access-key-fallback-examples/README.md).
 
 ### [Pausable](/near-plugins/src/pausable.rs)
 
