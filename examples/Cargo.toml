@@ -1,6 +1,0 @@
-[workspace]
-
-members = [
-  "full-access-key-fallback-examples/full_access_key_fallback_base",
-  "near-plugins-test-utils",
-]
