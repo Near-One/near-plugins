@@ -351,6 +351,53 @@ async fn test_acl_add_super_admin_unchecked() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_acl_revoke_super_admin() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let super_admin = setup.new_super_admin_account().await?;
+
+    setup
+        .contract
+        .assert_acl_is_super_admin(true, setup.contract_account(), super_admin.id())
+        .await;
+
+    // Create revoker accounts.
+    let revoker_unauth = setup.worker.dev_create_account().await?;
+    let revoker_auth = setup.new_super_admin_account().await?;
+
+    // Revoke is a no-op if revoker is not a super-admin.
+    let res = setup
+        .contract
+        .acl_revoke_super_admin(&revoker_unauth, super_admin.id())
+        .await?;
+    assert_eq!(res, None);
+    setup
+        .contract
+        .assert_acl_is_super_admin(true, setup.contract_account(), super_admin.id())
+        .await;
+
+    // Revoke succeeds if the revoker is a super-admin.
+    let res = setup
+        .contract
+        .acl_revoke_super_admin(&revoker_auth, super_admin.id())
+        .await?;
+    assert_eq!(res, Some(true));
+    setup
+        .contract
+        .assert_acl_is_super_admin(false, setup.contract_account(), super_admin.id())
+        .await;
+
+    // Revoking from an account which isn't super-admin returns `Some(false)`.
+    let account = setup.worker.dev_create_account().await?;
+    let res = setup
+        .contract
+        .acl_revoke_super_admin(&revoker_auth, account.id())
+        .await?;
+    assert_eq!(res, Some(false));
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_acl_revoke_super_admin_unchecked() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
     let account = setup.new_super_admin_account().await?;
