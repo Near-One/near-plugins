@@ -131,6 +131,8 @@ async fn test_setup() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_pause_feature() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
+
+    // Pause a feature that is not yet paused.
     let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "increase_1")
@@ -140,6 +142,18 @@ async fn test_pause_feature() -> anyhow::Result<()> {
         .call_counter_modifier(&setup.unauth_account, "increase_1")
         .await?;
     assert_method_is_paused(res);
+
+    // Pause a feature that is already paused.
+    let res = setup
+        .pausable_contract
+        .pa_pause_feature(&setup.pause_manager, "increase_1")
+        .await?;
+    assert_success_with(res, false);
+    let res = setup
+        .call_counter_modifier(&setup.unauth_account, "increase_1")
+        .await?;
+    assert_method_is_paused(res);
+
     Ok(())
 }
 
@@ -193,6 +207,46 @@ async fn test_pause_not_allowed_from_self() -> anyhow::Result<()> {
         ..
     } = Setup::new().await?;
     assert_pause_feature_acl_failure(&pausable_contract, contract.as_account()).await;
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_unpause_feature() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+
+    // Pause a feature.
+    let res = setup
+        .pausable_contract
+        .pa_pause_feature(&setup.pause_manager, "increase_1")
+        .await?;
+    assert_success_with(res, true);
+    let res = setup
+        .call_counter_modifier(&setup.unauth_account, "increase_1")
+        .await?;
+    assert_method_is_paused(res);
+
+    // Unpause a feature that is paused. The method it protected can then be called successfully.
+    let res = setup
+        .pausable_contract
+        .pa_unpause_feature(&setup.pause_manager, "increase_1")
+        .await?;
+    assert_success_with(res, true);
+    setup
+        .call_counter_modifier(&setup.unauth_account, "increase_1")
+        .await?
+        .into_result()?;
+
+    // Unpause a feature that is not paused.
+    let res = setup
+        .pausable_contract
+        .pa_unpause_feature(&setup.pause_manager, "increase_1")
+        .await?;
+    assert_success_with(res, false);
+    setup
+        .call_counter_modifier(&setup.unauth_account, "increase_1")
+        .await?
+        .into_result()?;
+
     Ok(())
 }
 
