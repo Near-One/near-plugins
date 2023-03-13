@@ -36,8 +36,8 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
     let output = quote! {
         #[near_bindgen]
         impl Pausable for #ident {
-            fn pa_storage_key(&self) -> Vec<u8>{
-                (#paused_storage_key).as_bytes().to_vec()
+            fn pa_storage_key(&self) -> &'static [u8] {
+                (#paused_storage_key).as_bytes()
             }
 
             fn pa_is_paused(&self, key: String) -> bool {

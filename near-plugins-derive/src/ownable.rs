@@ -26,8 +26,8 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
     let output = quote! {
         #[near_bindgen]
         impl Ownable for #ident {
-            fn owner_storage_key(&self) -> Vec<u8> {
-                (#owner_storage_key).as_bytes().to_vec()
+            fn owner_storage_key(&self) -> &'static [u8] {
+                (#owner_storage_key).as_bytes()
             }
 
             fn owner_get(&self) -> Option<::near_sdk::AccountId> {
