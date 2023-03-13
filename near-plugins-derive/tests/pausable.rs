@@ -6,7 +6,7 @@ use common::access_controllable_contract::AccessControllableContract;
 use common::pausable_contract::PausableContract;
 use common::utils::{
     assert_failure_with, assert_insufficient_acl_permissions, assert_method_is_paused,
-    assert_success_with_unit_return,
+    assert_success_with, assert_success_with_unit_return,
 };
 use near_sdk::serde_json::json;
 use std::collections::HashSet;
@@ -131,15 +131,29 @@ async fn test_setup() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_pause_feature() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
-    setup
+
+    // Pause a feature that is not yet paused.
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "increase_1")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     let res = setup
         .call_counter_modifier(&setup.unauth_account, "increase_1")
         .await?;
     assert_method_is_paused(res);
+
+    // Pause a feature that is already paused.
+    let res = setup
+        .pausable_contract
+        .pa_pause_feature(&setup.pause_manager, "increase_1")
+        .await?;
+    assert_success_with(res, false);
+    let res = setup
+        .call_counter_modifier(&setup.unauth_account, "increase_1")
+        .await?;
+    assert_method_is_paused(res);
+
     Ok(())
 }
 
@@ -147,11 +161,11 @@ async fn test_pause_feature() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_pause_feature_from_pause_manager() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "increase_1")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     let res = setup
         .call_counter_modifier(&setup.pause_manager, "increase_1")
         .await?;
@@ -196,6 +210,46 @@ async fn test_pause_not_allowed_from_self() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[tokio::test]
+async fn test_unpause_feature() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+
+    // Pause a feature.
+    let res = setup
+        .pausable_contract
+        .pa_pause_feature(&setup.pause_manager, "increase_1")
+        .await?;
+    assert_success_with(res, true);
+    let res = setup
+        .call_counter_modifier(&setup.unauth_account, "increase_1")
+        .await?;
+    assert_method_is_paused(res);
+
+    // Unpause a feature that is paused. The method it protected can then be called successfully.
+    let res = setup
+        .pausable_contract
+        .pa_unpause_feature(&setup.pause_manager, "increase_1")
+        .await?;
+    assert_success_with(res, true);
+    setup
+        .call_counter_modifier(&setup.unauth_account, "increase_1")
+        .await?
+        .into_result()?;
+
+    // Unpause a feature that is not paused.
+    let res = setup
+        .pausable_contract
+        .pa_unpause_feature(&setup.pause_manager, "increase_1")
+        .await?;
+    assert_success_with(res, false);
+    setup
+        .call_counter_modifier(&setup.unauth_account, "increase_1")
+        .await?
+        .into_result()?;
+
+    Ok(())
+}
+
 /// Asserts `pa_unpause_feature` fails due to insufficient acl permissions when called by `caller`.
 async fn assert_unpause_feature_acl_failure(contract: &PausableContract, caller: &Account) {
     let result = contract
@@ -236,11 +290,11 @@ async fn test_unpause_not_allowed_from_self() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_pause_with_all() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "ALL")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     let res = setup
         .call_counter_modifier(&setup.unauth_account, "increase_1")
         .await?;
@@ -252,11 +306,11 @@ async fn test_pause_with_all() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_pause_with_all_allows_except() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "ALL")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
 
     let exempted_account = setup.unauth_account.clone();
     setup
@@ -274,11 +328,11 @@ async fn test_pause_with_all_allows_except() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_not_paused_with_different_key() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "other_feature")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
 
     let res = setup
         .call_counter_modifier(&setup.unauth_account, "increase_1")
@@ -294,22 +348,22 @@ async fn test_work_after_unpause() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
 
     // After pausing function call fails.
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "increase_1")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     let res = setup
         .call_counter_modifier(&setup.unauth_account, "increase_1")
         .await?;
     assert_method_is_paused(res);
 
     // After unpausing function call succeeds.
-    setup
+    let res = setup
         .pausable_contract
         .pa_unpause_feature(&setup.pause_manager, "increase_1")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     let res = setup
         .call_counter_modifier(&setup.unauth_account, "increase_1")
         .await?;
@@ -334,11 +388,11 @@ async fn test_paused_list() -> anyhow::Result<()> {
 
     assert_paused_list(None, &setup.pausable_contract, &setup.unauth_account).await;
 
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "feature_a")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     assert_paused_list(
         Some(HashSet::from(["feature_a".to_string()])),
         &setup.pausable_contract,
@@ -346,11 +400,11 @@ async fn test_paused_list() -> anyhow::Result<()> {
     )
     .await;
 
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "feature_b")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     assert_paused_list(
         Some(HashSet::from([
             "feature_a".to_string(),
@@ -361,11 +415,11 @@ async fn test_paused_list() -> anyhow::Result<()> {
     )
     .await;
 
-    setup
+    let res = setup
         .pausable_contract
         .pa_unpause_feature(&setup.pause_manager, "feature_a")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     assert_paused_list(
         Some(HashSet::from(["feature_b".to_string()])),
         &setup.pausable_contract,
@@ -393,11 +447,11 @@ async fn test_is_paused() -> anyhow::Result<()> {
     )
     .await;
 
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "feature_a")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     assert_is_paused(
         true,
         "feature_a",
@@ -406,11 +460,11 @@ async fn test_is_paused() -> anyhow::Result<()> {
     )
     .await;
 
-    setup
+    let res = setup
         .pausable_contract
         .pa_unpause_feature(&setup.pause_manager, "feature_a")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
     assert_is_paused(
         false,
         "feature_a",
@@ -427,11 +481,11 @@ async fn test_is_paused() -> anyhow::Result<()> {
 async fn test_pause_custom_name_ok() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
 
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "increase_2")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
 
     let res = setup
         .call_counter_modifier(&setup.unauth_account, "increase_2")
@@ -446,11 +500,11 @@ async fn test_pause_custom_name_ok() -> anyhow::Result<()> {
 async fn test_pause_custom_name_fail() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
 
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "Increase by two")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
 
     let res = setup
         .call_counter_modifier(&setup.unauth_account, "increase_2")
@@ -465,11 +519,11 @@ async fn test_pause_except_ok() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
 
     // Pause feature.
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "increase_4")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
 
     // Grantee of `Role::Unrestricted4Increaser` is exempted.
     let increaser = setup.worker.dev_create_account().await?;
@@ -501,11 +555,11 @@ async fn test_pause_except_fail() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
 
     // Pause feature.
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "increase_4")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
 
     // Calling the method from an account which is not exempted fails.
     let res = setup
@@ -534,11 +588,11 @@ async fn test_custom_big_fail() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
 
     // Pause feature.
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "increase_big")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
 
     // Counter can still be increased until threshold.
     for _ in 0..3 {
@@ -570,11 +624,11 @@ async fn test_escape_hatch_ok() -> anyhow::Result<()> {
     assert_eq!(setup.get_counter().await?, 1);
 
     // Pause feature.
-    setup
+    let res = setup
         .pausable_contract
         .pa_pause_feature(&setup.pause_manager, "increase_1")
-        .await?
-        .into_result()?;
+        .await?;
+    assert_success_with(res, true);
 
     // Calling escape hatch succeeds.
     let res = setup
