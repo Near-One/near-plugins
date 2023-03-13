@@ -51,7 +51,12 @@ pub trait Pausable {
     /// Pauses feature `key`. This method fails if the caller has not been granted one of the access
     /// control `manager_roles` passed to the `Pausable` plugin.
     ///
-    /// If the method succeeds, the following event will be emitted:
+    /// It returns `true` if the feature is paused as a result of this function call and `false` if
+    /// the feature was already paused. In either case, the feature is paused after the function
+    /// returns successfully.
+    ///
+    /// If the feature is newly paused (the return value is `true`), the following event will be
+    /// emitted:
     ///
     /// ```json
     /// {
@@ -65,12 +70,16 @@ pub trait Pausable {
     ///     }
     /// }
     /// ```
-    fn pa_pause_feature(&mut self, key: String);
+    fn pa_pause_feature(&mut self, key: String) -> bool;
 
     /// Unpauses feature `key`. This method fails if the caller has not been granted one of the
     /// access control `manager_roles` passed to the `Pausable` plugin.
     ///
-    /// If the method succeeds, the following event will be emitted:
+    /// It returns whether the feature was paused, i.e. `true` if the feature was paused and
+    /// otherwise `false`. In either case, the feature is unpaused after the function returns
+    /// successfully.
+    ///
+    /// If the feature was paused (the return value is `true`), the following event will be emitted:
     ///
     /// ```json
     /// {
@@ -84,7 +93,7 @@ pub trait Pausable {
     ///    }
     /// }
     /// ```
-    fn pa_unpause_feature(&mut self, key: String);
+    fn pa_unpause_feature(&mut self, key: String) -> bool;
 }
 
 /// Event emitted when a feature is paused.

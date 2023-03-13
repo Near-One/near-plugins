@@ -54,16 +54,14 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
             }
 
             #[#cratename::access_control_any(roles(#(#manager_roles),*))]
-            fn pa_pause_feature(&mut self, key: String) {
+            fn pa_pause_feature(&mut self, key: String) -> bool {
                 let mut paused_keys = self.pa_all_paused().unwrap_or_default();
-                paused_keys.insert(key.clone());
+                let newly_paused = paused_keys.insert(key.clone());
 
-                ::near_sdk::log!(#cratename::events::AsEvent::event(
-                    &#cratename::pausable::Pause {
-                        by: ::near_sdk::env::predecessor_account_id(),
-                        key,
-                    }
-                ));
+                if !newly_paused {
+                    // Nothing to do since state was not modified.
+                    return false;
+                }
 
                 ::near_sdk::env::storage_write(
                     self.pa_storage_key().as_ref(),
@@ -72,19 +70,27 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                         .unwrap_or_else(|_| ::near_sdk::env::panic_str("Pausable: Unexpected error serializing keys"))
                         .as_ref(),
                 );
-            }
-
-            #[#cratename::access_control_any(roles(#(#manager_roles),*))]
-            fn pa_unpause_feature(&mut self, key: String) {
-                let mut paused_keys = self.pa_all_paused().unwrap_or_default();
-                paused_keys.remove(&key);
 
                 ::near_sdk::log!(#cratename::events::AsEvent::event(
-                    &#cratename::pausable::Unpause {
+                    &#cratename::pausable::Pause {
                         by: ::near_sdk::env::predecessor_account_id(),
                         key,
                     }
                 ));
+
+                // The feature is newly paused.
+                true
+            }
+
+            #[#cratename::access_control_any(roles(#(#manager_roles),*))]
+            fn pa_unpause_feature(&mut self, key: String) -> bool {
+                let mut paused_keys = self.pa_all_paused().unwrap_or_default();
+                let was_paused = paused_keys.remove(&key);
+
+                if !was_paused {
+                    // Nothing to do since state is not modified.
+                    return false;
+                }
 
                 if paused_keys.is_empty() {
                     ::near_sdk::env::storage_remove(self.pa_storage_key().as_ref());
@@ -97,6 +103,16 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                             .as_ref(),
                     );
                 }
+
+                ::near_sdk::log!(#cratename::events::AsEvent::event(
+                    &#cratename::pausable::Unpause {
+                        by: ::near_sdk::env::predecessor_account_id(),
+                        key,
+                    }
+                ));
+
+                // The feature was paused.
+                true
             }
         }
     };
