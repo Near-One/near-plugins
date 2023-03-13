@@ -40,7 +40,7 @@ pub trait Pausable {
     /// #[pausable(paused_storage_key="CUSTOM_KEY")]
     /// struct Contract { /* ... */}
     /// ```
-    fn pa_storage_key(&self) -> Vec<u8>;
+    fn pa_storage_key(&self) -> &'static [u8];
 
     /// Returns whether feature `key` is paused.
     fn pa_is_paused(&self, key: String) -> bool;

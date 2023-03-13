@@ -25,7 +25,7 @@ pub trait Ownable {
     /// #[ownable(owner_storage_key="CUSTOM_KEY")]
     /// struct Contract { /* ... */}
     /// ```
-    fn owner_storage_key(&self) -> Vec<u8>;
+    fn owner_storage_key(&self) -> &'static [u8];
 
     /// Returns the current owner of the contract. Result must be a NEAR valid account id or None,
     /// in case the account doesn't have an owner.
