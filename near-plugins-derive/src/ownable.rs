@@ -57,12 +57,11 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
                     );
                 }
 
-                ::near_sdk::log!(#cratename::events::AsEvent::event(
-                    &#cratename::ownable::OwnershipTransferred {
-                        previous_owner: current_owner,
-                        new_owner: owner.clone()
-                    }
-                ));
+                let event = #cratename::ownable::OwnershipTransferred {
+                    previous_owner: current_owner,
+                    new_owner: owner.clone(),
+                };
+                #cratename::events::AsEvent::emit(&event);
 
                 match owner.as_ref() {
                     Some(owner) => ::near_sdk::env::storage_write(
