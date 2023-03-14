@@ -110,6 +110,11 @@ pub fn assert_method_is_paused(res: ExecutionFinalResult) {
     );
 }
 
+pub fn assert_pausable_escape_hatch_is_closed(res: ExecutionFinalResult, feature: &str) {
+    let must_contain = format!("Pausable: {feature} must be paused to use this function");
+    assert_failure_with(res, &must_contain);
+}
+
 pub fn assert_owner_update_failure(res: ExecutionFinalResult) {
     let err = res
         .into_result()

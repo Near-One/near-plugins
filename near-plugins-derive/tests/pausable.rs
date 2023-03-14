@@ -6,7 +6,7 @@ use common::access_controllable_contract::AccessControllableContract;
 use common::pausable_contract::PausableContract;
 use common::utils::{
     assert_failure_with, assert_insufficient_acl_permissions, assert_method_is_paused,
-    assert_success_with, assert_success_with_unit_return,
+    assert_pausable_escape_hatch_is_closed, assert_success_with, assert_success_with_unit_return,
 };
 use near_sdk::serde_json::json;
 use std::collections::HashSet;
@@ -16,9 +16,6 @@ use workspaces::result::ExecutionFinalResult;
 use workspaces::{Account, AccountId, Contract, Worker};
 
 const PROJECT_PATH: &str = "./tests/contracts/pausable";
-
-const MESSAGE_METHOD_NOT_PAUSED: &str =
-    "Pausable: The feature corresponding to this escape hatch is not paused";
 
 /// Bundles resources required in tests.
 struct Setup {
@@ -648,6 +645,6 @@ async fn test_escape_hatch_fail() -> anyhow::Result<()> {
     let res = setup
         .call_counter_modifier(&setup.unauth_account, "decrease_1")
         .await?;
-    assert_failure_with(res, MESSAGE_METHOD_NOT_PAUSED);
+    assert_pausable_escape_hatch_is_closed(res, "increase_1");
     Ok(())
 }
