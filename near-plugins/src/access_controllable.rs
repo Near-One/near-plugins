@@ -108,6 +108,43 @@ pub trait AccessControllable {
     /// ```
     fn acl_revoke_super_admin(&mut self, account_id: AccountId) -> Option<bool>;
 
+    /// Transfer super-admin permissions from `predecessor` to `account_id` provided that the
+    /// predecessor has sufficient permissions, i.e. is a super-admin as defined
+    /// by [`acl_is_super_admin`]. This means a super-admin revoke
+    /// super-admin permissions from himself and then add super-admin permissions to `account_id`.
+    ///
+    /// In case of sufficient permissions, the returned `Some(bool)` indicates
+    /// whether `account_id` was a super-admin. Without permissions, `None` is
+    /// returned and internal state is not modified.
+    ///
+    /// If super-admin permissions are transferred, the following events will be
+    /// emitted:
+    ///
+    /// ```json
+    /// {
+    ///    "standard":"AccessControllable",
+    ///    "version":"1.0.0",
+    ///    "event":"super_admin_revoked",
+    ///    "data":{
+    ///       "account":"<PREVIOUSLY_SUPER_ADMIN>",
+    ///       "by":"<SUPER_ADMIN>"
+    ///    }
+    /// }
+    /// ```
+    ///     
+    /// ```json
+    /// {
+    ///    "standard":"AccessControllable",
+    ///    "version":"1.0.0",
+    ///    "event":"super_admin_added",
+    ///    "data":{
+    ///       "account":"<SUPER_ADMIN_ACCOUNT>",
+    ///       "by":"<CONTRACT_ACCOUNT>"
+    ///    }
+    /// }
+    /// ```
+    fn acl_transfer_super_admin(&mut self, account_id: AccountId) -> Option<bool>;
+
     /// Makes `account_id` an admin provided that the predecessor has sufficient
     /// permissions, i.e. is an admin as defined by [`acl_is_admin`].
     ///

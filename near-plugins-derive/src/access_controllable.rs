@@ -194,6 +194,16 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 Some(self.revoke_super_admin_unchecked(account_id))
             }
 
+            fn transfer_super_admin(&mut self, account_id: &::near_sdk::AccountId) -> Option<bool> {
+                let current_super_admin = ::near_sdk::env::predecessor_account_id();
+                if !self.is_super_admin(&current_super_admin) {
+                    return None;
+                }
+
+                self.revoke_super_admin_unchecked(&current_super_admin);
+                Some(self.add_super_admin_unchecked(&account_id))
+            }
+
             /// Revokes super-admin permissions from `account_id` without checking any
             /// permissions. It returns whether `account_id` was a super-admin.
             fn revoke_super_admin_unchecked(&mut self, account_id: &::near_sdk::AccountId) -> bool {
@@ -563,6 +573,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
             fn acl_revoke_super_admin(&mut self, account_id: ::near_sdk::AccountId) -> Option<bool> {
                 self.acl_get_or_init().revoke_super_admin(&account_id)
+            }
+
+            fn acl_transfer_super_admin(&mut self, account_id: ::near_sdk::AccountId) -> Option<bool> {
+                self.acl_get_or_init().transfer_super_admin(&account_id)
             }
 
             fn acl_add_admin(&mut self, role: String, account_id: ::near_sdk::AccountId) -> Option<bool> {
