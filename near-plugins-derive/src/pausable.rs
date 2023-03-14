@@ -190,7 +190,10 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
         let mut __check_paused = true;
         #bypass_condition
         if __check_paused {
-            ::near_sdk::require!(self.pa_is_paused(#fn_name.to_string()), "Pausable: Method must be paused");
+            ::near_sdk::require!(
+                self.pa_is_paused(#fn_name.to_string()),
+                "Pausable: The feature corresponding to this escape hatch is not paused"
+            );
         }
     );
 

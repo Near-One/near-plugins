@@ -17,7 +17,8 @@ use workspaces::{Account, AccountId, Contract, Worker};
 
 const PROJECT_PATH: &str = "./tests/contracts/pausable";
 
-const MESSAGE_METHOD_NOT_PAUSED: &str = "Pausable: Method must be paused";
+const MESSAGE_METHOD_NOT_PAUSED: &str =
+    "Pausable: The feature corresponding to this escape hatch is not paused";
 
 /// Bundles resources required in tests.
 struct Setup {
