@@ -108,13 +108,15 @@ pub trait AccessControllable {
     /// ```
     fn acl_revoke_super_admin(&mut self, account_id: AccountId) -> Option<bool>;
 
-    /// Transfer super-admin permissions from `predecessor` to `account_id` provided that the
+    /// Transfer super-admin permissions from the predecessor to `account_id` provided that the
     /// predecessor has sufficient permissions, i.e. is a super-admin as defined
-    /// by [`acl_is_super_admin`]. This means a super-admin revoke
-    /// super-admin permissions from himself and then add super-admin permissions to `account_id`.
+    /// by [`acl_is_super_admin`]. This function allows a super-admin to revoke the permission from
+    /// themselves and add `account_id` as super-admin. While it is a helper for use cases which
+    /// require this transfer, it should be noted that `AccessControllable` allows having more than
+    /// one super-admin.
     ///
     /// In case of sufficient permissions, the returned `Some(bool)` indicates
-    /// whether `account_id` was a super-admin. Without permissions, `None` is
+    /// whether `account_id` is a new super-admin. Without permissions, `None` is
     /// returned and internal state is not modified.
     ///
     /// If super-admin permissions are transferred, the following events will be

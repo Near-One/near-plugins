@@ -421,6 +421,10 @@ async fn test_acl_transfer_super_admin() -> anyhow::Result<()> {
         .contract
         .assert_acl_is_super_admin(true, setup.contract_account(), super_admin.id())
         .await;
+    setup
+        .contract
+        .assert_acl_is_super_admin(false, setup.contract_account(), new_super_admin.id())
+        .await;
 
     // Transfer succeeds if the caller is a super-admin.
     let res = setup
