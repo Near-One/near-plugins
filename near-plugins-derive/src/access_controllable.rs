@@ -151,6 +151,13 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 res
             }
 
+            fn add_super_admin(&mut self, account_id: &::near_sdk::AccountId) -> Option<bool> {
+                if !self.is_super_admin(&::near_sdk::env::predecessor_account_id()) {
+                    return None;
+                }
+                Some(self.add_super_admin_unchecked(account_id))
+            }
+
             /// Makes `account_id` a super-admin __without__ checking any permissions.
             /// It returns whether `account_id` is a new super-admin.
             ///
@@ -561,6 +568,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             #[private]
             fn acl_init_super_admin(&mut self, account_id: ::near_sdk::AccountId) -> bool {
                 self.acl_get_or_init().init_super_admin(&account_id)
+            }
+
+            fn acl_add_super_admin(&mut self, account_id: ::near_sdk::AccountId) -> Option<bool> {
+                self.acl_get_or_init().add_super_admin(&account_id)
             }
 
             fn acl_role_variants(&self) -> Vec<&'static str> {
