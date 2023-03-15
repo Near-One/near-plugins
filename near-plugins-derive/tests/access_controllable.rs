@@ -398,6 +398,61 @@ async fn test_acl_revoke_super_admin() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_acl_transfer_super_admin() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let super_admin = setup.new_super_admin_account().await?;
+    let new_super_admin = setup.worker.dev_create_account().await?;
+
+    setup
+        .contract
+        .assert_acl_is_super_admin(true, setup.contract_account(), super_admin.id())
+        .await;
+
+    // Create caller account.
+    let caller_unauth = setup.worker.dev_create_account().await?;
+
+    // Transfer is a no-op if caller is not a super-admin.
+    let res = setup
+        .contract
+        .acl_transfer_super_admin(&caller_unauth, super_admin.id())
+        .await?;
+    assert_eq!(res, None);
+    setup
+        .contract
+        .assert_acl_is_super_admin(true, setup.contract_account(), super_admin.id())
+        .await;
+    setup
+        .contract
+        .assert_acl_is_super_admin(false, setup.contract_account(), new_super_admin.id())
+        .await;
+
+    // Transfer succeeds if the caller is a super-admin.
+    let res = setup
+        .contract
+        .acl_transfer_super_admin(&super_admin, new_super_admin.id())
+        .await?;
+    assert_eq!(res, Some(true));
+    setup
+        .contract
+        .assert_acl_is_super_admin(false, setup.contract_account(), super_admin.id())
+        .await;
+    setup
+        .contract
+        .assert_acl_is_super_admin(true, setup.contract_account(), new_super_admin.id())
+        .await;
+
+    // Transfer to an account that is already super-admin returns `Some(false)`.
+    let admin = setup.new_super_admin_account().await?;
+    let res = setup
+        .contract
+        .acl_transfer_super_admin(&new_super_admin, admin.id())
+        .await?;
+    assert_eq!(res, Some(false));
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_acl_revoke_super_admin_unchecked() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
     let account = setup.new_super_admin_account().await?;
