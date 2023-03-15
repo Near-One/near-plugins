@@ -184,13 +184,20 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
 
     let fn_name = args.name;
 
+    // Construct error messages that use `format!` here, i.e. at compile time. Doing that during
+    // contract execution would cost extra gas.
+    let err_feature_not_paused = format!("Pausable: {fn_name} must be paused to use this function");
+
     let bypass_condition = get_bypass_condition(&args.except);
 
     let check_pause = quote!(
         let mut __check_paused = true;
         #bypass_condition
         if __check_paused {
-            ::near_sdk::require!(self.pa_is_paused(#fn_name.to_string()), "Pausable: Method must be paused");
+            ::near_sdk::require!(
+                self.pa_is_paused(#fn_name.to_string()),
+                #err_feature_not_paused,
+            );
         }
     );
 
