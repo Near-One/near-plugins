@@ -58,6 +58,9 @@ pub trait AccessControllable {
     /// It is `#[private]` in the implementation provided by this trait, i.e.
     /// only the contract itself may call this method.
     ///
+    /// Despite the restrictions of this method, it is possible to add multiple
+    /// super-admins using [`acl_add_super_admin`].
+    ///
     /// If a super-admin is added, the following event will be emitted:
     ///
     /// ```json
@@ -71,12 +74,32 @@ pub trait AccessControllable {
     ///    }
     /// }
     /// ```
-    ///
-    /// Despite the restrictions of this method, there might be multiple
-    /// super-admins. Adding more than one admin requires the use of internal
-    /// methods. The default implementation of `AccessControllable` provided by
-    /// this trait offers `add_super_admin_unchecked.`
     fn acl_init_super_admin(&mut self, account_id: AccountId) -> bool;
+
+    /// Adds `account_id` as super-admin provided that the predecessor has sufficient permissions,
+    /// i.e. is a super-admin as defined by [`acl_is_super_admin`]. To add the first super-admin,
+    /// [`acl_init_super_admin`] can be used.
+    ///
+    /// In case of sufficient permissions, the returned `Some(bool)` indicates whether `account_id`
+    /// is a new super-admin. Without permissions, `None` is returned and internal state is not
+    /// modified.
+    ///
+    /// Note that there may be multiple (or zero) super-admins.
+    ///
+    /// If a super-admin is added, the following event will be emitted:
+    ///
+    /// ```json
+    /// {
+    ///    "standard":"AccessControllable",
+    ///    "version":"1.0.0",
+    ///    "event":"super_admin_added",
+    ///    "data":{
+    ///       "account":"<NEW_SUPER_ADMIN>",
+    ///       "by":"<SUPER_ADMIN>"
+    ///    }
+    /// }
+    /// ```
+    fn acl_add_super_admin(&mut self, account_id: AccountId) -> Option<bool>;
 
     /// Returns whether `account_id` is a super-admin. A super-admin has admin
     /// permissions for every role. However, a super-admin is not considered

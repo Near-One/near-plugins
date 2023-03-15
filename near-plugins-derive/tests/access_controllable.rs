@@ -324,6 +324,47 @@ async fn test_acl_init_super_admin() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_acl_add_super_admin() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let to_be_super_admin = setup.worker.dev_create_account().await?;
+
+    // Create accounts that add a super-admin.
+    let caller_unauth = setup.worker.dev_create_account().await?;
+    let caller_auth = setup.new_super_admin_account().await?;
+
+    // Adding is a no-op if the caller is not a super-admin.
+    let res = setup
+        .contract
+        .acl_add_super_admin(&caller_unauth, to_be_super_admin.id())
+        .await?;
+    assert_eq!(res, None);
+    setup
+        .contract
+        .assert_acl_is_super_admin(false, setup.contract_account(), to_be_super_admin.id())
+        .await;
+
+    // Adding succeeds if the caller is a super-admin.
+    let res = setup
+        .contract
+        .acl_add_super_admin(&caller_auth, to_be_super_admin.id())
+        .await?;
+    assert_eq!(res, Some(true));
+    setup
+        .contract
+        .assert_acl_is_super_admin(true, setup.contract_account(), to_be_super_admin.id())
+        .await;
+
+    // Adding an account which is already super-admin returns `Some(false)`.
+    let res = setup
+        .contract
+        .acl_add_super_admin(&caller_auth, to_be_super_admin.id())
+        .await?;
+    assert_eq!(res, Some(false));
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_acl_add_super_admin_unchecked() -> anyhow::Result<()> {
     let Setup {
         contract, account, ..
