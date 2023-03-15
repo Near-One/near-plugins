@@ -1,3 +1,40 @@
+//! # `AccessControllable`
+//!
+//! A trait specifying an interface to manage permissions via roles and access control lists. A
+//! contract that is `AccessControllable` may restrict functions or features to accounts that have
+//! been granted permissions.
+//!
+//! ## Roles
+//!
+//! Permissions are based on roles defined by smart contract developers. In the default
+//! implementation provided by `near-plugins`, roles are represented by enum variants.
+//!
+//! # Controlling access
+//!
+//! Using the `#[access_control_any(roles(...))]` macro on a contract method restricts access to the
+//! method to grantees of the specified `roles`. The method panics if it is called by an account
+//! which is not a grantee of any of the `roles`.
+//!
+//! In addition, methods like `AccessControllable::has_role` can be used within other contract
+//! methods to restrict access to certain features or actions.
+//!
+//! ## Granting and revoking permissions
+//!
+//! Admins can grant roles to and revoke them from accounts. Each role has its own set of admins,
+//! which may contain zero or multiple admin accounts. An admin is allowed to add and remove other
+//! admin accounts. Note that admin permissions differ from role permissions: an account which is
+//! admin for role `r` but not a grantee of role `r` may not use methods or features restricted to
+//! role `r`.
+//!
+//! Besides (regular) admins the `AccessControllable` trait also defines super-admins. A super-admin
+//! is considered admin for every role. An `AccessControllable` contract can have zero or more
+//! super-admins.
+//!
+//! ## Credits
+//!
+//! Inspired by OpenZeppelin's
+//! [AccessControl](https://docs.openzeppelin.com/contracts/3.x/api/access#AccessControl) module.
+
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::AccountId;
 use std::collections::HashMap;
