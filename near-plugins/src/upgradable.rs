@@ -33,9 +33,8 @@
 //!
 //! ## Stale staged code
 //!
-//! After the code is deployed, it should be removed from staging. This prevents deploying old code
-//! that might contain a security vulnerability and avoids the issues described in
-//! [`Self::up_deploy_code`].
+//! After the code is deployed, it should be removed from staging to unstake tokens and avoid the
+//! issues described in [`Self::up_deploy_code`].
 //!
 //! ## Upgrading code that contains a security vulnerability
 //!
