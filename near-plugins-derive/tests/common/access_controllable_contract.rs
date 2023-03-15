@@ -67,6 +67,24 @@ impl AccessControllableContract {
             .await
     }
 
+    pub async fn acl_add_super_admin(
+        &self,
+        caller: &Account,
+        account_id: &AccountId,
+    ) -> anyhow::Result<Option<bool>> {
+        let res = caller
+            .call(self.contract.id(), "acl_add_super_admin")
+            .args_json(json!({
+                "account_id": account_id,
+            }))
+            .max_gas()
+            .transact()
+            .await?
+            .into_result()?
+            .json::<Option<bool>>()?;
+        Ok(res)
+    }
+
     pub async fn acl_add_super_admin_unchecked(
         &self,
         caller: &Account,
