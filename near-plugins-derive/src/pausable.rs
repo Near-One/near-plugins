@@ -71,12 +71,11 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                         .as_ref(),
                 );
 
-                ::near_sdk::log!(#cratename::events::AsEvent::event(
-                    &#cratename::pausable::Pause {
-                        by: ::near_sdk::env::predecessor_account_id(),
-                        key,
-                    }
-                ));
+                let event = #cratename::pausable::Pause {
+                    by: ::near_sdk::env::predecessor_account_id(),
+                    key,
+                };
+                #cratename::events::AsEvent::emit(&event);
 
                 // The feature is newly paused.
                 true
@@ -104,12 +103,11 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                     );
                 }
 
-                ::near_sdk::log!(#cratename::events::AsEvent::event(
-                    &#cratename::pausable::Unpause {
-                        by: ::near_sdk::env::predecessor_account_id(),
-                        key,
-                    }
-                ));
+                let event = #cratename::pausable::Unpause {
+                    by: ::near_sdk::env::predecessor_account_id(),
+                    key,
+                };
+                #cratename::events::AsEvent::emit(&event);
 
                 // The feature was paused.
                 true
