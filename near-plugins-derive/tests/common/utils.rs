@@ -174,9 +174,7 @@ pub fn assert_failure_with(res: ExecutionFinalResult, must_contain: &str) {
 pub fn assert_access_key_not_found_error(
     res: workspaces::Result<ExecutionFinalResult, workspaces::error::Error>,
 ) {
-    let err = res
-        .err()
-        .expect("Transaction should not have been executed");
+    let err = res.expect_err("Transaction should not have been executed");
 
     // Debug formatting is required to get the full error message containing `AccessKeyNotFound`.
     // Assume that is acceptable since this function is avaible only in tests.
