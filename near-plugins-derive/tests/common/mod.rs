@@ -1,4 +1,5 @@
 pub mod access_controllable_contract;
+pub mod key;
 pub mod ownable_contract;
 pub mod pausable_contract;
 pub mod repo;

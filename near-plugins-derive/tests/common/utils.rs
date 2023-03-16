@@ -171,6 +171,26 @@ pub fn assert_failure_with(res: ExecutionFinalResult, must_contain: &str) {
     );
 }
 
+pub fn assert_access_key_not_found_error(
+    res: workspaces::Result<ExecutionFinalResult, workspaces::error::Error>,
+) {
+    let err = res
+        .err()
+        .expect("Transaction should not have been executed");
+
+    // Debug formatting is required to get the full error message containing `AccessKeyNotFound`.
+    // Assume that is acceptable since this function is avaible only in tests.
+    let err = format!("{:?}", err);
+    let must_contain = "InvalidAccessKeyError";
+
+    assert!(
+        err.contains(must_contain),
+        "The expected message\n'{}'\nis not contained in error\n'{}'",
+        must_contain,
+        err,
+    );
+}
+
 /// Returns the block timestamp in nanoseconds. Panics on failure.
 async fn block_timestamp(worker: &Worker<Sandbox>) -> u64 {
     worker
