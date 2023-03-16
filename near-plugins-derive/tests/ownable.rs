@@ -3,10 +3,11 @@
 pub mod common;
 
 use anyhow::Ok;
+use common::key::{delete_access_key, get_access_key_infos};
 use common::ownable_contract::OwnableContract;
 use common::utils::{
-    assert_only_owner_permission_failure, assert_ownable_permission_failure,
-    assert_owner_update_failure, assert_success_with,
+    assert_access_key_not_found_error, assert_only_owner_permission_failure,
+    assert_ownable_permission_failure, assert_owner_update_failure, assert_success_with,
 };
 use near_sdk::serde_json::json;
 use std::path::Path;
@@ -306,6 +307,51 @@ async fn test_only_self_owner_fail() -> anyhow::Result<()> {
         .call_counter_increaser(&setup.unauth_account, "increase_2")
         .await?;
     assert_ownable_permission_failure(res);
+
+    Ok(())
+}
+
+/// Verifies that the contract cannot set a new owner after its access keys are removed.
+#[tokio::test]
+async fn test_removing_contract_keys_freezes_owner() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox().await?;
+    let owner = worker.dev_create_account().await?;
+    let setup = Setup::new(worker, Some(owner.id().clone())).await?;
+
+    setup.assert_owner_is(Some(owner.id())).await;
+
+    // Remove the contract's access key.
+    let contract_key = setup.contract.as_account().secret_key().public_key();
+    delete_access_key(
+        setup.contract.as_account(),
+        setup.contract.id(),
+        contract_key,
+    )
+    .await?
+    .into_result()?;
+
+    // Assert the contract has no access keys anymore.
+    let access_key_infos = get_access_key_infos(&setup.contract).await;
+    assert_eq!(access_key_infos.len(), 0, "There should be no access keys");
+
+    // Remove the current owner.
+    setup
+        .ownable_contract
+        .owner_set(&owner, None)
+        .await?
+        .into_result()?;
+    setup.assert_owner_is(None).await;
+
+    // Verify setting a new owner fails since the contract has no access keys.
+    let res = setup
+        .ownable_contract
+        .owner_set(
+            setup.contract.as_account(),
+            Some(setup.unauth_account.id().clone()),
+        )
+        .await;
+    assert_access_key_not_found_error(res);
+    setup.assert_owner_is(None).await;
 
     Ok(())
 }
