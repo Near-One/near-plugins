@@ -215,7 +215,14 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 // succeeds and adding `account_id` as super-admin fails. This could lock contracts
                 // in a state without super-admins. To protect against this scenario, the new
                 // super-admin is added first.
-                let is_new_super_admin = self.add_super_admin_unchecked(&account_id);
+                if account_id == &current_super_admin {
+                    // That means Alice called `acl_transfer_super_admin(Alice)`, which should be a
+                    // no-op and return `Some(true)`. However, the operations below would first add
+                    // and then revoke Alice as super-admin, meaning Alice wouldn't be super-admin
+                    // anymore. We return early to avoid that.
+                    return Some(true);
+                }
+                let is_new_super_admin = self.add_super_admin_unchecked(account_id);
                 self.revoke_super_admin_unchecked(&current_super_admin);
                 Some(is_new_super_admin)
             }
