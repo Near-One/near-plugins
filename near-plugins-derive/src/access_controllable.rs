@@ -207,8 +207,24 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                     return None;
                 }
 
+                // The following state modifications can be considered atomic: They happen in the
+                // current `FunctionCall` action because no promises or cross contract calls are
+                // scheduled.
+                //
+                // If this ever changes, it should be avoided that revoking `current_super_admin`
+                // succeeds and adding `account_id` as super-admin fails. This could lock contracts
+                // in a state without super-admins. To protect against this scenario, the new
+                // super-admin is added first.
+                if account_id == &current_super_admin {
+                    // That means Alice called `acl_transfer_super_admin(Alice)`, which should be a
+                    // no-op and return `Some(true)`. However, the operations below would first add
+                    // and then revoke Alice as super-admin, meaning Alice wouldn't be super-admin
+                    // anymore. We return early to avoid that.
+                    return Some(true);
+                }
+                let is_new_super_admin = self.add_super_admin_unchecked(account_id);
                 self.revoke_super_admin_unchecked(&current_super_admin);
-                Some(self.add_super_admin_unchecked(&account_id))
+                Some(is_new_super_admin)
             }
 
             /// Revokes super-admin permissions from `account_id` without checking any
