@@ -29,7 +29,8 @@ serde = "1"
 anyhow = "1.0"
 borsh = "0.9"
 tokio = { version = "1", features = ["full"] }
-workspaces = "0.7"
+# Feature `unstable` is required for compiling contracts during tests.
+workspaces = { version = "0.6", features = ["unstable"] }
 toml = "0.5"
 darling = "0.13.1"
 proc-macro2 = "1.0"
