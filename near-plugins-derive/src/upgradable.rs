@@ -140,6 +140,13 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             fn up_set_staging_duration_unchecked(&self, staging_duration: near_sdk::Duration) {
                 self.up_storage_write(__UpgradableStorageKey::StagingDuration, &staging_duration.try_to_vec().unwrap());
             }
+
+            /// Computes the `sha256` hash of `code` and panics if the conversion to `CryptoHash` fails.
+            fn up_hash_code(code: &[u8]) -> ::near_sdk::CryptoHash {
+                let hash = near_sdk::env::sha256(code);
+                std::convert::TryInto::try_into(hash)
+                    .expect("sha256 should convert to CryptoHash")
+            }
         }
 
         #[near_bindgen]
@@ -176,7 +183,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
 
             fn up_staged_code_hash(&self) -> Option<::near_sdk::CryptoHash> {
                 self.up_staged_code()
-                    .map(|code| std::convert::TryInto::try_into(near_sdk::env::sha256(code.as_ref())).unwrap())
+                    .map(|code| self.up_hash_code(code.as_ref()))
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_code_deployers),*))]
