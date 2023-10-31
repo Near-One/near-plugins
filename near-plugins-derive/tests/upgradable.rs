@@ -433,11 +433,17 @@ async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
     setup.assert_staged_code(Some(code)).await;
 
     // Deploy staged code.
-    let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, None, None)
+        .await?;
     assert_success_with_unit_return(res);
 
     Ok(())
 }
+
+// TODO add test_deploy_code_with_hash_success
+// TODO add test_deploy_code_with_hash_failure
 
 /// Verifies the upgrade was successful by calling a method that's available only on the upgraded
 /// contract. Ensures the new contract can be deployed and state remains valid without
@@ -462,7 +468,10 @@ async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
     setup.assert_staged_code(Some(code)).await;
 
     // Deploy staged code.
-    let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, None, None)
+        .await?;
     assert_success_with_unit_return(res);
 
     // The newly deployed contract defines the function `is_upgraded`. Calling it successfully
@@ -507,7 +516,7 @@ async fn test_deploy_code_with_migration() -> anyhow::Result<()> {
     };
     let res = setup
         .upgradable_contract
-        .up_deploy_code(&dao, Some(function_call_args))
+        .up_deploy_code(&dao, None, Some(function_call_args))
         .await?;
     assert_success_with_unit_return(res);
 
@@ -550,7 +559,7 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
     };
     let res = setup
         .upgradable_contract
-        .up_deploy_code(&dao, Some(function_call_args))
+        .up_deploy_code(&dao, None, Some(function_call_args))
         .await?;
     assert_failure_with(res, "Failing migration on purpose");
 
@@ -658,7 +667,10 @@ async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
     fast_forward_beyond(&worker, staging_duration).await;
 
     // Deploy staged code.
-    let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, None, None)
+        .await?;
     assert_success_with_unit_return(res);
 
     Ok(())
@@ -688,7 +700,10 @@ async fn test_deploy_code_with_delay_failure_too_early() -> anyhow::Result<()> {
     fast_forward_beyond(&worker, sdk_duration_from_secs(1)).await;
 
     // Verify trying to deploy staged code fails.
-    let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, None, None)
+        .await?;
     assert_failure_with(res, ERR_MSG_DEPLOY_CODE_TOO_EARLY);
 
     // Verify `code` wasn't deployed by calling a function that is defined only in the initial
@@ -717,7 +732,7 @@ async fn test_deploy_code_permission_failure() -> anyhow::Result<()> {
     // call this method.
     let res = setup
         .upgradable_contract
-        .up_deploy_code(&setup.unauth_account, None)
+        .up_deploy_code(&setup.unauth_account, None, None)
         .await?;
     assert_insufficient_acl_permissions(
         res,
@@ -756,7 +771,10 @@ async fn test_deploy_code_empty_failure() -> anyhow::Result<()> {
     // The staging timestamp is set when staging code and removed when unstaging code. So when there
     // is no code staged, there is no staging timestamp. Hence the error message regarding a missing
     // staging timestamp is expected.
-    let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, None, None)
+        .await?;
     assert_failure_with(res, ERR_MSG_NO_STAGING_TS);
 
     Ok(())
@@ -1004,7 +1022,7 @@ async fn test_acl_permission_scope() -> anyhow::Result<()> {
     // deploy code.
     let res = setup
         .upgradable_contract
-        .up_deploy_code(&setup.unauth_account, None)
+        .up_deploy_code(&setup.unauth_account, None, None)
         .await?;
     assert_insufficient_acl_permissions(
         res,
