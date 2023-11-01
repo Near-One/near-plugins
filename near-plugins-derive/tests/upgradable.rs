@@ -204,6 +204,13 @@ fn convert_code_to_crypto_hash(code: &[u8]) -> CryptoHash {
         .expect("Code should be converted to CryptoHash")
 }
 
+/// Computes the hash `code` according the to requirements of the `hash` parameter of
+/// `Upgradable::up_deploy_code`.
+fn convert_code_to_deploy_hash(code: &[u8]) -> String {
+    let hash = near_sdk::env::sha256(code);
+    near_sdk::base64::encode(hash)
+}
+
 /// Smoke test of contract setup.
 #[tokio::test]
 async fn test_setup() -> anyhow::Result<()> {
@@ -442,8 +449,63 @@ async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
     Ok(())
 }
 
-// TODO add test_deploy_code_with_hash_success
-// TODO add test_deploy_code_with_hash_failure
+#[tokio::test]
+async fn test_deploy_code_with_hash_success() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox().await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
+
+    // Stage some code.
+    let code = vec![1, 2, 3];
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(code.clone())).await;
+
+    // Deploy staged code.
+    let hash = convert_code_to_deploy_hash(&code);
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, Some(hash), None)
+        .await?;
+    assert_success_with_unit_return(res);
+
+    Ok(())
+}
+
+/// Verifies failure of `up_deploy_code(Some(hash), ...)` when `hash` does not correspond to the
+/// hash of staged code.
+#[tokio::test]
+async fn test_deploy_code_with_hash_invalid_hash() -> anyhow::Result<()> {
+    let worker = workspaces::sandbox().await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
+
+    // Stage some code.
+    let code = vec![1, 2, 3];
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(code.clone())).await;
+
+    // Deployment is aborted if an invalid hash is provided.
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, Some("invalid_hash".to_owned()), None)
+        .await?;
+    let actual_hash = convert_code_to_deploy_hash(&code);
+    let expected_err = format!(
+        "Upgradable: Cannot deploy due to wrong hash: expected hash: {}",
+        actual_hash
+    );
+    assert_failure_with(res, &expected_err);
+
+    Ok(())
+}
 
 /// Verifies the upgrade was successful by calling a method that's available only on the upgraded
 /// contract. Ensures the new contract can be deployed and state remains valid without
