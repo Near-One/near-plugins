@@ -602,10 +602,10 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
         amount: 0,
         gas: Gas::ONE_TERA,
     } }))
-        .gas(Gas::ONE_TERA.0 * 200);
+        .gas(near_workspaces::types::Gas::from_tgas(200));
     let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
         .args_borsh(Vec::<u8>::new())
-        .gas(Gas::ONE_TERA.0 * 90);
+        .gas(near_workspaces::types::Gas::from_tgas(90));
 
     let res = dao
         .batch(setup.contract.id())
