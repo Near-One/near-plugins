@@ -1,8 +1,8 @@
 use near_plugins::access_controllable::PermissionedAccounts;
 
 use near_sdk::serde_json::json;
-use workspaces::result::ExecutionFinalResult;
-use workspaces::{Account, AccountId, Contract};
+use near_workspaces::result::ExecutionFinalResult;
+use near_workspaces::{Account, AccountId, Contract};
 
 /// Wrapper for a contract that is `#[access_controllable]`. It allows
 /// implementing helpers for calling contract methods.
@@ -56,7 +56,7 @@ impl AccessControllableContract {
         &self,
         caller: &Account,
         account_id: &AccountId,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "acl_init_super_admin")
             .args_json(json!({
@@ -89,7 +89,7 @@ impl AccessControllableContract {
         &self,
         caller: &Account,
         account_id: &AccountId,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "acl_add_super_admin_unchecked")
             .args_json(json!({
@@ -140,7 +140,7 @@ impl AccessControllableContract {
         &self,
         caller: &Account,
         account_id: &AccountId,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "acl_revoke_super_admin_unchecked")
             .args_json(json!({
@@ -201,7 +201,7 @@ impl AccessControllableContract {
         caller: &Account,
         role: &str,
         account_id: &AccountId,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "acl_add_admin_unchecked")
             .args_json(json!({
@@ -252,7 +252,7 @@ impl AccessControllableContract {
         caller: &Account,
         role: &str,
         account_id: &AccountId,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "acl_revoke_admin_unchecked")
             .args_json(json!({
@@ -314,7 +314,7 @@ impl AccessControllableContract {
         caller: &Account,
         role: &str,
         account_id: &AccountId,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "acl_grant_role_unchecked")
             .args_json(json!({
@@ -365,7 +365,7 @@ impl AccessControllableContract {
         caller: &Account,
         role: &str,
         account_id: &AccountId,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "acl_revoke_role_unchecked")
             .args_json(json!({

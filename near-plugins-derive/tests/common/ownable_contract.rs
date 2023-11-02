@@ -1,6 +1,6 @@
 use near_sdk::serde_json::json;
-use workspaces::result::ExecutionFinalResult;
-use workspaces::{Account, AccountId, Contract};
+use near_workspaces::result::ExecutionFinalResult;
+use near_workspaces::{Account, AccountId, Contract};
 
 /// Wrapper for a contract that is `#[ownable]`. It allows implementing helpers for calling contract
 /// methods.
@@ -26,7 +26,7 @@ impl OwnableContract {
         &self,
         caller: &Account,
         owner: Option<AccountId>,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "owner_set")
             .args_json(json!({ "owner": owner }))

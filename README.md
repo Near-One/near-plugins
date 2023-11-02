@@ -65,7 +65,7 @@ Tests should verify that once the macros provided by this crate are expanded, th
 
 - A contract using the plugin is contained in `near-plugins-derive/tests/contracts/<plugin_name>/`.
 - This contract is used in `near-plugins-derive/tests/<plugin_name>.rs` which:
-    - Compiles and deploys the contract on chain via [NEAR `workspaces`](https://docs.rs/workspaces/0.7.0/workspaces/).
+    - Compiles and deploys the contract on chain via [`near-workspaces`](https://crates.io/crates/near-workspaces).
     - Sends transactions to the deployed contract to verify plugin functionality.
 
 ## Contributors Notes

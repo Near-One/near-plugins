@@ -10,10 +10,10 @@ use common::utils::{
     assert_ownable_permission_failure, assert_owner_update_failure, assert_success_with,
 };
 use near_sdk::serde_json::json;
+use near_workspaces::network::Sandbox;
+use near_workspaces::result::ExecutionFinalResult;
+use near_workspaces::{Account, AccountId, Contract, Worker};
 use std::path::Path;
-use workspaces::network::Sandbox;
-use workspaces::result::ExecutionFinalResult;
-use workspaces::{Account, AccountId, Contract, Worker};
 
 const PROJECT_PATH: &str = "./tests/contracts/ownable";
 
@@ -78,7 +78,7 @@ impl Setup {
         &self,
         caller: &Account,
         method_name: &str,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), method_name)
             .max_gas()
@@ -101,7 +101,7 @@ impl Setup {
 /// Smoke test of contract setup and basic functionality.
 #[tokio::test]
 async fn test_setup() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let setup = Setup::new(worker, None).await?;
 
     assert_eq!(setup.get_counter().await?, 0);
@@ -116,7 +116,7 @@ async fn test_setup() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_owner_is() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let owner = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(owner.id().clone())).await?;
 
@@ -136,7 +136,7 @@ async fn test_owner_is() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_set_owner_ok() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let setup = Setup::new(worker, None).await?;
 
     setup.assert_owner_is(None).await;
@@ -154,7 +154,7 @@ async fn test_set_owner_ok() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_set_owner_fail() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let owner = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(owner.id().clone())).await?;
 
@@ -173,7 +173,7 @@ async fn test_set_owner_fail() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_remove_owner() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let owner = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(owner.id().clone())).await?;
 
@@ -192,7 +192,7 @@ async fn test_remove_owner() -> anyhow::Result<()> {
 /// Contract itself may successfully call a method protected by `#[only(self)]`.
 #[tokio::test]
 async fn test_only_self_ok() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let setup = Setup::new(worker, None).await?;
 
     assert_eq!(setup.get_counter().await?, 0);
@@ -208,7 +208,7 @@ async fn test_only_self_ok() -> anyhow::Result<()> {
 /// A method protected by `#[only(self)]` fails if called from another account.
 #[tokio::test]
 async fn test_only_self_fail_unauth() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let setup = Setup::new(worker, None).await?;
 
     let res = setup
@@ -222,7 +222,7 @@ async fn test_only_self_fail_unauth() -> anyhow::Result<()> {
 /// A method protected by `#[only(self)]` fails if called by the owner.
 #[tokio::test]
 async fn test_only_self_fail_owner() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let owner = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(owner.id().clone())).await?;
 
@@ -235,7 +235,7 @@ async fn test_only_self_fail_owner() -> anyhow::Result<()> {
 /// Calling a method protected by `#[only(owner)]` from the owner succeeds.
 #[tokio::test]
 async fn test_only_owner_ok() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let owner = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(owner.id().clone())).await?;
 
@@ -250,7 +250,7 @@ async fn test_only_owner_ok() -> anyhow::Result<()> {
 /// A method protected by `#[only(owner)]` fails if called by the contract itself.
 #[tokio::test]
 async fn test_only_owner_fail_self() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let setup = Setup::new(worker, None).await?;
 
     let res = setup
@@ -264,7 +264,7 @@ async fn test_only_owner_fail_self() -> anyhow::Result<()> {
 /// A method protected by `#[only(owner)]` fails if called by another account.
 #[tokio::test]
 async fn test_only_owner_fail() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let setup = Setup::new(worker, None).await?;
 
     let res = setup
@@ -279,7 +279,7 @@ async fn test_only_owner_fail() -> anyhow::Result<()> {
 /// or by the owner.
 #[tokio::test]
 async fn test_only_self_owner_ok() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let owner = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(owner.id().clone())).await?;
 
@@ -300,7 +300,7 @@ async fn test_only_self_owner_ok() -> anyhow::Result<()> {
 /// Calling a method protected by `#[only(self, owner)]` fails if called by another account.
 #[tokio::test]
 async fn test_only_self_owner_fail() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let setup = Setup::new(worker, None).await?;
 
     let res = setup
@@ -314,7 +314,7 @@ async fn test_only_self_owner_fail() -> anyhow::Result<()> {
 /// Verifies that the contract cannot set a new owner after its access keys are removed.
 #[tokio::test]
 async fn test_removing_contract_keys_freezes_owner() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let owner = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(owner.id().clone())).await?;
 

@@ -3,8 +3,8 @@ use near_plugins::upgradable::{FunctionCallArgs, UpgradableDurationStatus};
 use near_sdk::serde_json::json;
 use near_sdk::CryptoHash;
 use near_sdk::Duration;
-use workspaces::result::ExecutionFinalResult;
-use workspaces::{Account, Contract};
+use near_workspaces::result::ExecutionFinalResult;
+use near_workspaces::{Account, Contract};
 
 /// Wrapper for a contract that derives `Upgradable`. It allows implementing helpers for calling
 /// contract methods provided by `Upgradable`.
@@ -36,7 +36,7 @@ impl UpgradableContract {
         &self,
         caller: &Account,
         code: Vec<u8>,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "up_stage_code")
             .args_borsh(code)
@@ -66,13 +66,13 @@ impl UpgradableContract {
         Ok(res.json::<Option<CryptoHash>>()?)
     }
 
-    /// The `Promise` returned by trait method `up_deploy_code` is resolved in the `workspaces`
+    /// The `Promise` returned by trait method `up_deploy_code` is resolved in the `near_workspaces`
     /// transaction.
     pub async fn up_deploy_code(
         &self,
         caller: &Account,
         function_call_args: Option<FunctionCallArgs>,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "up_deploy_code")
             .args_json(json!({
@@ -87,7 +87,7 @@ impl UpgradableContract {
         &self,
         caller: &Account,
         staging_duration: Duration,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "up_init_staging_duration")
             .args_json(json!({ "staging_duration": staging_duration }))
@@ -100,7 +100,7 @@ impl UpgradableContract {
         &self,
         caller: &Account,
         staging_duration: Duration,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "up_stage_update_staging_duration")
             .args_json(json!({ "staging_duration": staging_duration }))
@@ -112,7 +112,7 @@ impl UpgradableContract {
     pub async fn up_apply_update_staging_duration(
         &self,
         caller: &Account,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "up_apply_update_staging_duration")
             .max_gas()
