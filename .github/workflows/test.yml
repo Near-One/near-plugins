@@ -23,6 +23,11 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Install toolchain for test contracts
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.69.0
+
       - name: add wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
 
