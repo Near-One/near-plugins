@@ -26,6 +26,13 @@ jobs:
       - name: add wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
 
+      - name: Fix dependencies for `rust-version = 1.69.0`, see https://github.com/near/near-workspaces-rs/issues/336
+        run: |
+          cargo update -p anstyle --precise 1.0.2
+          cargo update -p anstyle-parse --precise 0.2.1
+          cargo update -p clap --precise 4.3.24
+          cargo update -p clap_lex --precise 0.5.0
+
       - name: cargo test
         run: cargo test --all --all-features
 
