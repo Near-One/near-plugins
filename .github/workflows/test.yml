@@ -16,6 +16,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
         with:
+          key: msrv-1.69.0
           cache-on-failure: true
 
       - name: Install toolchain
