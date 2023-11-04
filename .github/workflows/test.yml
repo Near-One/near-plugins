@@ -24,11 +24,7 @@ jobs:
           key: rust-version-1.69.0-msrv
 
       - name: downgrade some dev-dependencies for msrv, see https://github.com/near/near-workspaces-rs/issues/336
-        run: |
-          cargo update -p anstyle@1.0.4 --precise 1.0.2
-          cargo update -p anstyle-parse@0.2.2 --precise 0.2.1
-          cargo update -p clap@4.4.7 --precise 4.3.24
-          cargo update -p clap_lex@0.5.1 --precise 0.5.0
+        run: ./scripts/fix_dependencies.sh
 
       - name: add wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
