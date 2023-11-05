@@ -47,7 +47,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
         with:
-          cache-on-failure: true
+          key: rust-version-1.69.0-msrv
+
+      - name: downgrade some dev-dependencies for msrv, see https://github.com/near/near-workspaces-rs/issues/336
+        run: ./scripts/fix_dependencies.sh
 
       - name: cargo fmt
         run: cargo fmt --all -- --check
