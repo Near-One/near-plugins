@@ -68,7 +68,7 @@ Tests should verify that once the macros provided by this crate are expanded, th
     - Compiles and deploys the contract on chain via [`near-workspaces`](https://crates.io/crates/near-workspaces).
     - Sends transactions to the deployed contract to verify plugin functionality.
 
-## Contributors Notes
+## Traits and their implementations
 
 Traits doesn't contain any implementation, even though some interfaces are self-contained enough to have it.
 It is this way since `near_bindgen` macro from near-sdk-rs will only expose as public methods those that are implemented
@@ -76,6 +76,11 @@ during the trait implementation for the contract.
 
 In the documentation all comments under Default Implementation makes remarks about the current implementation derived
 automatically from macros. They can be changed if the trait is manually implemented rather than deriving the macro.
+
+## Contributor Notes
+
+When compiling tests for the first time on a machine using the MSRV 1.69.0, an error might occur due to some dependencies of `near-workspaces` requiring a higher version of Rust. You can execute [./script/fix-dependencies.sh](./scripts/fix_dependencies.sh) to install a compatible version of these dependencies. The comments in that script provide additional information.
+
 
 ## Roadmap
 
