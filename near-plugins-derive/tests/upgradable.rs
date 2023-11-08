@@ -13,10 +13,10 @@ use common::utils::{
 use near_plugins::upgradable::FunctionCallArgs;
 use near_sdk::serde_json::json;
 use near_sdk::{CryptoHash, Duration, Gas, Timestamp};
+use near_workspaces::network::Sandbox;
+use near_workspaces::result::ExecutionFinalResult;
+use near_workspaces::{Account, AccountId, Contract, Worker};
 use std::path::Path;
-use workspaces::network::Sandbox;
-use workspaces::result::ExecutionFinalResult;
-use workspaces::{Account, AccountId, Contract, Worker};
 
 const PROJECT_PATH: &str = "./tests/contracts/upgradable";
 const PROJECT_PATH_2: &str = "./tests/contracts/upgradable_2";
@@ -160,7 +160,10 @@ impl Setup {
         assert_eq!(status.new_staging_duration_timestamp, expected_timestamp);
     }
 
-    async fn call_is_upgraded(&self, caller: &Account) -> workspaces::Result<ExecutionFinalResult> {
+    async fn call_is_upgraded(
+        &self,
+        caller: &Account,
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         // `is_upgraded` could be called via `view`, however here it is called via `transact` so we
         // get an `ExecutionFinalResult` that can be passed to `assert_*` methods from
         // `common::utils`. It is acceptable since all we care about is whether the method exists.
@@ -171,7 +174,10 @@ impl Setup {
             .await
     }
 
-    async fn call_is_migrated(&self, caller: &Account) -> workspaces::Result<ExecutionFinalResult> {
+    async fn call_is_migrated(
+        &self,
+        caller: &Account,
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         // `is_migrated` could be called via `view`, however here it is called via `transact` so we
         // get an `ExecutionFinalResult` that can be passed to `assert_*` methods from
         // `common::utils`. It is acceptable since all we care about is whether the method exists
@@ -207,7 +213,7 @@ fn convert_code_to_crypto_hash(code: &[u8]) -> CryptoHash {
 /// Smoke test of contract setup.
 #[tokio::test]
 async fn test_setup() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let setup = Setup::new(worker, None, None).await?;
     setup.assert_is_set_up(&setup.unauth_account).await;
 
@@ -216,7 +222,7 @@ async fn test_setup() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_stage_code_permission_failure() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker,
@@ -245,7 +251,7 @@ async fn test_stage_code_permission_failure() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_stage_code_without_delay() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(dao.id().clone()), None).await?;
 
@@ -276,7 +282,7 @@ async fn test_stage_code_without_delay() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_stage_code_with_delay() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(42);
     let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
@@ -310,7 +316,7 @@ async fn test_stage_code_with_delay() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_staging_empty_code_clears_storage() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker,
@@ -344,7 +350,7 @@ async fn test_staging_empty_code_clears_storage() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_staged_code() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker,
@@ -381,7 +387,7 @@ async fn test_staged_code() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_staged_code_hash() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker,
@@ -419,7 +425,7 @@ async fn test_staged_code_hash() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
@@ -444,7 +450,7 @@ async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
 /// explicit state migration.
 #[tokio::test]
 async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
@@ -477,7 +483,7 @@ async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
 /// succeeded.
 #[tokio::test]
 async fn test_deploy_code_with_migration() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
@@ -524,7 +530,7 @@ async fn test_deploy_code_with_migration() -> anyhow::Result<()> {
 /// code remains active.
 #[tokio::test]
 async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
@@ -570,7 +576,7 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
 /// and 2 executes anyway.
 #[tokio::test]
 async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
@@ -589,17 +595,17 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
 
     // Construct the function call actions to be executed in a batch transaction.
     // Note that we are attaching a call to `migrate_with_failure`, which will fail.
-    let fn_call_deploy = workspaces::operations::Function::new("up_deploy_code")
+    let fn_call_deploy = near_workspaces::operations::Function::new("up_deploy_code")
         .args_json(json!({ "function_call_args": FunctionCallArgs {
         function_name: "migrate_with_failure".to_string(),
         arguments: Vec::new(),
         amount: 0,
         gas: Gas::ONE_TERA,
     } }))
-        .gas(Gas::ONE_TERA.0 * 200);
-    let fn_call_remove_code = workspaces::operations::Function::new("up_stage_code")
+        .gas(near_workspaces::types::Gas::from_tgas(200));
+    let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
         .args_borsh(Vec::<u8>::new())
-        .gas(Gas::ONE_TERA.0 * 90);
+        .gas(near_workspaces::types::Gas::from_tgas(90));
 
     let res = dao
         .batch(setup.contract.id())
@@ -635,7 +641,7 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(3);
     let setup = Setup::new(
@@ -666,7 +672,7 @@ async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_deploy_code_with_delay_failure_too_early() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker.clone(),
@@ -700,7 +706,7 @@ async fn test_deploy_code_with_delay_failure_too_early() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_deploy_code_permission_failure() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(dao.id().clone()), None).await?;
 
@@ -735,7 +741,7 @@ async fn test_deploy_code_permission_failure() -> anyhow::Result<()> {
 /// `up_deploy_code` fails if there's no code staged.
 #[tokio::test]
 async fn test_deploy_code_empty_failure() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(
         worker,
@@ -764,7 +770,7 @@ async fn test_deploy_code_empty_failure() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_init_staging_duration_permission_failure() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(dao.id().clone()), None).await?;
 
@@ -787,7 +793,7 @@ async fn test_init_staging_duration_permission_failure() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_init_staging_duration() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker, Some(dao.id().clone()), None).await?;
 
@@ -810,7 +816,7 @@ async fn test_init_staging_duration() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_stage_update_staging_duration_permission_failure() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(42);
     let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
@@ -835,7 +841,7 @@ async fn test_stage_update_staging_duration_permission_failure() -> anyhow::Resu
 
 #[tokio::test]
 async fn test_stage_update_staging_duration() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(42);
     let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
@@ -870,7 +876,7 @@ async fn test_stage_update_staging_duration() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_apply_update_staging_duration_permission_failure() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(21);
     let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
@@ -912,7 +918,7 @@ async fn test_apply_update_staging_duration_permission_failure() -> anyhow::Resu
 
 #[tokio::test]
 async fn test_apply_update_staging_duration() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(21);
     let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
@@ -946,7 +952,7 @@ async fn test_apply_update_staging_duration() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_apply_update_staging_duration_failure_too_early() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let staging_duration = sdk_duration_from_secs(1024);
     let setup = Setup::new(worker, Some(dao.id().clone()), Some(staging_duration)).await?;
@@ -979,7 +985,7 @@ async fn test_apply_update_staging_duration_failure_too_early() -> anyhow::Resul
 /// that whitelists only roles other than `r`.
 #[tokio::test]
 async fn test_acl_permission_scope() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let setup = Setup::new(worker.clone(), None, None).await?;
 
     // Create an account and grant it `Role::CodeStager`.

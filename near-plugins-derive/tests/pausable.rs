@@ -9,11 +9,11 @@ use common::utils::{
     assert_pausable_escape_hatch_is_closed, assert_success_with, assert_success_with_unit_return,
 };
 use near_sdk::serde_json::json;
+use near_workspaces::network::Sandbox;
+use near_workspaces::result::ExecutionFinalResult;
+use near_workspaces::{Account, AccountId, Contract, Worker};
 use std::collections::HashSet;
 use std::path::Path;
-use workspaces::network::Sandbox;
-use workspaces::result::ExecutionFinalResult;
-use workspaces::{Account, AccountId, Contract, Worker};
 
 const PROJECT_PATH: &str = "./tests/contracts/pausable";
 
@@ -39,7 +39,7 @@ impl Setup {
     /// Deploys the contract in [`PROJECT_PATH`] and initializes `Setup`.
     async fn new() -> anyhow::Result<Self> {
         // Compile and deploy the contract.
-        let worker = workspaces::sandbox().await?;
+        let worker = near_workspaces::sandbox().await?;
         let wasm = common::repo::compile_project(Path::new(PROJECT_PATH), "pausable").await?;
         let contract = worker.dev_deploy(&wasm).await?;
         let pausable_contract = PausableContract::new(contract.clone());
@@ -99,7 +99,7 @@ impl Setup {
         &self,
         caller: &Account,
         method_name: &str,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.pausable_contract.contract().id(), method_name)
             .max_gas()

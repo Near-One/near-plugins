@@ -12,7 +12,7 @@ version = "0.15.0"
 version = "0.1.0"
 edition = "2021"
 authors = ["Aurora Labs <hello@aurora.dev>"]
-rust-version = "1.64.0"
+rust-version = "1.69.0"
 description = "Ergonomic plugin system to extend NEAR contracts."
 license = "CC0-1.0"
 readme = "README.md"
@@ -22,14 +22,14 @@ keywords = ["near", "smart contract", "plugin"]
 
 [workspace.dependencies]
 bitflags = "1.3"
-near-sdk = "4.1.0"
+near-sdk = "4.1.1"
 near-plugins = { path = "near-plugins" }
 near-plugins-derive = { path = "near-plugins-derive" }
 serde = "1"
 anyhow = "1.0"
 borsh = "0.9"
 tokio = { version = "1", features = ["full"] }
-workspaces = "0.7"
+near-workspaces = "0.9"
 toml = "0.5"
 darling = "0.13.1"
 proc-macro2 = "1.0"
