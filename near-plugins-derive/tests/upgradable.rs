@@ -457,7 +457,7 @@ async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_deploy_code_with_hash_success() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
@@ -485,7 +485,7 @@ async fn test_deploy_code_with_hash_success() -> anyhow::Result<()> {
 /// hash of staged code.
 #[tokio::test]
 async fn test_deploy_code_with_hash_invalid_hash() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
     let dao = worker.dev_create_account().await?;
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
