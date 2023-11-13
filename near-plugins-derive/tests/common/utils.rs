@@ -1,11 +1,11 @@
 use near_sdk::serde::de::DeserializeOwned;
 use near_sdk::Duration;
+use near_workspaces::network::Sandbox;
+use near_workspaces::result::{ExecutionFinalResult, ExecutionOutcome};
+use near_workspaces::{AccountId, Block, Worker};
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 use std::str::FromStr;
-use workspaces::network::Sandbox;
-use workspaces::result::{ExecutionFinalResult, ExecutionOutcome};
-use workspaces::{AccountId, Block, Worker};
 
 /// Converts `account_id` to a `near_sdk::AccountId` and panics on failure.
 ///
@@ -172,7 +172,7 @@ pub fn assert_failure_with(res: ExecutionFinalResult, must_contain: &str) {
 }
 
 pub fn assert_access_key_not_found_error(
-    res: workspaces::Result<ExecutionFinalResult, workspaces::error::Error>,
+    res: near_workspaces::Result<ExecutionFinalResult, near_workspaces::error::Error>,
 ) {
     let err = res.expect_err("Transaction should not have been executed");
 
@@ -202,7 +202,7 @@ async fn block_timestamp(worker: &Worker<Sandbox>) -> u64 {
 pub async fn get_transaction_block(
     worker: &Worker<Sandbox>,
     result: &ExecutionOutcome,
-) -> workspaces::Result<Block> {
+) -> near_workspaces::Result<Block> {
     let block_hash = result.block_hash;
     worker.view_block().block_hash(block_hash).await
 }
@@ -215,7 +215,7 @@ pub async fn get_transaction_block(
 /// forwarding provided by this function is reasonly fast in our tests for durations that correspond
 /// to less than 100 seconds.
 ///
-/// [Time travels]: https://github.com/near/workspaces-rs#time-traveling
+/// [Time travels]: https://github.com/near/near-workspaces-rs#time-traveling
 pub async fn fast_forward_beyond(worker: &Worker<Sandbox>, duration: Duration) {
     let initial_timestamp = block_timestamp(worker).await;
 

@@ -9,12 +9,12 @@ use common::utils::{
 };
 use near_plugins::access_controllable::{PermissionedAccounts, PermissionedAccountsPerRole};
 use near_sdk::serde_json::json;
+use near_workspaces::network::Sandbox;
+use near_workspaces::result::ExecutionFinalResult;
+use near_workspaces::{Account, AccountId, Contract, Worker};
 use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::path::Path;
-use workspaces::network::Sandbox;
-use workspaces::result::ExecutionFinalResult;
-use workspaces::{Account, AccountId, Contract, Worker};
 
 const PROJECT_PATH: &str = "./tests/contracts/access_controllable";
 
@@ -48,7 +48,7 @@ impl Setup {
         admins: HashMap<String, AccountId>,
         grantees: HashMap<String, AccountId>,
     ) -> anyhow::Result<Self> {
-        let worker = workspaces::sandbox().await?;
+        let worker = near_workspaces::sandbox().await?;
         let wasm =
             common::repo::compile_project(Path::new(PROJECT_PATH), "access_controllable").await?;
         let contract = AccessControllableContract::new(worker.dev_deploy(&wasm).await?);
@@ -110,7 +110,7 @@ impl Setup {
 async fn call_increase_2(
     contract: &Contract,
     caller: &Account,
-) -> workspaces::Result<ExecutionFinalResult> {
+) -> near_workspaces::Result<ExecutionFinalResult> {
     caller
         .call(contract.id(), "increase_2")
         .args_json(())

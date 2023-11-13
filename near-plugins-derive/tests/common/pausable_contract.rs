@@ -1,7 +1,7 @@
 use near_sdk::serde_json::json;
+use near_workspaces::result::ExecutionFinalResult;
+use near_workspaces::{Account, Contract};
 use std::collections::HashSet;
-use workspaces::result::ExecutionFinalResult;
-use workspaces::{Account, Contract};
 
 /// Wrapper for a contract that is `#[pausable]`. It allows implementing helpers
 /// for calling contract methods.
@@ -33,7 +33,7 @@ impl PausableContract {
         &self,
         caller: &Account,
         key: &str,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "pa_pause_feature")
             .args_json(json!({ "key": key }))
@@ -46,7 +46,7 @@ impl PausableContract {
         &self,
         caller: &Account,
         key: &str,
-    ) -> workspaces::Result<ExecutionFinalResult> {
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "pa_unpause_feature")
             .args_json(json!({ "key": key }))
