@@ -14,4 +14,4 @@
 cargo update -p anstyle@1.0.4 --precise 1.0.2
 cargo update -p anstyle-parse@0.2.2 --precise 0.2.1
 cargo update -p clap@4.4.8 --precise 4.3.24
-cargo update -p clap_lex@0.6.0 --precise 0.5.0
+cargo update -p clap_lex@0.5.1 --precise 0.5.0
