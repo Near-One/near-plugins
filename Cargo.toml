@@ -27,7 +27,6 @@ near-plugins = { path = "near-plugins" }
 near-plugins-derive = { path = "near-plugins-derive" }
 serde = "1"
 anyhow = "1.0"
-borsh = "0.9"
 tokio = { version = "1", features = ["full"] }
 near-workspaces = "0.9"
 toml = "0.5"
