@@ -17,7 +17,6 @@ proc-macro-crate.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
-borsh.workspace = true
 near-plugins.workspace = true
 near-sdk.workspace = true
 tokio.workspace = true
