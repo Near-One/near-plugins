@@ -2,17 +2,17 @@
 
 ## BREAKING CHANGES:
 
-- #118: Update of `rust-version` (MSRV) from 1.64.0 to 1.69.0. Contracts using `near-plugins` now require a Rust version of at least 1.69.0.
+- [#118](https://github.com/aurora-is-near/near-plugins/pull/118): Update of `rust-version` (MSRV) from 1.64.0 to 1.69.0. Contracts using `near-plugins` now require a Rust version of at least 1.69.0.
   - Developers who want to run the test suite of `near-plugins` and run into compilation errors can follow [this workaround](https://github.com/aurora-is-near/near-plugins/pull/118#issuecomment-1794576809).
 
 ## Dependencies
 
 ### Dev-dependencies
 
-- #118 upgrades:
+- [#118](https://github.com/aurora-is-near/near-plugins/pull/118) upgrades:
   - `near-sdk`
   - `near-workspaces`
-- #122 removes `borsh` which was an unused dev-dependencies.
+- [#122](https://github.com/aurora-is-near/near-plugins/pull/122) removes `borsh` which was an unused dev-dependencies.
 
 # 0.1.0 (2023-05-08)
 
