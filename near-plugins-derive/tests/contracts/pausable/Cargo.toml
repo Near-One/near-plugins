@@ -19,3 +19,8 @@ panic = "abort"
 overflow-checks = true
 
 [workspace]
+
+# Required to build tests with near-sdk v4.1.1, see #128.
+# TODO(#125): Remove after upgrading to near-sdk v5.
+[patch.crates-io]
+parity-secp256k1 = {git = "https://github.com/paritytech/rust-secp256k1", tag = "parity-secp256k1-v0.7.0"}
