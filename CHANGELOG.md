@@ -1,4 +1,4 @@
- # 0.1.0 (2023-05-08)
+# 0.1.0 (2023-05-08)
 
 This section lists changes affecting multiple plugins. Changes that affect only individual plugins are listed below.
 
