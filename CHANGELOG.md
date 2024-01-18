@@ -5,6 +5,10 @@
 - [#118](https://github.com/aurora-is-near/near-plugins/pull/118): Update of `rust-version` (MSRV) from 1.64.0 to 1.69.0. Contracts using `near-plugins` now require a Rust version of at least 1.69.0.
   - Developers who want to run the test suite of `near-plugins` and run into compilation errors can follow [this workaround](https://github.com/aurora-is-near/near-plugins/pull/118#issuecomment-1794576809).
 
+## Testing
+
+- [128](https://github.com/aurora-is-near/near-plugins/pull/128) applies temporary workarounds required to build tests.
+
 ## Dependencies
 
 ### Dev-dependencies
