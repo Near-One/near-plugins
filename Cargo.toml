@@ -9,7 +9,7 @@ exclude = ["target", "examples"]
 version = "0.15.0"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Aurora Labs <hello@aurora.dev>"]
 rust-version = "1.69.0"
