@@ -17,7 +17,7 @@ jobs:
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: 1.69.0 # MSRV
 
       - uses: Swatinem/rust-cache@v1
         with:
@@ -42,7 +42,7 @@ jobs:
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: 1.69.0 # MSRV
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v1
