@@ -21,7 +21,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: rust-version-1.69.0-msrv
+          key: rust-version-1.69.0-msrv-2
 
       - name: downgrade some dev-dependencies for msrv, see https://github.com/near/near-workspaces-rs/issues/336
         run: ./scripts/fix_dependencies.sh
@@ -47,7 +47,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: rust-version-1.69.0-msrv
+          key: rust-version-1.69.0-msrv-2
 
       - name: downgrade some dev-dependencies for msrv, see https://github.com/near/near-workspaces-rs/issues/336
         run: ./scripts/fix_dependencies.sh
