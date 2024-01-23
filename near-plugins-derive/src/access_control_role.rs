@@ -68,7 +68,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
 
     let variant_idents = variants.into_iter().map(|v| v.ident).collect::<Vec<_>>();
     assert!(
-        variant_idents.len() <= usize::try_from(MAX_ROLE_VARIANTS).unwrap(),
+        variant_idents.len() <= usize::from(MAX_ROLE_VARIANTS),
         "The number of enum variants should not exceed MAX_ROLE_VARIANTS",
     );
     let variant_idxs: Vec<_> =
