@@ -79,6 +79,10 @@ automatically from macros. They can be changed if the trait is manually implemen
 
 ## Contributor Notes
 
+[Contracts used in tests](/near-plugins-derive/tests/contracts/) set `channel = <MSRV>` in their `rust-toolchain` to make tests ensure that plugins are compatible with the MSRV. Developers working on this repo might want to locally set `channel = <MSRV>` in the root `./rust-toolchain` to surface incompabilities with the MSRV early on.
+
+Why not commit `channel = <MSRV>` to `./rust-toolchain`? As a library crate we should leave the choice of the channel to users. Moreover, users should rather use a recent channel instead of the MSRV.
+
 When compiling tests for the first time on a machine using the MSRV 1.69.0, an error might occur due to some dependencies of `near-workspaces` requiring a higher version of Rust. You can execute [./script/fix-dependencies.sh](./scripts/fix_dependencies.sh) to install a compatible version of these dependencies. The comments in that script provide additional information.
 
 
