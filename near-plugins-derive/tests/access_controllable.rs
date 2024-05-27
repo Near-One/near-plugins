@@ -1193,7 +1193,7 @@ async fn test_acl_get_super_admins() -> anyhow::Result<()> {
         .contract
         .acl_get_super_admins(&setup.account, 0, 0)
         .await?;
-    assert_eq!(actual, vec![],);
+    assert!(actual.is_empty());
 
     // Skip outside of the number of existing super-admins.
     let n = u64::try_from(super_admin_ids.len()).unwrap();
@@ -1201,7 +1201,7 @@ async fn test_acl_get_super_admins() -> anyhow::Result<()> {
         .contract
         .acl_get_super_admins(&setup.account, n, 1)
         .await?;
-    assert_eq!(actual, vec![],);
+    assert!(actual.is_empty());
 
     // Retrieve super-admins with step size 1.
     for i in 0..3 {
@@ -1264,7 +1264,7 @@ async fn test_acl_get_admins() -> anyhow::Result<()> {
         .contract
         .acl_get_admins(&setup.account, role, 0, 0)
         .await?;
-    assert_eq!(actual, vec![],);
+    assert!(actual.is_empty());
 
     // Skip outside of the number of existing admins.
     let n = u64::try_from(admin_ids.len()).unwrap();
@@ -1272,7 +1272,7 @@ async fn test_acl_get_admins() -> anyhow::Result<()> {
         .contract
         .acl_get_admins(&setup.account, role, n, 1)
         .await?;
-    assert_eq!(actual, vec![],);
+    assert!(actual.is_empty());
 
     // Retrieve admins with step size 1.
     for i in 0..3 {
@@ -1335,7 +1335,7 @@ async fn test_acl_get_grantees() -> anyhow::Result<()> {
         .contract
         .acl_get_grantees(&setup.account, role, 0, 0)
         .await?;
-    assert_eq!(actual, vec![],);
+    assert!(actual.is_empty());
 
     // Skip outside of the number of existing grantees.
     let n = u64::try_from(grantee_ids.len()).unwrap();
@@ -1343,7 +1343,7 @@ async fn test_acl_get_grantees() -> anyhow::Result<()> {
         .contract
         .acl_get_grantees(&setup.account, role, n, 1)
         .await?;
-    assert_eq!(actual, vec![],);
+    assert!(actual.is_empty());
 
     // Retrieve grantees with step size 1.
     for i in 0..3 {

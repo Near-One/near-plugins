@@ -13,3 +13,6 @@ bitflags.workspace = true
 near-sdk.workspace = true
 near-plugins-derive.workspace = true
 serde.workspace = true
+
+[dev-dependencies]
+near-sdk = { workspace = true, features = ["unit-testing"] }

@@ -61,7 +61,7 @@
 //! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{AccountId, Balance, CryptoHash, Gas, Promise};
+use near_sdk::{AccountId, CryptoHash, Gas, NearToken, Promise};
 
 /// Trait describing the functionality of the _Upgradable_ plugin.
 pub trait Upgradable {
@@ -199,7 +199,7 @@ pub struct FunctionCallArgs {
     /// The arguments to pass to the function.
     pub arguments: Vec<u8>,
     /// The amount of tokens to transfer to the receiver.
-    pub amount: Balance,
+    pub amount: NearToken,
     /// The gas limit for the function call.
     pub gas: Gas,
 }

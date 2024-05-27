@@ -17,13 +17,13 @@ jobs:
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.69.0 # MSRV
+          toolchain: 1.72.0 # MSRV
           override: true
           target: wasm32-unknown-unknown
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: rust-version-1.69.0-msrv-2
+          key: rust-version-1.72.0-msrv-2
 
       - name: downgrade some dev-dependencies for msrv, see https://github.com/near/near-workspaces-rs/issues/336
         run: ./scripts/fix_dependencies.sh
@@ -44,13 +44,13 @@ jobs:
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.69.0 # MSRV
+          toolchain: 1.72.0 # MSRV
           override: true
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: rust-version-1.69.0-msrv-2
+          key: rust-version-1.72.0-msrv-2
 
       - name: downgrade some dev-dependencies for msrv, see https://github.com/near/near-workspaces-rs/issues/336
         run: ./scripts/fix_dependencies.sh

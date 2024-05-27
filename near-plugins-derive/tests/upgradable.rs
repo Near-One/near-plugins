@@ -12,7 +12,7 @@ use common::utils::{
 };
 use near_plugins::upgradable::FunctionCallArgs;
 use near_sdk::serde_json::json;
-use near_sdk::{CryptoHash, Duration, Gas, Timestamp};
+use near_sdk::{CryptoHash, Duration, Gas, NearToken, Timestamp};
 use near_workspaces::network::Sandbox;
 use near_workspaces::result::ExecutionFinalResult;
 use near_workspaces::{Account, AccountId, Contract, Worker};
@@ -508,8 +508,8 @@ async fn test_deploy_code_with_migration() -> anyhow::Result<()> {
     let function_call_args = FunctionCallArgs {
         function_name: "migrate".to_string(),
         arguments: Vec::new(),
-        amount: 0,
-        gas: Gas::ONE_TERA,
+        amount: NearToken::from_yoctonear(0),
+        gas: Gas::from_tgas(1),
     };
     let res = setup
         .upgradable_contract
@@ -551,8 +551,8 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
     let function_call_args = FunctionCallArgs {
         function_name: "migrate_with_failure".to_string(),
         arguments: Vec::new(),
-        amount: 0,
-        gas: Gas::ONE_TERA,
+        amount: NearToken::from_yoctonear(0),
+        gas: Gas::from_tgas(1),
     };
     let res = setup
         .upgradable_contract
@@ -599,8 +599,8 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
         .args_json(json!({ "function_call_args": FunctionCallArgs {
         function_name: "migrate_with_failure".to_string(),
         arguments: Vec::new(),
-        amount: 0,
-        gas: Gas::ONE_TERA,
+        amount: NearToken::from_yoctonear(0),
+        gas: Gas::from_tgas(1),
     } }))
         .gas(near_workspaces::types::Gas::from_tgas(200));
     let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
