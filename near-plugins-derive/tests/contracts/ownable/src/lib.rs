@@ -1,9 +1,10 @@
 use near_plugins::{only, Ownable};
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::{near_bindgen, AccountId, PanicOnDefault};
 
 #[near_bindgen]
 #[derive(Ownable, PanicOnDefault, BorshDeserialize, BorshSerialize)]
+#[borsh(crate = "near_sdk::borsh")]
 pub struct Counter {
     counter: u64,
 }
