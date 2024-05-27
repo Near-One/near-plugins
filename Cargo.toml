@@ -13,7 +13,7 @@ authors = ["Aurora Labs <hello@aurora.dev>"]
 # An update of the MSRV requires updating:
 # - `rust-toolchain` files in `near-plugins-derive/tests/contracts/**`
 # - the toolchain installed in CI via the `toolchain` parameter of `actions-rs/toolchain@v1`
-rust-version = "1.72.0"
+rust-version = "1.74.0"
 description = "Ergonomic plugin system to extend NEAR contracts."
 license = "CC0-1.0"
 readme = "README.md"
