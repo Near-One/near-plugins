@@ -602,7 +602,7 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
         amount: NearToken::from_yoctonear(0),
         gas: Gas::from_tgas(1),
     } }))
-        .gas(near_workspaces::types::Gas::from_tgas(200));
+        .gas(near_workspaces::types::Gas::from_tgas(201));
     let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
         .args_borsh(Vec::<u8>::new())
         .gas(near_workspaces::types::Gas::from_tgas(90));

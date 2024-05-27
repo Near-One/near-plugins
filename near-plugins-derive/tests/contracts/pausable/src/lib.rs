@@ -23,6 +23,7 @@ pub enum Role {
 #[access_control(role_type(Role))]
 #[near_bindgen]
 #[derive(Pausable, PanicOnDefault, BorshDeserialize, BorshSerialize)]
+#[borsh(crate = "near_sdk::borsh")]
 #[pausable(manager_roles(Role::PauseManager))]
 pub struct Counter {
     counter: u64,

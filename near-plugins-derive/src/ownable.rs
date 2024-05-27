@@ -66,7 +66,7 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
                 match owner.as_ref() {
                     Some(owner) => ::near_sdk::env::storage_write(
                         &self.owner_storage_key(),
-                        owner.as_ref().as_bytes(),
+                        owner.as_bytes(),
                     ),
                     None => ::near_sdk::env::storage_remove(&self.owner_storage_key()),
                 };

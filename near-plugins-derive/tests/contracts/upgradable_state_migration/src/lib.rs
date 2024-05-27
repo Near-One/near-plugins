@@ -10,7 +10,6 @@ use near_sdk::{env, near_bindgen, PanicOnDefault};
 /// Roles correspond to those defined in the initial contract `../upgradable`, to make permissions
 /// granted before the upgrade remain valid.
 #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
-#[borsh(crate = "near_sdk::borsh")]
 #[serde(crate = "near_sdk::serde")]
 pub enum Role {
     DAO,
@@ -71,4 +70,5 @@ impl Contract {
 
 /// Corresponds to the state defined in the initial `../upgradable` contract.
 #[derive(BorshDeserialize)]
+#[borsh(crate = "near_sdk::borsh")]
 pub struct OldContract;

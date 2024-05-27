@@ -93,6 +93,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
         /// instead it should be prepended to the storage prefix specified by
         /// the user.
         #[derive(::near_sdk::borsh::BorshSerialize)]
+        #[borsh(crate = "near_sdk::borsh")]
         enum __UpgradableStorageKey {
             Code,
             StagingTimestamp,
@@ -119,16 +120,15 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             fn up_set_timestamp(&self, key: __UpgradableStorageKey, value: ::near_sdk::Timestamp) {
-                self.up_storage_write(key, &value.try_to_vec().unwrap());
+                self.up_storage_write(key, &near_sdk::borsh::to_vec(&value).unwrap());
             }
 
             fn up_set_duration(&self, key: __UpgradableStorageKey, value: ::near_sdk::Duration) {
-                self.up_storage_write(key, &value.try_to_vec().unwrap());
+                self.up_storage_write(key, &near_sdk::borsh::to_vec(&value).unwrap());
             }
 
             fn up_storage_key(&self, key: __UpgradableStorageKey) -> Vec<u8> {
-                let key_vec = key
-                    .try_to_vec()
+                let key_vec = near_sdk::borsh::to_vec(&key)
                     .unwrap_or_else(|_| ::near_sdk::env::panic_str("Storage key should be serializable"));
                 [(#storage_prefix).as_bytes(), key_vec.as_slice()].concat()
             }
@@ -138,7 +138,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             fn up_set_staging_duration_unchecked(&self, staging_duration: near_sdk::Duration) {
-                self.up_storage_write(__UpgradableStorageKey::StagingDuration, &staging_duration.try_to_vec().unwrap());
+                self.up_storage_write(__UpgradableStorageKey::StagingDuration, &near_sdk::borsh::to_vec(&staging_duration).unwrap());
             }
         }
 
