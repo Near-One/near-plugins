@@ -25,9 +25,6 @@ jobs:
         with:
           key: rust-version-1.72.0-msrv-2
 
-      - name: downgrade some dev-dependencies for msrv, see https://github.com/near/near-workspaces-rs/issues/336
-        run: ./scripts/fix_dependencies.sh
-
       - name: add wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
 
@@ -51,9 +48,6 @@ jobs:
       - uses: Swatinem/rust-cache@v1
         with:
           key: rust-version-1.72.0-msrv-2
-
-      - name: downgrade some dev-dependencies for msrv, see https://github.com/near/near-workspaces-rs/issues/336
-        run: ./scripts/fix_dependencies.sh
 
       - name: cargo fmt
         run: cargo fmt --all -- --check
