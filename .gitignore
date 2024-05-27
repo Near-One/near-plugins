@@ -1,5 +1,4 @@
 /target
-Cargo.lock
 near-plugins-derive/tests/contracts/*/target
 
 # Ignore IDE data
