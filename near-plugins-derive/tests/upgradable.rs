@@ -561,7 +561,7 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
     assert_failure_with(res, "Failing migration on purpose");
 
     // Verify `code` wasn't deployed by calling a function that is defined only in the initial
-    // contract but not in the contract contract corresponding to `code`.
+    // contract but not in the contract corresponding to the `code`.
     setup.assert_is_set_up(&setup.unauth_account).await;
 
     Ok(())
@@ -602,10 +602,10 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
         amount: NearToken::from_yoctonear(0),
         gas: Gas::from_tgas(1),
     } }))
-        .gas(near_workspaces::types::Gas::from_tgas(201));
+        .gas(Gas::from_tgas(200));
     let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
         .args_borsh(Vec::<u8>::new())
-        .gas(near_workspaces::types::Gas::from_tgas(90));
+        .gas(Gas::from_tgas(90));
 
     let res = dao
         .batch(setup.contract.id())
