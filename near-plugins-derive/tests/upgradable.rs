@@ -99,7 +99,7 @@ impl Setup {
         // Grab the receipt corresponding to the function call.
         let receipt = result
             .receipt_outcomes()
-            .get(0)
+            .first()
             .expect("There should be at least one receipt outcome");
         let block_timestamp = get_transaction_block(&self.worker, receipt)
             .await
