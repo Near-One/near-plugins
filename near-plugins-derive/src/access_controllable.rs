@@ -39,7 +39,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
     let storage_prefix = macro_args
         .storage_prefix
         .unwrap_or_else(|| DEFAULT_STORAGE_PREFIX.to_string());
-    assert_eq!(macro_args.role_type.len(), 1, "role_type should be exactly one path");
+    assert_eq!(
+        macro_args.role_type.len(),
+        1,
+        "role_type should be exactly one path"
+    );
     let role_type = &macro_args.role_type[0];
 
     let output = quote! {
@@ -49,12 +53,12 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         #[borsh(crate = "near_sdk::borsh")]
         struct #acl_type {
             /// Stores permissions per account.
-            permissions: ::near_sdk::store::UnorderedMap<
+            permissions: ::near_sdk::store::LookupMap<
                 ::near_sdk::AccountId,
                 #bitflags_type,
             >,
             /// Stores the set of accounts that bear a permission.
-            bearers: ::near_sdk::store::UnorderedMap<
+            bearers: ::near_sdk::store::LookupMap<
                 #bitflags_type,
                 ::near_sdk::store::UnorderedSet<::near_sdk::AccountId>,
             >,
@@ -64,10 +68,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn default() -> Self {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 Self {
-                     permissions: ::near_sdk::store::UnorderedMap::new(
+                     permissions: ::near_sdk::store::LookupMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Permissions),
                     ),
-                    bearers: ::near_sdk::store::UnorderedMap::new(
+                    bearers: ::near_sdk::store::LookupMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Bearers),
                     ),
                 }
