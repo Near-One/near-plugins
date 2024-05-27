@@ -17,13 +17,13 @@ jobs:
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.72.0 # MSRV
+          toolchain: 1.74.0 # MSRV
           override: true
           target: wasm32-unknown-unknown
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: rust-version-1.72.0-msrv-2
+          key: rust-version-1.74.0-msrv-2
 
       - name: add wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
@@ -41,13 +41,13 @@ jobs:
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.72.0 # MSRV
+          toolchain: 1.74.0 # MSRV
           override: true
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: rust-version-1.72.0-msrv-2
+          key: rust-version-1.74.0-msrv-2
 
       - name: cargo fmt
         run: cargo fmt --all -- --check
