@@ -1,7 +1,7 @@
 //! A simple contract to be deployed via `Upgradable`.
 
 use near_plugins::{access_control, AccessControlRole, AccessControllable, Upgradable};
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{near_bindgen, PanicOnDefault};
 
@@ -23,6 +23,7 @@ pub enum Role {
 #[access_control(role_type(Role))]
 #[near_bindgen]
 #[derive(Upgradable, PanicOnDefault, BorshDeserialize, BorshSerialize)]
+#[borsh(crate = "near_sdk::borsh")]
 #[upgradable(access_control_roles(
     code_stagers(Role::CodeStager, Role::DAO),
     code_deployers(Role::CodeDeployer, Role::DAO),

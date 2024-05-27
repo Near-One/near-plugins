@@ -39,16 +39,14 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
     let storage_prefix = macro_args
         .storage_prefix
         .unwrap_or_else(|| DEFAULT_STORAGE_PREFIX.to_string());
-    assert!(
-        macro_args.role_type.len() == 1,
-        "role_type should be exactly one path"
-    );
+    assert_eq!(macro_args.role_type.len(), 1, "role_type should be exactly one path");
     let role_type = &macro_args.role_type[0];
 
     let output = quote! {
         #input
 
         #[derive(::near_sdk::borsh::BorshDeserialize, ::near_sdk::borsh::BorshSerialize)]
+        #[borsh(crate = "near_sdk::borsh")]
         struct #acl_type {
             /// Stores permissions per account.
             permissions: ::near_sdk::store::UnorderedMap<
@@ -80,6 +78,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         /// instead it should be prepended to the storage prefix specified by
         /// the user.
         #[derive(::near_sdk::borsh::BorshSerialize)]
+        #[borsh(crate = "near_sdk::borsh")]
         enum __AclStorageKey {
             Permissions,
             Bearers,
@@ -89,8 +88,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
         /// Generates a prefix by concatenating the input parameters.
         fn __acl_storage_prefix(base: &[u8], specifier: __AclStorageKey) -> Vec<u8> {
-            let specifier = specifier
-                .try_to_vec()
+            let specifier = near_sdk::borsh::to_vec(&specifier)
                 .unwrap_or_else(|_| ::near_sdk::env::panic_str("Storage key should be serializable"));
             [base, specifier.as_slice()].concat()
         }
@@ -117,7 +115,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
                 let acl_storage: #acl_type = Default::default();
                 near_sdk::env::storage_write(
                     &__acl_storage_prefix(base_prefix, __AclStorageKey::AclStorage),
-                    &acl_storage.try_to_vec().unwrap(),
+                    &near_sdk::borsh::to_vec(&acl_storage).unwrap(),
                 );
                 acl_storage
             }

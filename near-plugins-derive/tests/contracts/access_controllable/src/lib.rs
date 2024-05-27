@@ -1,5 +1,5 @@
 use near_plugins::{access_control, access_control_any, AccessControlRole, AccessControllable};
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault};
 use std::collections::HashMap;
@@ -22,6 +22,7 @@ pub enum Role {
 #[access_control(role_type(Role))]
 #[near_bindgen]
 #[derive(PanicOnDefault, BorshDeserialize, BorshSerialize)]
+#[borsh(crate = "near_sdk::borsh")]
 pub struct Counter {
     counter: u64,
 }
