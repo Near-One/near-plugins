@@ -53,12 +53,12 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         #[borsh(crate = "near_sdk::borsh")]
         struct #acl_type {
             /// Stores permissions per account.
-            permissions: ::near_sdk::store::LookupMap<
+            permissions: ::near_sdk::store::UnorderedMap<
                 ::near_sdk::AccountId,
                 #bitflags_type,
             >,
             /// Stores the set of accounts that bear a permission.
-            bearers: ::near_sdk::store::LookupMap<
+            bearers: ::near_sdk::store::UnorderedMap<
                 #bitflags_type,
                 ::near_sdk::store::UnorderedSet<::near_sdk::AccountId>,
             >,
@@ -68,10 +68,10 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn default() -> Self {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 Self {
-                     permissions: ::near_sdk::store::LookupMap::new(
+                     permissions: ::near_sdk::store::UnorderedMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Permissions),
                     ),
-                    bearers: ::near_sdk::store::LookupMap::new(
+                    bearers: ::near_sdk::store::UnorderedMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Bearers),
                     ),
                 }
