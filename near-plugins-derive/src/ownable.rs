@@ -25,7 +25,7 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
 
     let output = quote! {
         #[near]
-        impl Ownable for #ident {
+        impl #cratename::Ownable for #ident {
             fn owner_storage_key(&self) -> &'static [u8] {
                 (#owner_storage_key).as_bytes()
             }

@@ -74,7 +74,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
         impl Default for #acl_type {
             fn default() -> Self {
-                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
+                let base_prefix = <#ident as #cratename::AccessControllable>::acl_storage_prefix();
                 Self {
                     #[allow(deprecated)]
                     permissions: ::near_sdk::store::UnorderedMap::new(
@@ -109,13 +109,13 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
         impl #ident {
             fn acl_get_storage(&self) -> Option<#acl_type> {
-                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
+                let base_prefix = <#ident as #cratename::AccessControllable>::acl_storage_prefix();
                 near_sdk::env::storage_read(&__acl_storage_prefix(
                     base_prefix,
                     __AclStorageKey::AclStorage,
                 ))
                 .map(|acl_storage_bytes| {
-                    #acl_type::try_from_slice(&acl_storage_bytes)
+                    ::near_sdk::borsh::BorshDeserialize::try_from_slice(&acl_storage_bytes)
                         .unwrap_or_else(|_| near_sdk::env::panic_str("ACL: invalid acl storage format"))
                 })
             }
@@ -125,7 +125,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             fn acl_init_storage_unchecked(&mut self) -> #acl_type {
-                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
+                let base_prefix = <#ident as #cratename::AccessControllable>::acl_storage_prefix();
                 let acl_storage: #acl_type = Default::default();
                 near_sdk::env::storage_write(
                     &__acl_storage_prefix(base_prefix, __AclStorageKey::AclStorage),
@@ -138,7 +138,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         impl #acl_type {
             #[allow(deprecated)]
             fn new_bearers_set(permission: #bitflags_type) -> ::near_sdk::store::UnorderedSet<::near_sdk::AccountId> {
-                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
+                let base_prefix = <#ident as #cratename::AccessControllable>::acl_storage_prefix();
                 let specifier = __AclStorageKey::BearersSet { permission };
                 ::near_sdk::store::UnorderedSet::new(__acl_storage_prefix(base_prefix, specifier))
             }
@@ -585,7 +585,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         //
         // [documented]: https://docs.near.org/sdk/rust/contract-structure/near-bindgen
         #[near]
-        impl AccessControllable for #ident {
+        impl #cratename::AccessControllable for #ident {
             fn acl_storage_prefix() -> &'static [u8] {
                 (#storage_prefix).as_bytes()
             }

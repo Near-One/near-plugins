@@ -35,7 +35,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
 
     let output = quote! {
         #[near]
-        impl Pausable for #ident {
+        impl #cratename::Pausable for #ident {
             fn pa_storage_key(&self) -> &'static [u8] {
                 (#paused_storage_key).as_bytes()
             }
@@ -65,7 +65,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
 
                 ::near_sdk::env::storage_write(
                     self.pa_storage_key().as_ref(),
-                    near_sdk::borsh::to_vec(&paused_keys)
+                    ::near_sdk::borsh::to_vec(&paused_keys)
                         .unwrap_or_else(|_| ::near_sdk::env::panic_str("Pausable: Unexpected error serializing keys"))
                         .as_ref(),
                 );
@@ -95,7 +95,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                 } else {
                     ::near_sdk::env::storage_write(
                         self.pa_storage_key().as_ref(),
-                        near_sdk::borsh::to_vec(&paused_keys)
+                        ::near_sdk::borsh::to_vec(&paused_keys)
                             .unwrap_or_else(|_| ::near_sdk::env::panic_str("Pausable: Unexpected error serializing keys"))
                             .as_ref(),
                     );

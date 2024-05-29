@@ -166,7 +166,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
                 .unwrap_or_else(|| ::near_sdk::env::panic_str("Too many enum variants to be represented by bitflags"))
         }
 
-        impl AccessControlRole for #ident {
+        impl #cratename::AccessControlRole for #ident {
             fn acl_role_variants() -> Vec<&'static str> {
                 vec![
                     #(#variant_names,)*
