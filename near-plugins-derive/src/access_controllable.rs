@@ -62,7 +62,6 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             #[allow(deprecated)]
             bearers: ::near_sdk::store::UnorderedMap<
                 #bitflags_type,
-                #[allow(deprecated)]
                 ::near_sdk::store::UnorderedSet<::near_sdk::AccountId>,
             >,
         }
@@ -135,7 +134,6 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn new_bearers_set(permission: #bitflags_type) -> ::near_sdk::store::UnorderedSet<::near_sdk::AccountId> {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 let specifier = __AclStorageKey::BearersSet { permission };
-                #[allow(deprecated)]
                 ::near_sdk::store::UnorderedSet::new(__acl_storage_prefix(base_prefix, specifier))
             }
 
