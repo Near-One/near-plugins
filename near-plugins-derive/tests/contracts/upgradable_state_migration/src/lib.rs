@@ -5,7 +5,7 @@
 use near_plugins::{access_control, AccessControlRole, AccessControllable, Upgradable};
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near_bindgen, PanicOnDefault};
+use near_sdk::{env, near, PanicOnDefault};
 
 /// Roles correspond to those defined in the initial contract `../upgradable`, to make permissions
 /// granted before the upgrade remain valid.
@@ -23,9 +23,8 @@ pub enum Role {
 ///
 /// [state migration]: https://docs.near.org/develop/upgrade#migrating-the-state
 #[access_control(role_type(Role))]
-#[near_bindgen]
-#[derive(Upgradable, PanicOnDefault, BorshDeserialize, BorshSerialize)]
-#[borsh(crate = "near_sdk::borsh")]
+#[near(contract_state)]
+#[derive(Upgradable, PanicOnDefault)]
 #[upgradable(access_control_roles(
     code_stagers(Role::CodeStager, Role::DAO),
     code_deployers(Role::CodeDeployer, Role::DAO),
@@ -37,7 +36,7 @@ pub struct Contract {
     is_migrated: bool,
 }
 
-#[near_bindgen]
+#[near]
 impl Contract {
     /// Migrates state from [`OldContract`] to [`Contract`].
     ///

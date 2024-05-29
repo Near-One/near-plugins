@@ -1,7 +1,7 @@
 # NEAR Smart Contracts Plugins
 
 Implementation of common patterns used for NEAR smart contracts. Macros provided by default assumes the contract is
-using near-sdk-rs and `#[near_bindgen]` macro.
+using near-sdk-rs and `#[near]` macro.
 
 ## Plugins
 
@@ -71,7 +71,7 @@ Tests should verify that once the macros provided by this crate are expanded, th
 ## Traits and their implementations
 
 Traits doesn't contain any implementation, even though some interfaces are self-contained enough to have it.
-It is this way since `near_bindgen` macro from near-sdk-rs will only expose as public methods those that are implemented
+It is this way since `near` macro from near-sdk-rs will only expose as public methods those that are implemented
 during the trait implementation for the contract.
 
 In the documentation all comments under Default Implementation makes remarks about the current implementation derived

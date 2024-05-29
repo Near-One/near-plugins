@@ -568,12 +568,12 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             };
         }
 
-        // Note that `#[near-bindgen]` exposes non-public functions in trait
+        // Note that `#[near]` exposes non-public functions in trait
         // implementations. This is [documented] behavior. Therefore some
         // functions are made `#[private]` despite _not_ being public.
         //
-        // [documented]: https://docs.near.org/sdk/rust/contract-interface/public-methods#exposing-trait-implementations
-        #[near_bindgen]
+        // [documented]: https://docs.near.org/sdk/rust/contract-structure/near-bindgen
+        #[near]
         impl AccessControllable for #ident {
             fn acl_storage_prefix() -> &'static [u8] {
                 (#storage_prefix).as_bytes()

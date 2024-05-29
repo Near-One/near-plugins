@@ -142,7 +142,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
         }
 
-        #[near_bindgen]
+        #[near]
         impl Upgradable for #ident {
             fn up_storage_prefix(&self) -> &'static [u8] {
                 (#storage_prefix).as_bytes()
