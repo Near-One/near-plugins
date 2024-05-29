@@ -1,8 +1,8 @@
 use near_plugins::{access_control, AccessControlRole, AccessControllable, Upgradable};
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::env;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{near_bindgen, AccountId, Duration, PanicOnDefault};
+use near_sdk::{near, AccountId, Duration, PanicOnDefault};
 
 /// Defines roles for access control of protected methods provided by the `Upgradable` plugin.
 #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
@@ -41,8 +41,8 @@ pub enum Role {
 /// method panics if it is called by an account which is not a grantee of at least one of the
 /// whitelisted roles.
 #[access_control(role_type(Role))]
-#[near_bindgen]
-#[derive(Upgradable, PanicOnDefault, BorshDeserialize, BorshSerialize)]
+#[near(contract_state)]
+#[derive(Upgradable, PanicOnDefault)]
 #[upgradable(access_control_roles(
     code_stagers(Role::CodeStager, Role::DAO),
     code_deployers(Role::CodeDeployer, Role::DAO),
@@ -52,7 +52,7 @@ pub enum Role {
 ))]
 pub struct Contract;
 
-#[near_bindgen]
+#[near]
 impl Contract {
     /// Makes the contract itself `AccessControllable` super admin to allow it granting and revoking
     /// permissions. If parameter `dao` is `Some(account_id)`, then `account_id` is granted

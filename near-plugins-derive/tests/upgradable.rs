@@ -12,7 +12,7 @@ use common::utils::{
 };
 use near_plugins::upgradable::FunctionCallArgs;
 use near_sdk::serde_json::json;
-use near_sdk::{CryptoHash, Duration, Gas, Timestamp};
+use near_sdk::{CryptoHash, Duration, Gas, NearToken, Timestamp};
 use near_workspaces::network::Sandbox;
 use near_workspaces::result::ExecutionFinalResult;
 use near_workspaces::{Account, AccountId, Contract, Worker};
@@ -99,7 +99,7 @@ impl Setup {
         // Grab the receipt corresponding to the function call.
         let receipt = result
             .receipt_outcomes()
-            .get(0)
+            .first()
             .expect("There should be at least one receipt outcome");
         let block_timestamp = get_transaction_block(&self.worker, receipt)
             .await
@@ -508,8 +508,8 @@ async fn test_deploy_code_with_migration() -> anyhow::Result<()> {
     let function_call_args = FunctionCallArgs {
         function_name: "migrate".to_string(),
         arguments: Vec::new(),
-        amount: 0,
-        gas: Gas::ONE_TERA,
+        amount: NearToken::from_yoctonear(0),
+        gas: Gas::from_tgas(1),
     };
     let res = setup
         .upgradable_contract
@@ -551,8 +551,8 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
     let function_call_args = FunctionCallArgs {
         function_name: "migrate_with_failure".to_string(),
         arguments: Vec::new(),
-        amount: 0,
-        gas: Gas::ONE_TERA,
+        amount: NearToken::from_yoctonear(0),
+        gas: Gas::from_tgas(1),
     };
     let res = setup
         .upgradable_contract
@@ -561,7 +561,7 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
     assert_failure_with(res, "Failing migration on purpose");
 
     // Verify `code` wasn't deployed by calling a function that is defined only in the initial
-    // contract but not in the contract contract corresponding to `code`.
+    // contract but not in the contract corresponding to the `code`.
     setup.assert_is_set_up(&setup.unauth_account).await;
 
     Ok(())
@@ -599,13 +599,13 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
         .args_json(json!({ "function_call_args": FunctionCallArgs {
         function_name: "migrate_with_failure".to_string(),
         arguments: Vec::new(),
-        amount: 0,
-        gas: Gas::ONE_TERA,
+        amount: NearToken::from_yoctonear(0),
+        gas: Gas::from_tgas(1),
     } }))
-        .gas(near_workspaces::types::Gas::from_tgas(200));
+        .gas(Gas::from_tgas(201));
     let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
         .args_borsh(Vec::<u8>::new())
-        .gas(near_workspaces::types::Gas::from_tgas(90));
+        .gas(Gas::from_tgas(90));
 
     let res = dao
         .batch(setup.contract.id())

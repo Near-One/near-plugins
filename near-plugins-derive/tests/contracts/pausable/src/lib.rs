@@ -3,7 +3,7 @@ use near_plugins::{
 };
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault};
+use near_sdk::{env, near, AccountId, PanicOnDefault};
 
 /// Define roles for access control of `Pausable` features. Accounts which are
 /// granted a role are authorized to execute the corresponding action.
@@ -21,14 +21,14 @@ pub enum Role {
 }
 
 #[access_control(role_type(Role))]
-#[near_bindgen]
-#[derive(Pausable, PanicOnDefault, BorshDeserialize, BorshSerialize)]
+#[near(contract_state)]
+#[derive(Pausable, PanicOnDefault)]
 #[pausable(manager_roles(Role::PauseManager))]
 pub struct Counter {
     counter: u64,
 }
 
-#[near_bindgen]
+#[near]
 impl Counter {
     /// Permissons for `AccessControllable` can be initialized in the constructor. Here we are:
     ///

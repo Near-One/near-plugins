@@ -1,14 +1,14 @@
 use near_plugins::{only, Ownable};
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{near_bindgen, AccountId, PanicOnDefault};
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::{near, AccountId, PanicOnDefault};
 
-#[near_bindgen]
-#[derive(Ownable, PanicOnDefault, BorshDeserialize, BorshSerialize)]
+#[near(contract_state)]
+#[derive(Ownable, PanicOnDefault)]
 pub struct Counter {
     counter: u64,
 }
 
-#[near_bindgen]
+#[near]
 impl Counter {
     /// Optionally set the owner in the constructor.
     #[init]
