@@ -51,6 +51,12 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
         #[derive(::near_sdk::borsh::BorshDeserialize, ::near_sdk::borsh::BorshSerialize)]
         #[borsh(crate = "near_sdk::borsh")]
+        /// NOTE: Despite `near_sdk::store::UnorderedMap` and `near_sdk::store::UnorderedSet`
+        /// have been deprecated, it still makes sense to use them here as we might still
+        /// need to iterate over the keys.
+        /// The impact on gas consumption compared to `near_sdk::store::LookupMap` is negligible
+        /// as it lazily loads list of keys to iterate over internally. Compiled size of a
+        /// contract is not affected that much as well.
         struct #acl_type {
             /// Stores permissions per account.
             #[allow(deprecated)]
