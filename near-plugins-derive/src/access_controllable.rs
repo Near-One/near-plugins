@@ -53,13 +53,16 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         #[borsh(crate = "near_sdk::borsh")]
         struct #acl_type {
             /// Stores permissions per account.
+            #[allow(deprecated)]
             permissions: ::near_sdk::store::UnorderedMap<
                 ::near_sdk::AccountId,
                 #bitflags_type,
             >,
             /// Stores the set of accounts that bear a permission.
+            #[allow(deprecated)]
             bearers: ::near_sdk::store::UnorderedMap<
                 #bitflags_type,
+                #[allow(deprecated)]
                 ::near_sdk::store::UnorderedSet<::near_sdk::AccountId>,
             >,
         }
@@ -68,9 +71,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             fn default() -> Self {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 Self {
-                     permissions: ::near_sdk::store::UnorderedMap::new(
+                    #[allow(deprecated)]
+                    permissions: ::near_sdk::store::UnorderedMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Permissions),
                     ),
+                    #[allow(deprecated)]
                     bearers: ::near_sdk::store::UnorderedMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Bearers),
                     ),
@@ -126,9 +131,11 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         }
 
         impl #acl_type {
+            #[allow(deprecated)]
             fn new_bearers_set(permission: #bitflags_type) -> ::near_sdk::store::UnorderedSet<::near_sdk::AccountId> {
                 let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
                 let specifier = __AclStorageKey::BearersSet { permission };
+                #[allow(deprecated)]
                 ::near_sdk::store::UnorderedSet::new(__acl_storage_prefix(base_prefix, specifier))
             }
 
