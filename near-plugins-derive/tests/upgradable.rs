@@ -509,7 +509,7 @@ async fn test_deploy_code_with_migration() -> anyhow::Result<()> {
         function_name: "migrate".to_string(),
         arguments: Vec::new(),
         amount: NearToken::from_yoctonear(0),
-        gas: Gas::from_tgas(1),
+        gas: Gas::from_tgas(3),
     };
     let res = setup
         .upgradable_contract
@@ -552,7 +552,7 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
         function_name: "migrate_with_failure".to_string(),
         arguments: Vec::new(),
         amount: NearToken::from_yoctonear(0),
-        gas: Gas::from_tgas(1),
+        gas: Gas::from_tgas(2),
     };
     let res = setup
         .upgradable_contract
@@ -600,7 +600,7 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
         function_name: "migrate_with_failure".to_string(),
         arguments: Vec::new(),
         amount: NearToken::from_yoctonear(0),
-        gas: Gas::from_tgas(1),
+        gas: Gas::from_tgas(2),
     } }))
         .gas(Gas::from_tgas(201));
     let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
