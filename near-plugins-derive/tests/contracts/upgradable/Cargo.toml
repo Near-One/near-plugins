@@ -1,14 +1,14 @@
 [package]
 name = "upgradable"
 version = "0.0.0"
-edition = "2018"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 near-plugins = { path = "../../../../near-plugins" }
-near-sdk = "5.1.0"
+near-sdk = "5.2"
 
 [profile.release]
 codegen-units = 1

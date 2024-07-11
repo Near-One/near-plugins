@@ -2,8 +2,8 @@ use std::path::{Path, PathBuf};
 use std::process::Output;
 
 async fn read_toolchain(project_path: &Path) -> anyhow::Result<String> {
-    let bytes = tokio::fs::read(project_path.join("rust-toolchain")).await?;
-    let value: toml::Value = toml::from_slice(&bytes)?;
+    let content = tokio::fs::read_to_string(project_path.join("rust-toolchain")).await?;
+    let value: toml::Value = toml::from_str(&content)?;
     let result = value
         .as_table()
         .and_then(|t| t.get("toolchain"))
