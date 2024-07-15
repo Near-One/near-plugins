@@ -8,7 +8,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 near-plugins = { path = "../../../../near-plugins" }
-near-sdk = "5.1"
+near-sdk = "5.2"
 
 [profile.release]
 codegen-units = 1

@@ -6,24 +6,28 @@ on:
       - master
   pull_request:
 
+env:
+  RUST_BACKTRACE: full
+  MSRV: 1.76.0
+
 jobs:
   tests:
     name: Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.74.0 # MSRV
+          toolchain: ${{ env.MSRV }}
           override: true
           target: wasm32-unknown-unknown
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: rust-version-1.74.0-msrv-2
+          key: rust-version-${{ env.MSRV }}-msrv-2
 
       - name: add wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
@@ -36,18 +40,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.74.0 # MSRV
+          toolchain: ${{ env.MSRV }}
           override: true
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: rust-version-1.74.0-msrv-2
+          key: rust-version-${{ env.MSRV }}-msrv-2
 
       - name: cargo fmt
         run: cargo fmt --all -- --check
