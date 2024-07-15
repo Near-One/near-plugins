@@ -5,7 +5,7 @@ use serde::Serialize;
 
 /// Interface to capture metadata about an event
 #[derive(Serialize)]
-pub struct EventMetadata<T: Serialize = ()> {
+pub struct EventMetadata<T> {
     /// name of standard, e.g. nep171
     pub standard: String,
     /// e.g. 1.0.0

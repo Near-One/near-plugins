@@ -183,6 +183,7 @@ pub trait Upgradable {
 }
 
 #[derive(Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
 pub struct UpgradableDurationStatus {
     pub staging_duration: Option<near_sdk::Duration>,
     pub staging_timestamp: Option<near_sdk::Timestamp>,
@@ -213,8 +214,8 @@ struct StageCode {
     code_hash: CryptoHash,
 }
 
-impl AsEvent<StageCode> for StageCode {
-    fn metadata(&self) -> EventMetadata<StageCode> {
+impl AsEvent<Self> for StageCode {
+    fn metadata(&self) -> EventMetadata<Self> {
         EventMetadata {
             standard: "Upgradable".to_string(),
             version: "1.0.0".to_string(),
@@ -233,8 +234,8 @@ struct DeployCode {
     code_hash: CryptoHash,
 }
 
-impl AsEvent<DeployCode> for DeployCode {
-    fn metadata(&self) -> EventMetadata<DeployCode> {
+impl AsEvent<Self> for DeployCode {
+    fn metadata(&self) -> EventMetadata<Self> {
         EventMetadata {
             standard: "Upgradable".to_string(),
             version: "1.0.0".to_string(),

@@ -10,10 +10,10 @@
 //! ## Default implementation:
 //!
 //! Key "ALL" is understood to pause all "pausable" features at once.
-//! Provided implementation is optimized for the case where only a small amount of features are
-//! paused at a single moment. If all features are meant to be paused, use "ALL" instead. This is done
+//! Provided implementation is optimized for the case where only a small amount of features is
+//! paused at a single moment. If all features should be paused, use "ALL" instead. This is done
 //! by storing all paused keys in a single slot on the storage. Notice that unpausing "ALL" will not
-//! necessarily unpause all features, if other features are still present in the paused_list.
+//! necessarily unpause all features, if other features are still present in the `paused_list`.
 //!
 //! As a precondition for being `Pausable` a contract must be `AccessControllable`. Access control
 //! is used to define the permissions required to pause and unpause features. In addition, grantees
@@ -23,7 +23,7 @@
 //! ## Credits:
 //!
 //! Inspired by Open Zeppelin Pausable module:
-//! https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/Pausable.sol
+//! `https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/Pausable.sol`
 use crate::events::{AsEvent, EventMetadata};
 use near_sdk::AccountId;
 use serde::Serialize;
@@ -105,8 +105,8 @@ pub struct Pause {
     pub key: String,
 }
 
-impl AsEvent<Pause> for Pause {
-    fn metadata(&self) -> EventMetadata<Pause> {
+impl AsEvent<Self> for Pause {
+    fn metadata(&self) -> EventMetadata<Self> {
         EventMetadata {
             standard: "Pausable".to_string(),
             version: "1.0.0".to_string(),
@@ -125,8 +125,8 @@ pub struct Unpause {
     pub key: String,
 }
 
-impl AsEvent<Unpause> for Unpause {
-    fn metadata(&self) -> EventMetadata<Unpause> {
+impl AsEvent<Self> for Unpause {
+    fn metadata(&self) -> EventMetadata<Self> {
         EventMetadata {
             standard: "Pausable".to_string(),
             version: "1.0.0".to_string(),

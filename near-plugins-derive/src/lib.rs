@@ -1,3 +1,9 @@
+#![allow(
+    clippy::cognitive_complexity,
+    clippy::collection_is_never_read,
+    clippy::module_name_repetitions,
+    clippy::too_many_lines
+)]
 use proc_macro::{self, TokenStream};
 
 mod access_control_role;

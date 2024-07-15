@@ -13,7 +13,7 @@
 //!
 //! Using the `#[access_control_any(roles(...))]` macro on a contract method restricts access to the
 //! method to grantees of the specified `roles`. The method panics if it is called by an account
-//! which is not a grantee of any of the `roles`.
+//! which is not a grantee any of the `roles`.
 //!
 //! In addition, methods like `AccessControllable::has_role` can be used within other contract
 //! methods to restrict access to certain features or actions.
@@ -32,7 +32,7 @@
 //!
 //! ## Credits
 //!
-//! Inspired by OpenZeppelin's
+//! Inspired by `OpenZeppelin`'s
 //! [AccessControl](https://docs.openzeppelin.com/contracts/3.x/api/access#AccessControl) module.
 
 use near_sdk::serde::{Deserialize, Serialize};
@@ -55,8 +55,8 @@ use std::collections::HashMap;
 ///
 /// [does not support]: https://github.com/near/near-sdk-rs/blob/9d99077c6acfde68c06845f2a1eb2b5ed7983401/near-sdk/compilation_tests/impl_generic.stderr
 pub trait AccessControllable {
-    /// Returns the storage prefix for collections related to access control. By
-    /// default `b"__acl"` is used.
+    /// Returns the storage prefix for collections related to access control.
+    /// `b"__acl"` is used by default.
     ///
     /// Attribute `storage_prefix` can be used to set a different prefix:
     ///
@@ -74,10 +74,10 @@ pub trait AccessControllable {
     /// A vector containing _all_ variant names is returned since the default implementation limits
     /// the number of variants to [`near_plugins_derive::access_control_role::MAX_ROLE_VARIANTS`].
     /// This allows for a simpler user experience compared to the iterator based approach of
-    /// [`Self::acl_get_admins`], for example. For custom implmentations of this it is advised to
+    /// [`Self::acl_get_admins`], for example. For custom implementations of this it is advised to
     /// limit the number of role variants as well.
     ///
-    /// Event though it might not be used, this method takes paramter `&self` to be [available in
+    /// Event though it might not be used, this method takes parameter `&self` to be [available in
     /// view calls].
     ///
     /// [available in view calls]: https://stackoverflow.com/q/66715815
@@ -193,7 +193,7 @@ pub trait AccessControllable {
     ///    }
     /// }
     /// ```
-    ///     
+    ///
     /// ```json
     /// {
     ///    "standard":"AccessControllable",
@@ -235,7 +235,7 @@ pub trait AccessControllable {
     /// Returns whether `account_id` is an admin for `role`. Super-admins are
     /// admins for _every_ role.
     ///
-    /// Note that adding an account as admin for `role` does not make that
+    /// Note that adding an account as admin for `role` does not make the
     /// account a grantee of `role`. Instead, `role` has to be granted
     /// explicitly. The same applies to super-admins.
     fn acl_is_admin(&self, role: String, account_id: AccountId) -> bool;
@@ -296,7 +296,7 @@ pub trait AccessControllable {
     fn acl_grant_role(&mut self, role: String, account_id: AccountId) -> Option<bool>;
 
     /// Returns whether `account_id` has been granted `role`. Note that adding
-    /// an account as (super-)admin for `role` does not make that account a
+    /// an account as (super-)admin for `role` does not make the account a
     /// grantee of `role`. Instead, `role` has to be granted explicitly.
     fn acl_has_role(&self, role: String, account_id: AccountId) -> bool;
 
@@ -428,7 +428,7 @@ pub mod events {
     const STANDARD: &str = "AccessControllable";
     const VERSION: &str = "1.0.0";
 
-    /// Event emitted when an accout is made super-admin.
+    /// Event emitted when an account is made super-admin.
     #[derive(Serialize, Clone)]
     #[serde(crate = "near_sdk::serde")]
     pub struct SuperAdminAdded {
@@ -438,8 +438,8 @@ pub mod events {
         pub by: AccountId,
     }
 
-    impl AsEvent<SuperAdminAdded> for SuperAdminAdded {
-        fn metadata(&self) -> EventMetadata<SuperAdminAdded> {
+    impl AsEvent<Self> for SuperAdminAdded {
+        fn metadata(&self) -> EventMetadata<Self> {
             EventMetadata {
                 standard: STANDARD.to_string(),
                 version: VERSION.to_string(),
@@ -459,8 +459,8 @@ pub mod events {
         pub by: AccountId,
     }
 
-    impl AsEvent<SuperAdminRevoked> for SuperAdminRevoked {
-        fn metadata(&self) -> EventMetadata<SuperAdminRevoked> {
+    impl AsEvent<Self> for SuperAdminRevoked {
+        fn metadata(&self) -> EventMetadata<Self> {
             EventMetadata {
                 standard: STANDARD.to_string(),
                 version: VERSION.to_string(),
@@ -482,8 +482,8 @@ pub mod events {
         pub by: AccountId,
     }
 
-    impl AsEvent<AdminAdded> for AdminAdded {
-        fn metadata(&self) -> EventMetadata<AdminAdded> {
+    impl AsEvent<Self> for AdminAdded {
+        fn metadata(&self) -> EventMetadata<Self> {
             EventMetadata {
                 standard: STANDARD.to_string(),
                 version: VERSION.to_string(),
@@ -505,8 +505,8 @@ pub mod events {
         pub by: AccountId,
     }
 
-    impl AsEvent<AdminRevoked> for AdminRevoked {
-        fn metadata(&self) -> EventMetadata<AdminRevoked> {
+    impl AsEvent<Self> for AdminRevoked {
+        fn metadata(&self) -> EventMetadata<Self> {
             EventMetadata {
                 standard: STANDARD.to_string(),
                 version: VERSION.to_string(),
@@ -528,8 +528,8 @@ pub mod events {
         pub by: AccountId,
     }
 
-    impl AsEvent<RoleGranted> for RoleGranted {
-        fn metadata(&self) -> EventMetadata<RoleGranted> {
+    impl AsEvent<Self> for RoleGranted {
+        fn metadata(&self) -> EventMetadata<Self> {
             EventMetadata {
                 standard: STANDARD.to_string(),
                 version: VERSION.to_string(),
@@ -551,8 +551,8 @@ pub mod events {
         pub by: AccountId,
     }
 
-    impl AsEvent<RoleRevoked> for RoleRevoked {
-        fn metadata(&self) -> EventMetadata<RoleRevoked> {
+    impl AsEvent<Self> for RoleRevoked {
+        fn metadata(&self) -> EventMetadata<Self> {
             EventMetadata {
                 standard: STANDARD.to_string(),
                 version: VERSION.to_string(),

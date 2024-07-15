@@ -47,9 +47,9 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
             }
 
             fn pa_all_paused(&self) -> Option<std::collections::HashSet<String>> {
-                ::near_sdk::env::storage_read(self.pa_storage_key().as_ref()).map(|value| {
+                near_sdk::env::storage_read(self.pa_storage_key().as_ref()).map(|value| {
                     std::collections::HashSet::try_from_slice(value.as_ref())
-                        .unwrap_or_else(|_| ::near_sdk::env::panic_str("Pausable: Invalid format for paused keys"))
+                        .unwrap_or_else(|_| near_sdk::env::panic_str("Pausable: Invalid format for paused keys"))
                 })
             }
 
@@ -63,15 +63,15 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                     return false;
                 }
 
-                ::near_sdk::env::storage_write(
+                near_sdk::env::storage_write(
                     self.pa_storage_key().as_ref(),
-                    ::near_sdk::borsh::to_vec(&paused_keys)
-                        .unwrap_or_else(|_| ::near_sdk::env::panic_str("Pausable: Unexpected error serializing keys"))
+                    near_sdk::borsh::to_vec(&paused_keys)
+                        .unwrap_or_else(|_| near_sdk::env::panic_str("Pausable: Unexpected error serializing keys"))
                         .as_ref(),
                 );
 
                 let event = #cratename::pausable::Pause {
-                    by: ::near_sdk::env::predecessor_account_id(),
+                    by: near_sdk::env::predecessor_account_id(),
                     key,
                 };
                 #cratename::events::AsEvent::emit(&event);
@@ -91,18 +91,18 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                 }
 
                 if paused_keys.is_empty() {
-                    ::near_sdk::env::storage_remove(self.pa_storage_key().as_ref());
+                    near_sdk::env::storage_remove(self.pa_storage_key().as_ref());
                 } else {
-                    ::near_sdk::env::storage_write(
+                    near_sdk::env::storage_write(
                         self.pa_storage_key().as_ref(),
-                        ::near_sdk::borsh::to_vec(&paused_keys)
-                            .unwrap_or_else(|_| ::near_sdk::env::panic_str("Pausable: Unexpected error serializing keys"))
+                        near_sdk::borsh::to_vec(&paused_keys)
+                            .unwrap_or_else(|_| near_sdk::env::panic_str("Pausable: Unexpected error serializing keys"))
                             .as_ref(),
                     );
                 }
 
                 let event = #cratename::pausable::Unpause {
-                    by: ::near_sdk::env::predecessor_account_id(),
+                    by: near_sdk::env::predecessor_account_id(),
                     key,
                 };
                 #cratename::events::AsEvent::emit(&event);
@@ -152,11 +152,11 @@ pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
         let mut __check_paused = true;
         #bypass_condition
         if __check_paused {
-            ::near_sdk::require!(!self.pa_is_paused(#fn_name.to_string()), "Pausable: Method is paused");
+            near_sdk::require!(!self.pa_is_paused(#fn_name.to_string()), "Pausable: Method is paused");
         }
     );
 
-    utils::add_extra_code_to_fn(&input, check_pause)
+    utils::add_extra_code_to_fn(&input, &check_pause)
 }
 
 /// Defines attributes for the `if_paused` macro.
@@ -190,14 +190,14 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
         let mut __check_paused = true;
         #bypass_condition
         if __check_paused {
-            ::near_sdk::require!(
+            near_sdk::require!(
                 self.pa_is_paused(#fn_name.to_string()),
                 #err_feature_not_paused,
             );
         }
     );
 
-    utils::add_extra_code_to_fn(&input, check_pause)
+    utils::add_extra_code_to_fn(&input, &check_pause)
 }
 
 fn get_bypass_condition(args: &ExceptSubArgs) -> proc_macro2::TokenStream {
@@ -207,7 +207,7 @@ fn get_bypass_condition(args: &ExceptSubArgs) -> proc_macro2::TokenStream {
         let __except_roles: Vec<String> = __except_roles.iter().map(|&x| x.into()).collect();
         let may_bypass = self.acl_has_any_role(
             __except_roles,
-            ::near_sdk::env::predecessor_account_id()
+            near_sdk::env::predecessor_account_id()
         );
         if may_bypass {
             __check_paused = false;

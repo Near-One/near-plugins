@@ -33,7 +33,7 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
 
       - name: cargo test
-        run: cargo test --all --all-features
+        run: cargo test --workspace --all-features
 
   lint:
     name: Format
@@ -57,4 +57,4 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: cargo clippy
-        run: cargo clippy --all --all-features --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-features --all-targets -- -D warnings
