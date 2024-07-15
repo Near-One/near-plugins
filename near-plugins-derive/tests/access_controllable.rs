@@ -39,7 +39,7 @@ impl Setup {
     /// Deploys the contract and calls the initialization method without passing any accounts to be
     /// added as admin or grantees.
     async fn new() -> anyhow::Result<Self> {
-        Self::new_with_admins_and_grantees(Default::default(), Default::default()).await
+        Self::new_with_admins_and_grantees(HashMap::default(), HashMap::default()).await
     }
 
     /// Deploys the contract and passes `admins` and `grantees` to the initialization method. Note
@@ -161,21 +161,21 @@ fn assert_permissioned_account_equivalence(a: &PermissionedAccounts, b: &Permiss
         let per_role_a = a
             .roles
             .get(role)
-            .unwrap_or_else(|| panic!("PermissionedAccounts a misses role {}", role));
+            .unwrap_or_else(|| panic!("PermissionedAccounts a misses role {role}"));
         let per_role_b = b
             .roles
             .get(role)
-            .unwrap_or_else(|| panic!("PermissionedAccounts b misses role {}", role));
+            .unwrap_or_else(|| panic!("PermissionedAccounts b misses role {role}"));
 
         assert_account_ids_equivalence(
             &per_role_a.admins,
             &per_role_b.admins,
-            format!("admins of role {}", role).as_str(),
+            &format!("admins of role {role}"),
         );
         assert_account_ids_equivalence(
             &per_role_a.grantees,
             &per_role_b.grantees,
-            format!("grantees of role {}", role).as_str(),
+            &format!("grantees of role {role}"),
         );
     }
 }
@@ -192,7 +192,7 @@ fn assert_account_ids_equivalence(
 ) {
     let set_a: HashSet<_> = a.iter().cloned().collect();
     let set_b: HashSet<_> = b.iter().cloned().collect();
-    assert_eq!(set_a, set_b, "Unequal sets of AccountIds for {}", specifier,);
+    assert_eq!(set_a, set_b, "Unequal sets of AccountIds for {specifier}");
 }
 
 /// Smoke test of contract setup and basic functionality.
@@ -902,6 +902,7 @@ async fn test_acl_has_role() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+#[allow(clippy::similar_names)]
 async fn test_acl_grant_role() -> anyhow::Result<()> {
     let Setup {
         worker,
@@ -1120,20 +1121,20 @@ async fn test_attribute_access_control_any() -> anyhow::Result<()> {
     // Account without any of the required permissions is restricted.
     let account = setup.new_account_with_roles(&[]).await?;
     let res = call_increase_2(raw_contract, &account).await?;
-    assert_insufficient_acl_permissions(res, method_name, allowed_roles.clone());
+    assert_insufficient_acl_permissions(res, method_name, &allowed_roles);
     let account = setup.new_account_with_roles(&["Resetter"]).await?;
     let res = call_increase_2(raw_contract, &account).await?;
-    assert_insufficient_acl_permissions(res, method_name, allowed_roles.clone());
+    assert_insufficient_acl_permissions(res, method_name, &allowed_roles);
 
     // A super-admin which has not been granted the role is restricted.
     let super_admin = setup.new_super_admin_account().await?;
     let res = call_increase_2(raw_contract, &super_admin).await?;
-    assert_insufficient_acl_permissions(res, method_name, allowed_roles.clone());
+    assert_insufficient_acl_permissions(res, method_name, &allowed_roles);
 
     // An admin for a permitted role is restricted (no grantee of role itself).
     let admin = setup.new_account_as_admin(&["ByMax2Increaser"]).await?;
     let res = call_increase_2(raw_contract, &admin).await?;
-    assert_insufficient_acl_permissions(res, method_name, allowed_roles.clone());
+    assert_insufficient_acl_permissions(res, method_name, &allowed_roles);
 
     // Account with one of the required permissions succeeds.
     let account = setup.new_account_with_roles(&["ByMax2Increaser"]).await?;
@@ -1210,8 +1211,8 @@ async fn test_acl_get_super_admins() -> anyhow::Result<()> {
             .acl_get_super_admins(&setup.account, i, 1)
             .await?;
         let i = usize::try_from(i).unwrap();
-        let expected = super_admin_ids[i..i + 1].to_vec();
-        assert_eq!(actual, expected, "Mismatch at position {}", i,);
+        let expected = super_admin_ids[i..=i].to_vec();
+        assert_eq!(actual, expected, "Mismatch at position {i}");
     }
 
     // Retrieve super-admins with step size 2.
@@ -1281,8 +1282,8 @@ async fn test_acl_get_admins() -> anyhow::Result<()> {
             .acl_get_admins(&setup.account, role, i, 1)
             .await?;
         let i = usize::try_from(i).unwrap();
-        let expected = admin_ids[i..i + 1].to_vec();
-        assert_eq!(actual, expected, "Mismatch at position {}", i,);
+        let expected = admin_ids[i..=i].to_vec();
+        assert_eq!(actual, expected, "Mismatch at position {i}");
     }
 
     // Retrieve admins with step size 2.
@@ -1352,8 +1353,8 @@ async fn test_acl_get_grantees() -> anyhow::Result<()> {
             .acl_get_grantees(&setup.account, role, i, 1)
             .await?;
         let i = usize::try_from(i).unwrap();
-        let expected = grantee_ids[i..i + 1].to_vec();
-        assert_eq!(actual, expected, "Mismatch at position {}", i,);
+        let expected = grantee_ids[i..=i].to_vec();
+        assert_eq!(actual, expected, "Mismatch at position {i}");
     }
 
     // Retrieve grantees with step size 2.

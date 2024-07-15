@@ -10,11 +10,13 @@ pub struct PausableContract {
 }
 
 impl PausableContract {
-    pub fn new(contract: Contract) -> Self {
+    #[must_use]
+    pub const fn new(contract: Contract) -> Self {
         Self { contract }
     }
 
-    pub fn contract(&self) -> &Contract {
+    #[must_use]
+    pub const fn contract(&self) -> &Contract {
         &self.contract
     }
 

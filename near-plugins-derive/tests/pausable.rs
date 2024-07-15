@@ -177,11 +177,7 @@ async fn assert_pause_feature_acl_failure(contract: &PausableContract, caller: &
         .pa_pause_feature(caller, "increase_1")
         .await
         .unwrap();
-    assert_insufficient_acl_permissions(
-        result,
-        "pa_pause_feature",
-        vec!["PauseManager".to_string()],
-    );
+    assert_insufficient_acl_permissions(result, "pa_pause_feature", &["PauseManager".to_string()]);
 }
 
 #[tokio::test]
@@ -257,7 +253,7 @@ async fn assert_unpause_feature_acl_failure(contract: &PausableContract, caller:
     assert_insufficient_acl_permissions(
         result,
         "pa_unpause_feature",
-        vec!["PauseManager".to_string()],
+        &["PauseManager".to_string()],
     );
 }
 
