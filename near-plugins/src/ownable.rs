@@ -5,7 +5,7 @@
 //! specific functions.
 //!
 //! During creation of the contract set the owner using `owner_set`. Protect functions that should
-//! only be called by the owner using #[only(owner)].
+//! only be called by the owner using annotation: `#[only(owner)]`.
 //!
 //! ## Credits:
 //!
