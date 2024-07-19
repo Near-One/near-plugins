@@ -73,7 +73,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
     );
     let variant_idxs: Vec<_> =
         (0..u8::try_from(variant_idents.len()).expect("Too many enum variants")).collect();
-    let variant_names: Vec<_> = variant_idents.iter().map(|v| format!("{}", v)).collect();
+    let variant_names: Vec<_> = variant_idents.iter().map(|v| format!("{v}")).collect();
 
     let boundchecker_type = Ident::new(DEFAULT_BOUNDCHECKER_TYPE_NAME, ident.span());
     let bitflags_type_ident = new_bitflags_type_ident(Span::call_site());
@@ -89,7 +89,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         // Without this explicit check, compilation would still fail if a bound
         // is not satisfied. Though with less a clear error message.
         struct #boundchecker_type<T: Copy + Clone> {
-            _marker: ::std::marker::PhantomData<T>,
+            _marker: std::marker::PhantomData<T>,
         }
         impl<T: Copy + Clone> #boundchecker_type<T> {
             fn new() -> Self {
@@ -113,7 +113,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl ::std::convert::TryFrom<u8> for #ident {
+        impl std::convert::TryFrom<u8> for #ident {
             type Error = &'static str;
 
             fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -146,7 +146,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl ::std::convert::TryFrom<&str> for #ident {
+        impl std::convert::TryFrom<&str> for #ident {
             type Error = &'static str;
 
             fn try_from(value: &str) -> Result<#ident, Self::Error> {
@@ -163,7 +163,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
         fn safe_leftshift(value: u128, n: u8) -> u128 {
             value
                 .checked_shl(n.into())
-                .unwrap_or_else(|| ::near_sdk::env::panic_str("Too many enum variants to be represented by bitflags"))
+                .unwrap_or_else(|| near_sdk::env::panic_str("Too many enum variants to be represented by bitflags"))
         }
 
         impl #cratename::AccessControlRole for #ident {
@@ -181,7 +181,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             fn acl_permission(self) -> u128 {
                 // Shift 1u128 left by an odd number, see module documentation.
                 let n = (u8::from(self) + 1)
-                    .checked_mul(2).unwrap_or_else(|| ::near_sdk::env::panic_str("Too many enum variants")) - 1;
+                    .checked_mul(2).unwrap_or_else(|| near_sdk::env::panic_str("Too many enum variants")) - 1;
                 safe_leftshift(1, n)
             }
 
@@ -189,7 +189,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
                 // Shift 1u128 left by an even number, see module documentation.
                 let n = (u8::from(self) + 1)
                     .checked_mul(2)
-                    .unwrap_or_else(|| ::near_sdk::env::panic_str("Too many enum variants"));
+                    .unwrap_or_else(|| near_sdk::env::panic_str("Too many enum variants"));
                 safe_leftshift(1, n)
             }
         }
@@ -198,8 +198,8 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
             /// Encodes permissions for roles and admins.
             #[derive(
                 Default,
-                ::near_sdk::borsh::BorshDeserialize,
-                ::near_sdk::borsh::BorshSerialize,
+                near_sdk::borsh::BorshDeserialize,
+                near_sdk::borsh::BorshSerialize,
             )]
             #[borsh(crate = "near_sdk::borsh")]
             struct #bitflags_type_ident: u128 {
@@ -228,7 +228,7 @@ fn bitflags_idents(names: &[String], span: Span) -> Vec<Ident> {
         .collect::<Vec<_>>();
     let admin_names = names
         .iter()
-        .map(|name| format!("{}_ADMIN", name))
+        .map(|name| format!("{name}_ADMIN"))
         .collect::<Vec<_>>();
     let mut idents = vec![Ident::new(DEFAULT_SUPER_ADMIN_NAME, span)];
     for (name, admin_name) in names.iter().zip(admin_names) {

@@ -22,3 +22,6 @@ near-sdk = { workspace = true, features = ["unit-testing"] }
 tokio.workspace = true
 near-workspaces.workspace = true
 toml.workspace = true
+
+[lints]
+workspace = true

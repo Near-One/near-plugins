@@ -5,7 +5,7 @@ use serde::Serialize;
 
 /// Interface to capture metadata about an event
 #[derive(Serialize)]
-pub struct EventMetadata<T: Serialize = ()> {
+pub struct EventMetadata<T> {
     /// name of standard, e.g. nep171
     pub standard: String,
     /// e.g. 1.0.0
@@ -58,7 +58,7 @@ mod tests {
 
     /// Helper function to check if an event is well formed and follows NEP-297
     /// i.e. tries to deserialize the json object.
-    fn valid_event(event: String) -> bool {
+    fn valid_event(event: &str) -> bool {
         #[derive(serde::Deserialize)]
         struct EventFormat {
             #[allow(dead_code)]
@@ -86,7 +86,7 @@ mod tests {
         let expected =
             r#"EVENT_JSON:{"standard":"Compile","version":"0.0.1","event":"compile_test"}"#;
         assert_eq!(event_log, expected);
-        assert!(valid_event(event_log));
+        assert!(valid_event(&event_log));
     }
 
     #[test]
@@ -97,6 +97,6 @@ mod tests {
         let event_log = compile_event.event();
         let expected = r#"EVENT_JSON:{"standard":"Compile","version":"0.0.1","event":"compile_test","data":"Compilation successful"}"#;
         assert_eq!(event_log, expected);
-        assert!(valid_event(event_log));
+        assert!(valid_event(&event_log));
     }
 }

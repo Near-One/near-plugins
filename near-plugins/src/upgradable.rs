@@ -112,13 +112,13 @@ pub trait Upgradable {
     /// Attaching a function call can be useful, for example, if deploying the staged code requires
     /// [state migration]. It can be achieved by calling a migration function defined in the new
     /// version of the contract. A failure during state migration can leave the contract in a broken
-    /// state, which is avoided by the roleback mechanism described above.
+    /// state, which is avoided by the rollback mechanism described above.
     ///
     /// # Removal of staged code
     ///
     /// After deployment, staged code remains in storage. It is not removed automatically as this
     /// would cost extra gas and therefore increase the risk of the transaction hitting NEAR's gas
-    /// limit. Moreover, in case the deployment is roled back due to a failure in the attached
+    /// limit. Moreover, in case the deployment is rollbacked due to a failure in the attached
     /// function call, the staged code might still be required.
     ///
     /// Once staged code is no longer needed, it can be removed by passing the appropriate arguments
@@ -183,6 +183,7 @@ pub trait Upgradable {
 }
 
 #[derive(Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
 pub struct UpgradableDurationStatus {
     pub staging_duration: Option<near_sdk::Duration>,
     pub staging_timestamp: Option<near_sdk::Timestamp>,
@@ -213,8 +214,8 @@ struct StageCode {
     code_hash: CryptoHash,
 }
 
-impl AsEvent<StageCode> for StageCode {
-    fn metadata(&self) -> EventMetadata<StageCode> {
+impl AsEvent<Self> for StageCode {
+    fn metadata(&self) -> EventMetadata<Self> {
         EventMetadata {
             standard: "Upgradable".to_string(),
             version: "1.0.0".to_string(),
@@ -233,8 +234,8 @@ struct DeployCode {
     code_hash: CryptoHash,
 }
 
-impl AsEvent<DeployCode> for DeployCode {
-    fn metadata(&self) -> EventMetadata<DeployCode> {
+impl AsEvent<Self> for DeployCode {
+    fn metadata(&self) -> EventMetadata<Self> {
         EventMetadata {
             standard: "Upgradable".to_string(),
             version: "1.0.0".to_string(),

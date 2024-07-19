@@ -15,11 +15,11 @@ async fn read_toolchain(project_path: &Path) -> anyhow::Result<String> {
     Ok(result)
 }
 
-pub fn require_success(output: Output) -> Result<(), anyhow::Error> {
+pub fn require_success(output: &Output) -> Result<(), anyhow::Error> {
     if output.status.success() {
         Ok(())
     } else {
-        Err(anyhow::Error::msg(format!("Command failed: {:?}", output)))
+        Err(anyhow::Error::msg(format!("Command failed: {output:?}")))
     }
 }
 
@@ -30,7 +30,7 @@ async fn add_wasm_target(project_path: &Path, toolchain: &str) -> anyhow::Result
         .args(["target", "add", "wasm32-unknown-unknown"])
         .output()
         .await?;
-    require_success(output)?;
+    require_success(&output)?;
     Ok(())
 }
 
@@ -52,13 +52,13 @@ pub async fn compile_project(project_path: &Path, package_name: &str) -> anyhow:
         .output()
         .await?;
 
-    require_success(output)?;
+    require_success(&output)?;
     let binary_path = project_path.join(
         [
             "target",
             "wasm32-unknown-unknown",
             "release",
-            format!("{}.wasm", package_name).as_str(),
+            format!("{package_name}.wasm").as_str(),
         ]
         .iter()
         .collect::<PathBuf>(),

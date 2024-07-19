@@ -30,20 +30,20 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
                 (#owner_storage_key).as_bytes()
             }
 
-            fn owner_get(&self) -> Option<::near_sdk::AccountId> {
-                ::near_sdk::env::storage_read(&self.owner_storage_key()).map(|owner_bytes| {
+            fn owner_get(&self) -> Option<near_sdk::AccountId> {
+                near_sdk::env::storage_read(&self.owner_storage_key()).map(|owner_bytes| {
                     let owner_raw =
-                        String::from_utf8(owner_bytes).unwrap_or_else(|_| ::near_sdk::env::panic_str("Ownable: Invalid string format"));
-                    std::convert::TryInto::try_into(owner_raw).unwrap_or_else(|_| ::near_sdk::env::panic_str("Ownable: Invalid account id"))
+                        String::from_utf8(owner_bytes).unwrap_or_else(|_| near_sdk::env::panic_str("Ownable: Invalid string format"));
+                    std::convert::TryInto::try_into(owner_raw).unwrap_or_else(|_| near_sdk::env::panic_str("Ownable: Invalid account id"))
                 })
             }
 
-            fn owner_set(&mut self, owner: Option<::near_sdk::AccountId>) {
+            fn owner_set(&mut self, owner: Option<near_sdk::AccountId>) {
                 let current_owner = self.owner_get();
 
                 if let Some(owner) = current_owner.as_ref() {
                     assert_eq!(
-                        &::near_sdk::env::predecessor_account_id(),
+                        &near_sdk::env::predecessor_account_id(),
                         owner,
                         "Ownable: Only owner can update current owner"
                     );
@@ -51,8 +51,8 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
                     // If owner is not set, only self can update the owner.
                     // Used mostly on constructor.
                     assert_eq!(
-                        ::near_sdk::env::predecessor_account_id(),
-                        ::near_sdk::env::current_account_id(),
+                        near_sdk::env::predecessor_account_id(),
+                        near_sdk::env::current_account_id(),
                         "Ownable: Owner not set. Only self can set the owner"
                     );
                 }
@@ -64,17 +64,17 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
                 #cratename::events::AsEvent::emit(&event);
 
                 match owner.as_ref() {
-                    Some(owner) => ::near_sdk::env::storage_write(
+                    Some(owner) => near_sdk::env::storage_write(
                         &self.owner_storage_key(),
                         owner.as_bytes(),
                     ),
-                    None => ::near_sdk::env::storage_remove(&self.owner_storage_key()),
+                    None => near_sdk::env::storage_remove(&self.owner_storage_key()),
                 };
             }
 
             fn owner_is(&self) -> bool {
                 self.owner_get().map_or(false, |owner| {
-                    owner == ::near_sdk::env::predecessor_account_id()
+                    owner == near_sdk::env::predecessor_account_id()
                 })
             }
         }
@@ -103,14 +103,14 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let owner_check = match (contains_self, contains_owner) {
         (true, true) => quote! {
             if !self.owner_is() {
-                ::near_sdk::assert_self();
+                near_sdk::assert_self();
             }
         },
         (true, false) => quote! {
-            ::near_sdk::assert_self();
+            near_sdk::assert_self();
         },
         (false, true) => quote! {
-            ::near_sdk::require!(self.owner_is(), "Ownable: Method must be called from owner");
+            near_sdk::require!(self.owner_is(), "Ownable: Method must be called from owner");
         },
         (false, false) => {
             // The developer did not specify a target for `only`, so we panic during macro
@@ -121,5 +121,5 @@ pub fn only(attrs: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    utils::add_extra_code_to_fn(&input, owner_check)
+    utils::add_extra_code_to_fn(&input, &owner_check)
 }

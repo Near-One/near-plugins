@@ -240,7 +240,7 @@ async fn test_stage_code_permission_failure() -> anyhow::Result<()> {
     assert_insufficient_acl_permissions(
         res,
         "up_stage_code",
-        vec!["CodeStager".to_string(), "DAO".to_string()],
+        &["CodeStager".to_string(), "DAO".to_string()],
     );
 
     // Verify no code was staged.
@@ -627,7 +627,7 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
         .get(1)
         .expect("There should be at least two receipts");
     assert!(fn_call_deploy_receipt.is_failure());
-    assert!(format!("{:?}", fn_call_deploy_receipt).contains("Failing migration on purpose"));
+    assert!(format!("{fn_call_deploy_receipt:?}").contains("Failing migration on purpose"));
 
     // Verify `code` wasn't deployed by calling a function that is defined only in the initial
     // contract but not in the contract corresponding to `code`.
@@ -728,7 +728,7 @@ async fn test_deploy_code_permission_failure() -> anyhow::Result<()> {
     assert_insufficient_acl_permissions(
         res,
         "up_deploy_code",
-        vec!["CodeDeployer".to_string(), "DAO".to_string()],
+        &["CodeDeployer".to_string(), "DAO".to_string()],
     );
 
     // Verify `code` wasn't deployed by calling a function that is defined only in the initial
@@ -783,7 +783,7 @@ async fn test_init_staging_duration_permission_failure() -> anyhow::Result<()> {
     assert_insufficient_acl_permissions(
         res,
         "up_init_staging_duration",
-        vec!["DurationManager".to_string(), "DAO".to_string()],
+        &["DurationManager".to_string(), "DAO".to_string()],
     );
 
     setup.assert_staging_duration(None).await;
@@ -830,7 +830,7 @@ async fn test_stage_update_staging_duration_permission_failure() -> anyhow::Resu
     assert_insufficient_acl_permissions(
         res,
         "up_stage_update_staging_duration",
-        vec!["DurationManager".to_string(), "DAO".to_string()],
+        &["DurationManager".to_string(), "DAO".to_string()],
     );
 
     // Verify no duration was staged.
@@ -904,7 +904,7 @@ async fn test_apply_update_staging_duration_permission_failure() -> anyhow::Resu
     assert_insufficient_acl_permissions(
         res,
         "up_apply_update_staging_duration",
-        vec!["DurationManager".to_string(), "DAO".to_string()],
+        &["DurationManager".to_string(), "DAO".to_string()],
     );
 
     // Verify the update was not applied.
@@ -1015,7 +1015,7 @@ async fn test_acl_permission_scope() -> anyhow::Result<()> {
     assert_insufficient_acl_permissions(
         res,
         "up_deploy_code",
-        vec!["CodeDeployer".to_string(), "DAO".to_string()],
+        &["CodeDeployer".to_string(), "DAO".to_string()],
     );
 
     // Verify `code` wasn't deployed by calling a function that is defined only in the initial

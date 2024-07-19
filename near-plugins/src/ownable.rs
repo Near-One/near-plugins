@@ -5,19 +5,19 @@
 //! specific functions.
 //!
 //! During creation of the contract set the owner using `owner_set`. Protect functions that should
-//! only be called by the owner using #[only(owner)].
+//! only be called by the owner using annotation: `#[only(owner)]`.
 //!
 //! ## Credits:
 //!
 //! Inspired by Open Zeppelin Ownable module:
-//! https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol
+//! `https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol`
 use crate::events::{AsEvent, EventMetadata};
 use near_sdk::AccountId;
 use serde::Serialize;
 
 /// Trait describing the functionality of the _Ownable_ plugin.
 pub trait Ownable {
-    /// Returns the key of storage slot to save the current owner. By default b"__OWNER__" is used.
+    /// Returns the key of storage slot to save the current owner. b"__OWNER__" is used by default.
     ///
     /// Attribute `owner_storage_key` can be used to set a different key:
     ///
@@ -76,8 +76,8 @@ pub struct OwnershipTransferred {
     pub new_owner: Option<AccountId>,
 }
 
-impl AsEvent<OwnershipTransferred> for OwnershipTransferred {
-    fn metadata(&self) -> EventMetadata<OwnershipTransferred> {
+impl AsEvent<Self> for OwnershipTransferred {
+    fn metadata(&self) -> EventMetadata<Self> {
         EventMetadata {
             standard: "Ownable".to_string(),
             version: "1.0.0".to_string(),
