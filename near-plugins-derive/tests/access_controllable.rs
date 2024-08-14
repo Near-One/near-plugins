@@ -8,7 +8,7 @@ use common::utils::{
     assert_success_with,
 };
 use near_plugins::access_controllable::{PermissionedAccounts, PermissionedAccountsPerRole};
-use near_sdk::serde_json::json;
+use near_sdk::serde_json::{self, json};
 use near_workspaces::network::Sandbox;
 use near_workspaces::result::ExecutionFinalResult;
 use near_workspaces::{Account, AccountId, Contract, Worker};
@@ -42,25 +42,35 @@ impl Setup {
         Self::new_with_admins_and_grantees(HashMap::default(), HashMap::default()).await
     }
 
+    /// Deploys the contract with a specific wasm binary.
+    async fn new_with_wasm(wasm: Vec<u8>) -> anyhow::Result<Self> {
+        Self::deploy_contract(wasm, json!({
+            "admins": HashMap::<String, AccountId>::new(),
+            "grantees": HashMap::<String, AccountId>::new()
+        })).await
+    }
+
     /// Deploys the contract and passes `admins` and `grantees` to the initialization method. Note
     /// that accounts corresponding to the ids in `admins` and `grantees` are _not_ created.
     async fn new_with_admins_and_grantees(
         admins: HashMap<String, AccountId>,
         grantees: HashMap<String, AccountId>,
     ) -> anyhow::Result<Self> {
-        let worker = near_workspaces::sandbox().await?;
         let wasm =
             common::repo::compile_project(Path::new(PROJECT_PATH), "access_controllable").await?;
+
+        Self::deploy_contract(wasm, json!({ "admins": admins, "grantees": grantees })).await
+    }
+
+    async fn deploy_contract(wasm: Vec<u8>, args: serde_json::Value) -> anyhow::Result<Self> {
+        let worker = near_workspaces::sandbox().await?;
         let contract = AccessControllableContract::new(worker.dev_deploy(&wasm).await?);
         let account = worker.dev_create_account().await?;
 
         contract
             .contract()
             .call("new")
-            .args_json(json!({
-                "admins": admins,
-                "grantees": grantees,
-            }))
+            .args_json(args)
             .max_gas()
             .transact()
             .await?
@@ -1519,5 +1529,42 @@ async fn test_acl_revoke_role_unchecked_is_private() -> anyhow::Result<()> {
         .acl_revoke_role_unchecked(&account, "ByMax2Increaser", account.id())
         .await?;
     assert_private_method_failure(res, "acl_revoke_role_unchecked");
+    Ok(())
+}
+
+const WASM_V_0_2_0_FILEPATH: &str = "tests/data/access_controllable_v_0_2_0.wasm";
+
+#[tokio::test]
+async fn test_upgrade_storage() -> anyhow::Result<()> {
+    let role = "ByMax2Increaser";
+
+    let old_wasm = std::fs::read(WASM_V_0_2_0_FILEPATH)?;
+    let Setup {
+        contract, account, ..
+    } = Setup::new_with_wasm(old_wasm).await?;
+
+    let contract_account = contract.contract().as_account();
+    let _ = contract
+        .acl_grant_role_unchecked(contract_account, role, account.id())
+        .await?;
+
+    let has_role = contract.acl_has_role(&account, role, account.id()).await?;
+    assert!(has_role);
+
+    let new_wasm = common::repo::compile_project(Path::new(PROJECT_PATH), "access_controllable").await?;
+
+    // New version
+    let contract = contract
+        .contract()
+        .as_account()
+        .deploy(&new_wasm)
+        .await
+        .unwrap()
+        .result;
+    let contract = AccessControllableContract::new(contract);
+
+    let has_role = contract.acl_has_role(&account, role, account.id()).await?;
+    assert!(has_role);
+
     Ok(())
 }
