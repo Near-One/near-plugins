@@ -1540,6 +1540,7 @@ const WASM_V_0_2_0_FILEPATH: &str = "tests/data/access_controllable_v_0_2_0.wasm
 #[tokio::test]
 async fn test_upgrade_storage() -> anyhow::Result<()> {
     let role = "ByMax2Increaser";
+    let role2 = "Resetter";
 
     let old_wasm = std::fs::read(WASM_V_0_2_0_FILEPATH)?;
     let Setup {
@@ -1547,12 +1548,29 @@ async fn test_upgrade_storage() -> anyhow::Result<()> {
     } = Setup::new_with_wasm(old_wasm).await?;
 
     let contract_account = contract.contract().as_account();
+
     let _ = contract
-        .acl_grant_role_unchecked(contract_account, role, account.id())
+        .acl_init_super_admin(contract_account, account.id())
         .await?;
 
-    let has_role = contract.acl_has_role(&account, role, account.id()).await?;
-    assert!(has_role);
+    let result = contract
+        .acl_grant_role(&account, role, account.id())
+        .await?;
+    assert!(result.is_some());
+    assert!(result.unwrap());
+
+    let result = contract
+        .acl_grant_role(&account, role2, account.id())
+        .await?;
+    assert!(result.is_some());
+    assert!(result.unwrap());
+
+    let admin_account_id: AccountId = "alice.near".parse().unwrap();
+    let added = contract
+        .acl_add_admin(&account, role, &admin_account_id)
+        .await?;
+    assert!(added.is_some());
+    assert!(added.unwrap());
 
     let new_wasm =
         common::repo::compile_project(Path::new(PROJECT_PATH), "access_controllable").await?;
@@ -1569,6 +1587,17 @@ async fn test_upgrade_storage() -> anyhow::Result<()> {
 
     let has_role = contract.acl_has_role(&account, role, account.id()).await?;
     assert!(has_role);
+
+    let has_role = contract.acl_has_role(&account, role2, account.id()).await?;
+    assert!(has_role);
+
+    let is_admin = contract
+        .acl_is_admin(&account, role, &admin_account_id)
+        .await?;
+    assert!(is_admin);
+
+    let is_super_admin = contract.acl_is_super_admin(&account, account.id()).await?;
+    assert!(is_super_admin);
 
     Ok(())
 }
