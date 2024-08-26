@@ -17,5 +17,6 @@ lto = true
 debug = false
 panic = "abort"
 overflow-checks = true
+strip = "symbols"
 
 [workspace]
