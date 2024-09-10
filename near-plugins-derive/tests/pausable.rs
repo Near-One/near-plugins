@@ -342,6 +342,18 @@ async fn test_not_paused_with_different_key() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_view_call_of_pausable_method() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let res = setup
+        .call_counter_modifier(&setup.unauth_account, "increase_1")
+        .await?;
+    assert_success_with_unit_return(res);
+    assert_eq!(setup.get_counter().await?, 1);
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_work_after_unpause() -> anyhow::Result<()> {
     let setup = Setup::new().await?;
 
