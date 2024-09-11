@@ -213,8 +213,9 @@ fn convert_code_to_crypto_hash(code: &[u8]) -> CryptoHash {
 /// Computes the hash `code` according the to requirements of the `hash` parameter of
 /// `Upgradable::up_deploy_code`.
 fn convert_code_to_deploy_hash(code: &[u8]) -> String {
+    use near_sdk::base64::Engine;
     let hash = near_sdk::env::sha256(code);
-    near_sdk::base64::encode(hash)
+    near_sdk::base64::prelude::BASE64_STANDARD.encode(&hash)
 }
 
 /// Smoke test of contract setup.
@@ -675,16 +676,18 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
     // Construct the function call actions to be executed in a batch transaction.
     // Note that we are attaching a call to `migrate_with_failure`, which will fail.
     let fn_call_deploy = near_workspaces::operations::Function::new("up_deploy_code")
-        .args_json(json!({ "function_call_args": FunctionCallArgs {
+        .args_json(json!({ 
+            "hash": convert_code_to_deploy_hash(&code),
+            "function_call_args": FunctionCallArgs {
         function_name: "migrate_with_failure".to_string(),
         arguments: Vec::new(),
         amount: NearToken::from_yoctonear(0),
         gas: Gas::from_tgas(2),
     } }))
-        .gas(Gas::from_tgas(201));
+        .gas(Gas::from_tgas(220));
     let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
         .args_borsh(Vec::<u8>::new())
-        .gas(Gas::from_tgas(90));
+        .gas(Gas::from_tgas(80));
 
     let res = dao
         .batch(setup.contract.id())
