@@ -215,7 +215,7 @@ fn convert_code_to_crypto_hash(code: &[u8]) -> CryptoHash {
 fn convert_code_to_deploy_hash(code: &[u8]) -> String {
     use near_sdk::base64::Engine;
     let hash = near_sdk::env::sha256(code);
-    near_sdk::base64::prelude::BASE64_STANDARD.encode(&hash)
+    near_sdk::base64::prelude::BASE64_STANDARD.encode(hash)
 }
 
 /// Smoke test of contract setup.
