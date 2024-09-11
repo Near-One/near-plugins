@@ -201,16 +201,20 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn get_bypass_condition(args: &ExceptSubArgs) -> proc_macro2::TokenStream {
-    let except_roles = args.roles.clone();
-    quote!(
-        let __except_roles: Vec<&str> = vec![#(#except_roles.into()),*];
-        let __except_roles: Vec<String> = __except_roles.iter().map(|&x| x.into()).collect();
-        let may_bypass = self.acl_has_any_role(
-            __except_roles,
-            ::near_sdk::env::predecessor_account_id()
-        );
-        if may_bypass {
-            __check_paused = false;
-        }
-    )
+    if args.roles.len() > 0 {
+        let except_roles = args.roles.clone();
+        quote!(
+            let __except_roles: Vec<&str> = vec![#(#except_roles.into()),*];
+            let __except_roles: Vec<String> = __except_roles.iter().map(|&x| x.into()).collect();
+            let may_bypass = self.acl_has_any_role(
+                __except_roles,
+                ::near_sdk::env::predecessor_account_id()
+            );
+            if may_bypass {
+                __check_paused = false;
+            }
+        )
+    } else {
+        quote!()
+    }
 }
