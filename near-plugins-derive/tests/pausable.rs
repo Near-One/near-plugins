@@ -7,6 +7,7 @@ use common::pausable_contract::PausableContract;
 use common::utils::{
     assert_failure_with, assert_insufficient_acl_permissions, assert_method_is_paused,
     assert_pausable_escape_hatch_is_closed, assert_success_with, assert_success_with_unit_return,
+    assert_view_method_is_paused,
 };
 use near_sdk::serde_json::json;
 use near_workspaces::network::Sandbox;
@@ -319,6 +320,11 @@ async fn test_pause_with_all_allows_except() -> anyhow::Result<()> {
         .call_counter_modifier(&exempted_account, "increase_4")
         .await?;
     assert_success_with_unit_return(res);
+    let res = setup
+        .pausable_contract
+        .pa_unpause_feature(&setup.pause_manager, "ALL")
+        .await?;
+    assert_success_with(res, true);
     assert_eq!(setup.get_counter().await?, 4);
     Ok(())
 }
@@ -337,6 +343,25 @@ async fn test_not_paused_with_different_key() -> anyhow::Result<()> {
         .await?;
     assert_success_with_unit_return(res);
     assert_eq!(setup.get_counter().await?, 1);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_pause_view_method() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+    let res = setup
+        .call_counter_modifier(&setup.unauth_account, "increase_1")
+        .await?;
+    assert_success_with_unit_return(res);
+    assert_eq!(setup.get_counter().await?, 1);
+
+    let res = setup
+        .pausable_contract
+        .pa_pause_feature(&setup.pause_manager, "get_counter")
+        .await?;
+    assert_success_with(res, true);
+    assert_view_method_is_paused(setup.get_counter().await.unwrap_err());
 
     Ok(())
 }
