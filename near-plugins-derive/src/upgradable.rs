@@ -187,7 +187,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_code_deployers),*))]
-            fn up_deploy_code(&mut self, hash: Option<String>, function_call_args: Option<#cratename::upgradable::FunctionCallArgs>) -> near_sdk::Promise {
+            fn up_deploy_code(&mut self, hash: String, function_call_args: Option<#cratename::upgradable::FunctionCallArgs>) -> near_sdk::Promise {
                 let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging timestamp isn't set"));
 
@@ -202,17 +202,15 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 }
 
                 let code = self.up_staged_code().unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged code"));
-                if let Some(hash) = hash {
-                    let expected_hash = ::near_sdk::base64::encode(Self::up_hash_code(code.as_ref()));
-                    if hash != expected_hash {
-                        near_sdk::env::panic_str(
-                            format!(
-                                "Upgradable: Cannot deploy due to wrong hash: expected hash: {}",
-                                expected_hash,
-                            )
-                            .as_str(),
+                let expected_hash = ::near_sdk::base64::encode(Self::up_hash_code(code.as_ref()));
+                if hash != expected_hash {
+                    near_sdk::env::panic_str(
+                        format!(
+                            "Upgradable: Cannot deploy due to wrong hash: expected hash: {}",
+                            expected_hash,
                         )
-                    }
+                        .as_str(),
+                    )
                 }
 
                 let promise = ::near_sdk::Promise::new(::near_sdk::env::current_account_id())

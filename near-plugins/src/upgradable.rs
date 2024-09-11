@@ -106,13 +106,12 @@ pub trait Upgradable {
     ///
     /// Some workflows (e.g. when a DAO interacts with an `Upgradable` contract) are facilitated if
     /// deployment succeeds only in case the hash of staged code corresponds to a given hash. This
-    /// behavior can be enabled with the `hash` parameter. In case it is `Some(h)`, the deployment
+    /// behavior can be enabled with the `hash` parameter. In case it is `h`, the deployment
     /// succeeds only if `h` equals the base64 encoded string of the staged code's `sha256` hash. In
     /// particular, the encoding according to [`near_sdk::base64::encode`] is expected. Note that
     /// `near_sdk` uses a rather dated version of the `base64` crate whose API differs from current
     /// versions.
     ///
-    /// Otherwise, if `hash` equals `None`, this verification step is skipped.
     ///
     /// # Attaching a function call
     ///
@@ -157,7 +156,7 @@ pub trait Upgradable {
     /// [storage staked]: https://docs.near.org/concepts/storage/storage-staking#btw-you-can-remove-data-to-unstake-some-tokens
     fn up_deploy_code(
         &mut self,
-        hash: Option<String>,
+        hash: String,
         function_call_args: Option<FunctionCallArgs>,
     ) -> Promise;
 

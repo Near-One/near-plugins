@@ -71,7 +71,7 @@ impl UpgradableContract {
     pub async fn up_deploy_code(
         &self,
         caller: &Account,
-        hash: Option<String>,
+        hash: String,
         function_call_args: Option<FunctionCallArgs>,
     ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
