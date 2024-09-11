@@ -57,6 +57,7 @@ impl Counter {
     }
 
     /// Returns the value of the counter.
+    #[pause]
     pub fn get_counter(&self) -> u64 {
         self.counter
     }

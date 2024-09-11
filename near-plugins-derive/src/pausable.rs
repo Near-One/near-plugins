@@ -201,6 +201,10 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn get_bypass_condition(args: &ExceptSubArgs) -> proc_macro2::TokenStream {
+    if args.roles.len() == 0 {
+        return quote!();
+    }
+
     let except_roles = args.roles.clone();
     quote!(
         let __except_roles: Vec<&str> = vec![#(#except_roles.into()),*];

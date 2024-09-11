@@ -110,6 +110,16 @@ pub fn assert_method_is_paused(res: ExecutionFinalResult) {
     );
 }
 
+pub fn assert_view_method_is_paused(err: anyhow::Error) {
+    let err = format!("{:?}", err);
+    let must_contain = "Pausable: Method is paused";
+    assert!(
+        err.contains(must_contain),
+        "Expected method to be paused, instead it failed with: {}",
+        err
+    );
+}
+
 pub fn assert_pausable_escape_hatch_is_closed(res: ExecutionFinalResult, feature: &str) {
     let must_contain = format!("Pausable: {feature} must be paused to use this function");
     assert_failure_with(res, &must_contain);
