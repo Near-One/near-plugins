@@ -68,7 +68,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
 
     let variant_idents = variants.into_iter().map(|v| v.ident).collect::<Vec<_>>();
     assert!(
-        variant_idents.len() <= usize::try_from(MAX_ROLE_VARIANTS).unwrap(),
+        variant_idents.len() <= usize::from(MAX_ROLE_VARIANTS),
         "The number of enum variants should not exceed MAX_ROLE_VARIANTS",
     );
     let variant_idxs: Vec<_> =
@@ -166,7 +166,7 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
                 .unwrap_or_else(|| ::near_sdk::env::panic_str("Too many enum variants to be represented by bitflags"))
         }
 
-        impl AccessControlRole for #ident {
+        impl #cratename::AccessControlRole for #ident {
             fn acl_role_variants() -> Vec<&'static str> {
                 vec![
                     #(#variant_names,)*
@@ -196,7 +196,12 @@ pub fn derive_access_control_role(input: TokenStream) -> TokenStream {
 
         #cratename::bitflags::bitflags! {
             /// Encodes permissions for roles and admins.
-            #[derive(BorshDeserialize, BorshSerialize, Default)]
+            #[derive(
+                Default,
+                ::near_sdk::borsh::BorshDeserialize,
+                ::near_sdk::borsh::BorshSerialize,
+            )]
+            #[borsh(crate = "near_sdk::borsh")]
             struct #bitflags_type_ident: u128 {
                 #(
                     const #bitflags_idents = 1u128 << #bitflags_idxs;

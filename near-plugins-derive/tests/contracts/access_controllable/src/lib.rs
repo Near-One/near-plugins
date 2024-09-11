@@ -1,7 +1,7 @@
 use near_plugins::{access_control, access_control_any, AccessControlRole, AccessControllable};
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault};
+use near_sdk::{env, near, AccountId, PanicOnDefault};
 use std::collections::HashMap;
 
 /// Roles are represented by enum variants.
@@ -20,13 +20,13 @@ pub enum Role {
 
 /// Pass `Role` to the `access_controllable` macro.
 #[access_control(role_type(Role))]
-#[near_bindgen]
-#[derive(PanicOnDefault, BorshDeserialize, BorshSerialize)]
+#[near(contract_state)]
+#[derive(PanicOnDefault)]
 pub struct Counter {
     counter: u64,
 }
 
-#[near_bindgen]
+#[near]
 impl Counter {
     /// Constructor of the contract which optionally adds access control admins and grants roles if
     /// either of the maps passed as parameters contains account ids. In that case, the contract
@@ -132,21 +132,24 @@ impl Counter {
             self.acl_is_super_admin(env::predecessor_account_id()),
             "Only super admins are allowed to add other super admins."
         );
-        self.acl_get_or_init().add_super_admin_unchecked(&account_id)
+        self.acl_get_or_init()
+            .add_super_admin_unchecked(&account_id)
     }
 }
 
 /// Exposing internal methods to facilitate integration testing.
-#[near_bindgen]
+#[near]
 impl Counter {
     #[private]
     pub fn acl_add_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
-        self.acl_get_or_init().add_super_admin_unchecked(&account_id)
+        self.acl_get_or_init()
+            .add_super_admin_unchecked(&account_id)
     }
 
     #[private]
     pub fn acl_revoke_super_admin_unchecked(&mut self, account_id: AccountId) -> bool {
-        self.acl_get_or_init().revoke_super_admin_unchecked(&account_id)
+        self.acl_get_or_init()
+            .revoke_super_admin_unchecked(&account_id)
     }
 
     #[private]
@@ -157,16 +160,19 @@ impl Counter {
 
     #[private]
     pub fn acl_add_admin_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.acl_get_or_init().add_admin_unchecked(role, &account_id)
+        self.acl_get_or_init()
+            .add_admin_unchecked(role, &account_id)
     }
 
     #[private]
     pub fn acl_revoke_admin_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.acl_get_or_init().revoke_admin_unchecked(role, &account_id)
+        self.acl_get_or_init()
+            .revoke_admin_unchecked(role, &account_id)
     }
 
     #[private]
     pub fn acl_grant_role_unchecked(&mut self, role: Role, account_id: AccountId) -> bool {
-        self.acl_get_or_init().grant_role_unchecked(role, &account_id)
+        self.acl_get_or_init()
+            .grant_role_unchecked(role, &account_id)
     }
 }

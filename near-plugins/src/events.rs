@@ -33,7 +33,7 @@ pub trait AsEvent<T: Serialize> {
 
     /// Emits the event on chain.
     fn emit(&self) {
-        near_sdk::log!(self.event());
+        near_sdk::log!("{}", self.event());
     }
 }
 

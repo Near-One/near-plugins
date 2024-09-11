@@ -1,11 +1,11 @@
-use crate::access_control_role::new_bitflags_type_ident;
-use crate::utils;
-use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
 use darling::FromMeta;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 use syn::{parse_macro_input, AttributeArgs, ItemFn, ItemStruct};
+
+use crate::access_control_role::new_bitflags_type_ident;
+use crate::utils::{self, cratename, is_near_bindgen_wrapped_or_marshall};
 
 /// Defines attributes for the `access_controllable` macro.
 #[derive(Debug, FromMeta)]
@@ -39,8 +39,9 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
     let storage_prefix = macro_args
         .storage_prefix
         .unwrap_or_else(|| DEFAULT_STORAGE_PREFIX.to_string());
-    assert!(
-        macro_args.role_type.len() == 1,
+    assert_eq!(
+        macro_args.role_type.len(),
+        1,
         "role_type should be exactly one path"
     );
     let role_type = &macro_args.role_type[0];
@@ -49,13 +50,22 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         #input
 
         #[derive(::near_sdk::borsh::BorshDeserialize, ::near_sdk::borsh::BorshSerialize)]
+        #[borsh(crate = "near_sdk::borsh")]
+        /// NOTE: Despite `near_sdk::store::UnorderedMap` and `near_sdk::store::UnorderedSet`
+        /// have been deprecated, it still makes sense to use them here as we might still
+        /// need to iterate over the keys.
+        /// The impact on gas consumption compared to `near_sdk::store::LookupMap` is negligible
+        /// as it lazily loads list of keys to iterate over internally. Compiled size of a
+        /// contract is not affected that much as well.
         struct #acl_type {
             /// Stores permissions per account.
+            #[allow(deprecated)]
             permissions: ::near_sdk::store::UnorderedMap<
                 ::near_sdk::AccountId,
                 #bitflags_type,
             >,
             /// Stores the set of accounts that bear a permission.
+            #[allow(deprecated)]
             bearers: ::near_sdk::store::UnorderedMap<
                 #bitflags_type,
                 ::near_sdk::store::UnorderedSet<::near_sdk::AccountId>,
@@ -64,11 +74,13 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
         impl Default for #acl_type {
             fn default() -> Self {
-                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
+                let base_prefix = <#ident as #cratename::AccessControllable>::acl_storage_prefix();
                 Self {
-                     permissions: ::near_sdk::store::UnorderedMap::new(
+                    #[allow(deprecated)]
+                    permissions: ::near_sdk::store::UnorderedMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Permissions),
                     ),
+                    #[allow(deprecated)]
                     bearers: ::near_sdk::store::UnorderedMap::new(
                         __acl_storage_prefix(base_prefix, __AclStorageKey::Bearers),
                     ),
@@ -80,6 +92,7 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
         /// instead it should be prepended to the storage prefix specified by
         /// the user.
         #[derive(::near_sdk::borsh::BorshSerialize)]
+        #[borsh(crate = "near_sdk::borsh")]
         enum __AclStorageKey {
             Permissions,
             Bearers,
@@ -89,21 +102,20 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
 
         /// Generates a prefix by concatenating the input parameters.
         fn __acl_storage_prefix(base: &[u8], specifier: __AclStorageKey) -> Vec<u8> {
-            let specifier = specifier
-                .try_to_vec()
+            let specifier = near_sdk::borsh::to_vec(&specifier)
                 .unwrap_or_else(|_| ::near_sdk::env::panic_str("Storage key should be serializable"));
             [base, specifier.as_slice()].concat()
         }
 
         impl #ident {
             fn acl_get_storage(&self) -> Option<#acl_type> {
-                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
+                let base_prefix = <#ident as #cratename::AccessControllable>::acl_storage_prefix();
                 near_sdk::env::storage_read(&__acl_storage_prefix(
                     base_prefix,
                     __AclStorageKey::AclStorage,
                 ))
                 .map(|acl_storage_bytes| {
-                    #acl_type::try_from_slice(&acl_storage_bytes)
+                    ::near_sdk::borsh::BorshDeserialize::try_from_slice(&acl_storage_bytes)
                         .unwrap_or_else(|_| near_sdk::env::panic_str("ACL: invalid acl storage format"))
                 })
             }
@@ -113,19 +125,20 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             }
 
             fn acl_init_storage_unchecked(&mut self) -> #acl_type {
-                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
+                let base_prefix = <#ident as #cratename::AccessControllable>::acl_storage_prefix();
                 let acl_storage: #acl_type = Default::default();
                 near_sdk::env::storage_write(
                     &__acl_storage_prefix(base_prefix, __AclStorageKey::AclStorage),
-                    &acl_storage.try_to_vec().unwrap(),
+                    &near_sdk::borsh::to_vec(&acl_storage).unwrap(),
                 );
                 acl_storage
             }
         }
 
         impl #acl_type {
+            #[allow(deprecated)]
             fn new_bearers_set(permission: #bitflags_type) -> ::near_sdk::store::UnorderedSet<::near_sdk::AccountId> {
-                let base_prefix = <#ident as AccessControllable>::acl_storage_prefix();
+                let base_prefix = <#ident as #cratename::AccessControllable>::acl_storage_prefix();
                 let specifier = __AclStorageKey::BearersSet { permission };
                 ::near_sdk::store::UnorderedSet::new(__acl_storage_prefix(base_prefix, specifier))
             }
@@ -566,13 +579,13 @@ pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream
             };
         }
 
-        // Note that `#[near-bindgen]` exposes non-public functions in trait
+        // Note that `#[near]` exposes non-public functions in trait
         // implementations. This is [documented] behavior. Therefore some
         // functions are made `#[private]` despite _not_ being public.
         //
-        // [documented]: https://docs.near.org/sdk/rust/contract-interface/public-methods#exposing-trait-implementations
-        #[near_bindgen]
-        impl AccessControllable for #ident {
+        // [documented]: https://docs.near.org/sdk/rust/contract-structure/near-bindgen
+        #[near]
+        impl #cratename::AccessControllable for #ident {
             fn acl_storage_prefix() -> &'static [u8] {
                 (#storage_prefix).as_bytes()
             }

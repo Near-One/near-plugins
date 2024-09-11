@@ -24,8 +24,8 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
         .unwrap_or_else(|| "__OWNER__".to_string());
 
     let output = quote! {
-        #[near_bindgen]
-        impl Ownable for #ident {
+        #[near]
+        impl #cratename::Ownable for #ident {
             fn owner_storage_key(&self) -> &'static [u8] {
                 (#owner_storage_key).as_bytes()
             }
@@ -66,7 +66,7 @@ pub fn derive_ownable(input: TokenStream) -> TokenStream {
                 match owner.as_ref() {
                     Some(owner) => ::near_sdk::env::storage_write(
                         &self.owner_storage_key(),
-                        owner.as_ref().as_bytes(),
+                        owner.as_bytes(),
                     ),
                     None => ::near_sdk::env::storage_remove(&self.owner_storage_key()),
                 };
