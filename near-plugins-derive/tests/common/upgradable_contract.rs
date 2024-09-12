@@ -71,11 +71,13 @@ impl UpgradableContract {
     pub async fn up_deploy_code(
         &self,
         caller: &Account,
+        hash: String,
         function_call_args: Option<FunctionCallArgs>,
     ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "up_deploy_code")
             .args_json(json!({
+                "hash": hash,
                 "function_call_args": function_call_args,
             }))
             .max_gas()

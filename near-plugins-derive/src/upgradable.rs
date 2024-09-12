@@ -140,6 +140,13 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             fn up_set_staging_duration_unchecked(&self, staging_duration: near_sdk::Duration) {
                 self.up_storage_write(__UpgradableStorageKey::StagingDuration, &::near_sdk::borsh::to_vec(&staging_duration).unwrap());
             }
+
+            /// Computes the `sha256` hash of `code` and panics if the conversion to `CryptoHash` fails.
+            fn up_hash_code(code: &[u8]) -> ::near_sdk::CryptoHash {
+                let hash = near_sdk::env::sha256(code);
+                std::convert::TryInto::try_into(hash)
+                    .expect("sha256 should convert to CryptoHash")
+            }
         }
 
         #[near]
@@ -176,11 +183,11 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
 
             fn up_staged_code_hash(&self) -> Option<::near_sdk::CryptoHash> {
                 self.up_staged_code()
-                    .map(|code| std::convert::TryInto::try_into(::near_sdk::env::sha256(code.as_ref())).unwrap())
+                    .map(|code| Self::up_hash_code(code.as_ref()))
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_code_deployers),*))]
-            fn up_deploy_code(&mut self, function_call_args: Option<#cratename::upgradable::FunctionCallArgs>) -> near_sdk::Promise {
+            fn up_deploy_code(&mut self, hash: String, function_call_args: Option<#cratename::upgradable::FunctionCallArgs>) -> near_sdk::Promise {
                 let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging timestamp isn't set"));
 
@@ -195,6 +202,17 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 }
 
                 let code = self.up_staged_code().unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged code"));
+                let expected_hash = ::near_sdk::base64::encode(Self::up_hash_code(code.as_ref()));
+                if hash != expected_hash {
+                    near_sdk::env::panic_str(
+                        format!(
+                            "Upgradable: Cannot deploy due to wrong hash: expected hash: {}",
+                            expected_hash,
+                        )
+                        .as_str(),
+                    )
+                }
+
                 let promise = ::near_sdk::Promise::new(::near_sdk::env::current_account_id())
                     .deploy_contract(code);
                 match function_call_args {

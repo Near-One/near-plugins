@@ -109,13 +109,13 @@ impl Setup {
     }
 
     /// Asserts staged code equals `expected_code`.
-    async fn assert_staged_code(&self, expected_code: Option<Vec<u8>>) {
+    async fn assert_staged_code(&self, expected_code: Option<&Vec<u8>>) {
         let staged = self
             .upgradable_contract
             .up_staged_code(&self.unauth_account)
             .await
             .expect("Call to up_staged_code should succeed");
-        assert_eq!(staged, expected_code);
+        assert_eq!(staged.as_ref(), expected_code);
     }
 
     /// Asserts the staging duration of the `Upgradable` contract equals the `expected_duration`.
@@ -208,6 +208,14 @@ fn convert_code_to_crypto_hash(code: &[u8]) -> CryptoHash {
     near_sdk::env::sha256(code)
         .try_into()
         .expect("Code should be converted to CryptoHash")
+}
+
+/// Computes the hash `code` according the to requirements of the `hash` parameter of
+/// `Upgradable::up_deploy_code`.
+fn convert_code_to_deploy_hash(code: &[u8]) -> String {
+    use near_sdk::base64::Engine;
+    let hash = near_sdk::env::sha256(code);
+    near_sdk::base64::prelude::BASE64_STANDARD.encode(hash)
 }
 
 /// Smoke test of contract setup.
@@ -332,7 +340,7 @@ async fn test_staging_empty_code_clears_storage() -> anyhow::Result<()> {
         .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
-    setup.assert_staged_code(Some(code)).await;
+    setup.assert_staged_code(Some(&code)).await;
 
     // Verify staging empty code removes it.
     let res = setup
@@ -436,11 +444,72 @@ async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
         .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
-    setup.assert_staged_code(Some(code)).await;
+    setup.assert_staged_code(Some(&code)).await;
 
     // Deploy staged code.
-    let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, convert_code_to_deploy_hash(&code), None)
+        .await?;
     assert_success_with_unit_return(res);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_deploy_code_with_hash_success() -> anyhow::Result<()> {
+    let worker = near_workspaces::sandbox().await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
+
+    // Stage some code.
+    let code = vec![1, 2, 3];
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(&code)).await;
+
+    // Deploy staged code.
+    let hash = convert_code_to_deploy_hash(&code);
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, hash, None)
+        .await?;
+    assert_success_with_unit_return(res);
+
+    Ok(())
+}
+
+/// Verifies failure of `up_deploy_code(hash, ...)` when `hash` does not correspond to the
+/// hash of staged code.
+#[tokio::test]
+async fn test_deploy_code_with_hash_invalid_hash() -> anyhow::Result<()> {
+    let worker = near_workspaces::sandbox().await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
+
+    // Stage some code.
+    let code = vec![1, 2, 3];
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(&code)).await;
+
+    // Deployment is aborted if an invalid hash is provided.
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, "invalid_hash".to_owned(), None)
+        .await?;
+    let actual_hash = convert_code_to_deploy_hash(&code);
+    let expected_err = format!(
+        "Upgradable: Cannot deploy due to wrong hash: expected hash: {}",
+        actual_hash
+    );
+    assert_failure_with(res, &expected_err);
 
     Ok(())
 }
@@ -465,10 +534,13 @@ async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
         .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
-    setup.assert_staged_code(Some(code)).await;
+    setup.assert_staged_code(Some(&code)).await;
 
     // Deploy staged code.
-    let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, convert_code_to_deploy_hash(&code), None)
+        .await?;
     assert_success_with_unit_return(res);
 
     // The newly deployed contract defines the function `is_upgraded`. Calling it successfully
@@ -502,7 +574,7 @@ async fn test_deploy_code_with_migration() -> anyhow::Result<()> {
         .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
-    setup.assert_staged_code(Some(code)).await;
+    setup.assert_staged_code(Some(&code)).await;
 
     // Deploy staged code and call the new contract's `migrate` method.
     let function_call_args = FunctionCallArgs {
@@ -513,7 +585,11 @@ async fn test_deploy_code_with_migration() -> anyhow::Result<()> {
     };
     let res = setup
         .upgradable_contract
-        .up_deploy_code(&dao, Some(function_call_args))
+        .up_deploy_code(
+            &dao,
+            convert_code_to_deploy_hash(&code),
+            Some(function_call_args),
+        )
         .await?;
     assert_success_with_unit_return(res);
 
@@ -545,7 +621,7 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
         .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
-    setup.assert_staged_code(Some(code)).await;
+    setup.assert_staged_code(Some(&code)).await;
 
     // Deploy staged code and call the new contract's `migrate_with_failure` method.
     let function_call_args = FunctionCallArgs {
@@ -556,7 +632,11 @@ async fn test_deploy_code_with_migration_failure_rollback() -> anyhow::Result<()
     };
     let res = setup
         .upgradable_contract
-        .up_deploy_code(&dao, Some(function_call_args))
+        .up_deploy_code(
+            &dao,
+            convert_code_to_deploy_hash(&code),
+            Some(function_call_args),
+        )
         .await?;
     assert_failure_with(res, "Failing migration on purpose");
 
@@ -591,21 +671,23 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
         .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
-    setup.assert_staged_code(Some(code)).await;
+    setup.assert_staged_code(Some(&code)).await;
 
     // Construct the function call actions to be executed in a batch transaction.
     // Note that we are attaching a call to `migrate_with_failure`, which will fail.
     let fn_call_deploy = near_workspaces::operations::Function::new("up_deploy_code")
-        .args_json(json!({ "function_call_args": FunctionCallArgs {
+        .args_json(json!({ 
+            "hash": convert_code_to_deploy_hash(&code),
+            "function_call_args": FunctionCallArgs {
         function_name: "migrate_with_failure".to_string(),
         arguments: Vec::new(),
         amount: NearToken::from_yoctonear(0),
         gas: Gas::from_tgas(2),
     } }))
-        .gas(Gas::from_tgas(201));
+        .gas(Gas::from_tgas(220));
     let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
         .args_borsh(Vec::<u8>::new())
-        .gas(Gas::from_tgas(90));
+        .gas(Gas::from_tgas(80));
 
     let res = dao
         .batch(setup.contract.id())
@@ -658,13 +740,16 @@ async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
         .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
-    setup.assert_staged_code(Some(code)).await;
+    setup.assert_staged_code(Some(&code)).await;
 
     // Let the staging duration pass.
     fast_forward_beyond(&worker, staging_duration).await;
 
     // Deploy staged code.
-    let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, convert_code_to_deploy_hash(&code), None)
+        .await?;
     assert_success_with_unit_return(res);
 
     Ok(())
@@ -688,13 +773,16 @@ async fn test_deploy_code_with_delay_failure_too_early() -> anyhow::Result<()> {
         .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
-    setup.assert_staged_code(Some(code)).await;
+    setup.assert_staged_code(Some(&code)).await;
 
     // Let some time pass but not enough.
     fast_forward_beyond(&worker, sdk_duration_from_secs(1)).await;
 
     // Verify trying to deploy staged code fails.
-    let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, convert_code_to_deploy_hash(&code), None)
+        .await?;
     assert_failure_with(res, ERR_MSG_DEPLOY_CODE_TOO_EARLY);
 
     // Verify `code` wasn't deployed by calling a function that is defined only in the initial
@@ -717,13 +805,17 @@ async fn test_deploy_code_permission_failure() -> anyhow::Result<()> {
         .up_stage_code(&dao, code.clone())
         .await?;
     assert_success_with_unit_return(res);
-    setup.assert_staged_code(Some(code)).await;
+    setup.assert_staged_code(Some(&code)).await;
 
     // Only the roles passed as `code_deployers` to the `Upgradable` derive macro may successfully
     // call this method.
     let res = setup
         .upgradable_contract
-        .up_deploy_code(&setup.unauth_account, None)
+        .up_deploy_code(
+            &setup.unauth_account,
+            convert_code_to_deploy_hash(&code),
+            None,
+        )
         .await?;
     assert_insufficient_acl_permissions(
         res,
@@ -762,7 +854,10 @@ async fn test_deploy_code_empty_failure() -> anyhow::Result<()> {
     // The staging timestamp is set when staging code and removed when unstaging code. So when there
     // is no code staged, there is no staging timestamp. Hence the error message regarding a missing
     // staging timestamp is expected.
-    let res = setup.upgradable_contract.up_deploy_code(&dao, None).await?;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, "".to_owned(), None)
+        .await?;
     assert_failure_with(res, ERR_MSG_NO_STAGING_TS);
 
     Ok(())
@@ -1003,14 +1098,18 @@ async fn test_acl_permission_scope() -> anyhow::Result<()> {
         .up_stage_code(&code_stager, code.clone())
         .await?;
     assert_success_with_unit_return(res);
-    setup.assert_staged_code(Some(code)).await;
+    setup.assert_staged_code(Some(&code)).await;
 
     // Verify `code_stager` is not authorized to deploy staged code. Only grantees of at least one
     // of the roles passed as `code_deployers` to the `Upgradable` derive macro are authorized to
     // deploy code.
     let res = setup
         .upgradable_contract
-        .up_deploy_code(&setup.unauth_account, None)
+        .up_deploy_code(
+            &setup.unauth_account,
+            convert_code_to_deploy_hash(&code),
+            None,
+        )
         .await?;
     assert_insufficient_acl_permissions(
         res,

@@ -102,6 +102,17 @@ pub trait Upgradable {
 
     /// Allows an authorized account to deploy the staged code. It panics if no code is staged.
     ///
+    /// # Verifying the hash of staged code
+    ///
+    /// Some workflows (e.g. when a DAO interacts with an `Upgradable` contract) are facilitated if
+    /// deployment succeeds only in case the hash of staged code corresponds to a given hash. This
+    /// behavior can be enabled with the `hash` parameter. In case it is `h`, the deployment
+    /// succeeds only if `h` equals the base64 encoded string of the staged code's `sha256` hash. In
+    /// particular, the encoding according to [`near_sdk::base64::encode`] is expected. Note that
+    /// `near_sdk` uses a rather dated version of the `base64` crate whose API differs from current
+    /// versions.
+    ///
+    ///
     /// # Attaching a function call
     ///
     /// If `function_call_args` are provided, code is deployed in a batch promise that contains the
@@ -143,7 +154,11 @@ pub trait Upgradable {
     /// [asynchronous design]: https://docs.near.org/concepts/basics/transactions/overview
     /// [state migration]: https://docs.near.org/develop/upgrade#migrating-the-state
     /// [storage staked]: https://docs.near.org/concepts/storage/storage-staking#btw-you-can-remove-data-to-unstake-some-tokens
-    fn up_deploy_code(&mut self, function_call_args: Option<FunctionCallArgs>) -> Promise;
+    fn up_deploy_code(
+        &mut self,
+        hash: String,
+        function_call_args: Option<FunctionCallArgs>,
+    ) -> Promise;
 
     /// Initializes the duration of the delay for deploying the staged code. It defaults to zero if
     /// code is staged before the staging duration is initialized. Once the staging duration has
