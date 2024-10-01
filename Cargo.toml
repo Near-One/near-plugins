@@ -13,7 +13,7 @@ authors = ["Aurora Labs <hello@aurora.dev>"]
 # An update of the MSRV requires updating:
 # - `rust-toolchain` files in `near-plugins-derive/tests/contracts/**`
 # - the toolchain installed in CI via the `toolchain` parameter of `actions-rs/toolchain@v1`
-rust-version = "1.76.0"
+rust-version = "1.79.0"
 description = "Ergonomic plugin system to extend NEAR contracts."
 license = "CC0-1.0"
 readme = "README.md"
@@ -23,13 +23,13 @@ keywords = ["near", "smart contract", "plugin"]
 
 [workspace.dependencies]
 bitflags = "1.3"
-near-sdk = ">=5.2, <5.4"
+near-sdk = ">=5.2"
 near-plugins = { path = "near-plugins" }
 near-plugins-derive = { path = "near-plugins-derive" }
 serde = "1"
 anyhow = "1.0"
 tokio = { version = "1", features = ["full"] }
-near-workspaces = "0.11"
+near-workspaces = "0.14"
 toml = "0.8"
 darling = "0.13.1"
 proc-macro2 = "1.0"
