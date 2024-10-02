@@ -60,8 +60,7 @@
 //! [batch transaction]: https://docs.near.org/concepts/basics/transactions/overview
 //! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
-use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{AccountId, CryptoHash, Gas, NearToken, Promise};
+use near_sdk::{near, serde::Serialize, AccountId, CryptoHash, Gas, NearToken, Promise};
 
 /// Trait describing the functionality of the _Upgradable_ plugin.
 pub trait Upgradable {
@@ -197,7 +196,7 @@ pub trait Upgradable {
     fn up_apply_update_staging_duration(&mut self);
 }
 
-#[derive(Deserialize, Serialize)]
+#[near(serializers = [json])]
 pub struct UpgradableDurationStatus {
     pub staging_duration: Option<near_sdk::Duration>,
     pub staging_timestamp: Option<near_sdk::Timestamp>,
@@ -207,7 +206,8 @@ pub struct UpgradableDurationStatus {
 
 /// Specifies a function call to be appended to the actions of a promise via
 /// [`near_sdk::Promise::function_call`]).
-#[derive(Deserialize, Serialize, Debug)]
+#[near(serializers = [json])]
+#[derive(Debug)]
 pub struct FunctionCallArgs {
     /// The name of the function to call.
     pub function_name: String,
