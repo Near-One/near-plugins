@@ -35,8 +35,7 @@
 //! Inspired by OpenZeppelin's
 //! [AccessControl](https://docs.openzeppelin.com/contracts/3.x/api/access#AccessControl) module.
 
-use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::AccountId;
+use near_sdk::{AccountId, near, serde::{Deserialize, Serialize}};
 use std::collections::HashMap;
 
 /// # Representation of roles
@@ -399,7 +398,8 @@ pub trait AccessControllable {
 /// # Uniqueness and ordering
 ///
 /// Account ids returned in vectors are unique but not ordered.
-#[derive(Deserialize, Serialize, Debug)]
+#[near(serializers = [json])]
+#[derive(Debug)]
 pub struct PermissionedAccounts {
     /// The accounts that have super admin permissions.
     pub super_admins: Vec<AccountId>,
@@ -412,7 +412,8 @@ pub struct PermissionedAccounts {
 /// # Uniqueness and ordering
 ///
 /// Account ids returned in vectors are unique but not ordered.
-#[derive(Deserialize, Serialize, Debug)]
+#[near(serializers = [json])]
+#[derive(Debug)]
 pub struct PermissionedAccountsPerRole {
     /// The accounts that have admin permissions for the role.
     pub admins: Vec<AccountId>,
