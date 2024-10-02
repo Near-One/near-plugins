@@ -35,7 +35,7 @@
 //! Inspired by OpenZeppelin's
 //! [AccessControl](https://docs.openzeppelin.com/contracts/3.x/api/access#AccessControl) module.
 
-use near_sdk::{AccountId, near, serde::{Deserialize, Serialize}};
+use near_sdk::{near, AccountId};
 use std::collections::HashMap;
 
 /// # Representation of roles
