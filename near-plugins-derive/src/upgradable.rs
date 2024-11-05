@@ -103,42 +103,42 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
         }
 
         impl #ident {
-            fn up_get_timestamp(&self, key: __UpgradableStorageKey) -> Option<::near_sdk::Timestamp> {
-                near_sdk::env::storage_read(self.up_storage_key(key).as_ref()).map(|timestamp_bytes| {
+            fn up_get_timestamp(key: __UpgradableStorageKey) -> Option<::near_sdk::Timestamp> {
+                near_sdk::env::storage_read(Self::up_storage_key(key).as_ref()).map(|timestamp_bytes| {
                     ::near_sdk::Timestamp::try_from_slice(&timestamp_bytes).unwrap_or_else(|_|
                         near_sdk::env::panic_str("Upgradable: Invalid u64 timestamp format")
                     )
                 })
             }
 
-            fn up_get_duration(&self, key: __UpgradableStorageKey) -> Option<::near_sdk::Duration> {
-                ::near_sdk::env::storage_read(self.up_storage_key(key).as_ref()).map(|duration_bytes| {
+            fn up_get_duration(key: __UpgradableStorageKey) -> Option<::near_sdk::Duration> {
+                ::near_sdk::env::storage_read(Self::up_storage_key(key).as_ref()).map(|duration_bytes| {
                     ::near_sdk::Duration::try_from_slice(&duration_bytes).unwrap_or_else(|_|
                             near_sdk::env::panic_str("Upgradable: Invalid u64 Duration format")
                     )
                 })
             }
 
-            fn up_set_timestamp(&self, key: __UpgradableStorageKey, value: ::near_sdk::Timestamp) {
-                self.up_storage_write(key, &::near_sdk::borsh::to_vec(&value).unwrap());
+            fn up_set_timestamp(key: __UpgradableStorageKey, value: ::near_sdk::Timestamp) {
+                Self::up_storage_write(key, &::near_sdk::borsh::to_vec(&value).unwrap());
             }
 
-            fn up_set_duration(&self, key: __UpgradableStorageKey, value: ::near_sdk::Duration) {
-                self.up_storage_write(key, &::near_sdk::borsh::to_vec(&value).unwrap());
+            fn up_set_duration(key: __UpgradableStorageKey, value: ::near_sdk::Duration) {
+                Self::up_storage_write(key, &::near_sdk::borsh::to_vec(&value).unwrap());
             }
 
-            fn up_storage_key(&self, key: __UpgradableStorageKey) -> Vec<u8> {
+            fn up_storage_key(key: __UpgradableStorageKey) -> Vec<u8> {
                 let key_vec = ::near_sdk::borsh::to_vec(&key)
                     .unwrap_or_else(|_| ::near_sdk::env::panic_str("Storage key should be serializable"));
                 [(#storage_prefix).as_bytes(), key_vec.as_slice()].concat()
             }
 
-            fn up_storage_write(&self, key: __UpgradableStorageKey, value: &[u8]) {
-                ::near_sdk::env::storage_write(self.up_storage_key(key).as_ref(), &value);
+            fn up_storage_write(key: __UpgradableStorageKey, value: &[u8]) {
+                ::near_sdk::env::storage_write(Self::up_storage_key(key).as_ref(), &value);
             }
 
-            fn up_set_staging_duration_unchecked(&self, staging_duration: near_sdk::Duration) {
-                self.up_storage_write(__UpgradableStorageKey::StagingDuration, &::near_sdk::borsh::to_vec(&staging_duration).unwrap());
+            fn up_set_staging_duration_unchecked(staging_duration: near_sdk::Duration) {
+                Self::up_storage_write(__UpgradableStorageKey::StagingDuration, &::near_sdk::borsh::to_vec(&staging_duration).unwrap());
             }
 
             /// Computes the `sha256` hash of `code` and panics if the conversion to `CryptoHash` fails.
@@ -151,44 +151,44 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
 
         #[near]
         impl Upgradable for #ident {
-            fn up_storage_prefix(&self) -> &'static [u8] {
+            fn up_storage_prefix() -> &'static [u8] {
                 (#storage_prefix).as_bytes()
             }
 
-            fn up_get_delay_status(&self) -> #cratename::UpgradableDurationStatus {
+            fn up_get_delay_status() -> #cratename::UpgradableDurationStatus {
                 #cratename::UpgradableDurationStatus {
-                    staging_duration: self.up_get_duration(__UpgradableStorageKey::StagingDuration),
-                    staging_timestamp: self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp),
-                    new_staging_duration: self.up_get_duration(__UpgradableStorageKey::NewStagingDuration),
-                    new_staging_duration_timestamp: self.up_get_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp),
+                    staging_duration: Self::up_get_duration(__UpgradableStorageKey::StagingDuration),
+                    staging_timestamp: Self::up_get_timestamp(__UpgradableStorageKey::StagingTimestamp),
+                    new_staging_duration: Self::up_get_duration(__UpgradableStorageKey::NewStagingDuration),
+                    new_staging_duration_timestamp: Self::up_get_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp),
                 }
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_code_stagers),*))]
-            fn up_stage_code(&mut self, #[serializer(borsh)] code: Vec<u8>) {
+            fn up_stage_code(#[serializer(borsh)] code: Vec<u8>) {
                 if code.is_empty() {
-                    ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::Code).as_ref());
-                    ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::StagingTimestamp).as_ref());
+                    ::near_sdk::env::storage_remove(Self::up_storage_key(__UpgradableStorageKey::Code).as_ref());
+                    ::near_sdk::env::storage_remove(Self::up_storage_key(__UpgradableStorageKey::StagingTimestamp).as_ref());
                 } else {
-                    let timestamp = ::near_sdk::env::block_timestamp() + self.up_get_duration(__UpgradableStorageKey::StagingDuration).unwrap_or(0);
-                    self.up_storage_write(__UpgradableStorageKey::Code, &code);
-                    self.up_set_timestamp(__UpgradableStorageKey::StagingTimestamp, timestamp);
+                    let timestamp = ::near_sdk::env::block_timestamp() + Self::up_get_duration(__UpgradableStorageKey::StagingDuration).unwrap_or(0);
+                    Self::up_storage_write(__UpgradableStorageKey::Code, &code);
+                    Self::up_set_timestamp(__UpgradableStorageKey::StagingTimestamp, timestamp);
                 }
             }
 
             #[result_serializer(borsh)]
-            fn up_staged_code(&self) -> Option<Vec<u8>> {
-                ::near_sdk::env::storage_read(self.up_storage_key(__UpgradableStorageKey::Code).as_ref())
+            fn up_staged_code() -> Option<Vec<u8>> {
+                ::near_sdk::env::storage_read(Self::up_storage_key(__UpgradableStorageKey::Code).as_ref())
             }
 
-            fn up_staged_code_hash(&self) -> Option<::near_sdk::CryptoHash> {
-                self.up_staged_code()
+            fn up_staged_code_hash() -> Option<::near_sdk::CryptoHash> {
+                Self::up_staged_code()
                     .map(|code| Self::up_hash_code(code.as_ref()))
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_code_deployers),*))]
-            fn up_deploy_code(&mut self, hash: String, function_call_args: Option<#cratename::upgradable::FunctionCallArgs>) -> near_sdk::Promise {
-                let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::StagingTimestamp)
+            fn up_deploy_code(hash: String, function_call_args: Option<#cratename::upgradable::FunctionCallArgs>) -> near_sdk::Promise {
+                let staging_timestamp = Self::up_get_timestamp(__UpgradableStorageKey::StagingTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging timestamp isn't set"));
 
                 if ::near_sdk::env::block_timestamp() < staging_timestamp {
@@ -201,7 +201,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     );
                 }
 
-                let code = self.up_staged_code().unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged code"));
+                let code = Self::up_staged_code().unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged code"));
                 let expected_hash = ::near_sdk::base64::encode(Self::up_hash_code(code.as_ref()));
                 if hash != expected_hash {
                     near_sdk::env::panic_str(
@@ -227,24 +227,24 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_duration_initializers),*))]
-            fn up_init_staging_duration(&mut self, staging_duration: ::near_sdk::Duration) {
-                ::near_sdk::require!(self.up_get_duration(__UpgradableStorageKey::StagingDuration).is_none(), "Upgradable: staging duration was already initialized");
-                self.up_set_staging_duration_unchecked(staging_duration);
+            fn up_init_staging_duration(staging_duration: ::near_sdk::Duration) {
+                ::near_sdk::require!(Self::up_get_duration(__UpgradableStorageKey::StagingDuration).is_none(), "Upgradable: staging duration was already initialized");
+                Self::up_set_staging_duration_unchecked(staging_duration);
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_duration_update_stagers),*))]
-            fn up_stage_update_staging_duration(&mut self, staging_duration: ::near_sdk::Duration) {
-                let current_staging_duration = self.up_get_duration(__UpgradableStorageKey::StagingDuration)
+            fn up_stage_update_staging_duration(staging_duration: ::near_sdk::Duration) {
+                let current_staging_duration = Self::up_get_duration(__UpgradableStorageKey::StagingDuration)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: staging duration isn't initialized"));
 
-                self.up_set_duration(__UpgradableStorageKey::NewStagingDuration, staging_duration);
+                Self::up_set_duration(__UpgradableStorageKey::NewStagingDuration, staging_duration);
                 let staging_duration_timestamp = ::near_sdk::env::block_timestamp() + current_staging_duration;
-                self.up_set_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp, staging_duration_timestamp);
+                Self::up_set_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp, staging_duration_timestamp);
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_duration_update_appliers),*))]
-            fn up_apply_update_staging_duration(&mut self) {
-                let staging_timestamp = self.up_get_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp)
+            fn up_apply_update_staging_duration() {
+                let staging_timestamp = Self::up_get_timestamp(__UpgradableStorageKey::NewStagingDurationTimestamp)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged update"));
 
                 if ::near_sdk::env::block_timestamp() < staging_timestamp {
@@ -257,10 +257,10 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     );
                 }
 
-                let new_duration = self.up_get_duration(__UpgradableStorageKey::NewStagingDuration)
+                let new_duration = Self::up_get_duration(__UpgradableStorageKey::NewStagingDuration)
                     .unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged duration update"));
 
-                self.up_set_duration(__UpgradableStorageKey::StagingDuration, new_duration);
+                Self::up_set_duration(__UpgradableStorageKey::StagingDuration, new_duration);
             }
         }
     };

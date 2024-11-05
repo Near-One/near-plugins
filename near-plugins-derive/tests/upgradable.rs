@@ -174,6 +174,20 @@ impl Setup {
             .await
     }
 
+    async fn call_get_counter(
+        &self,
+        caller: &Account,
+    ) -> near_workspaces::Result<ExecutionFinalResult> {
+        // `is_upgraded` could be called via `view`, however here it is called via `transact` so we
+        // get an `ExecutionFinalResult` that can be passed to `assert_*` methods from
+        // `common::utils`. It is acceptable since all we care about is whether the method exists.
+        caller
+            .call(self.contract.id(), "get_counter")
+            .max_gas()
+            .transact()
+            .await
+    }
+
     async fn call_is_migrated(
         &self,
         caller: &Account,
@@ -548,6 +562,26 @@ async fn test_deploy_code_and_call_method() -> anyhow::Result<()> {
     let res = setup.call_is_upgraded(&setup.unauth_account).await?;
     assert_success_with(res, true);
 
+    let res = setup.call_get_counter(&setup.unauth_account).await?;
+    assert_failure_with(res, "Cannot deserialize the contract state");
+
+    let code = common::repo::compile_project(Path::new(PROJECT_PATH), "upgradable").await?;
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+
+    // Deploy staged code.
+    setup.assert_staged_code(Some(&code)).await;
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(&dao, convert_code_to_deploy_hash(&code), None)
+        .await?;
+    assert_success_with_unit_return(res);
+
+    let res = setup.call_get_counter(&setup.unauth_account).await?;
+    assert_success_with(res, 0);
     Ok(())
 }
 

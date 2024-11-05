@@ -30,7 +30,10 @@ pub enum Role {
     duration_update_stagers(Role::DurationManager, Role::DAO),
     duration_update_appliers(Role::DurationManager, Role::DAO),
 ))]
-pub struct Contract;
+pub struct Contract {
+    pub counter_1: u64,
+    pub counter_2: u64,
+}
 
 #[near]
 impl Contract {
@@ -38,5 +41,9 @@ impl Contract {
     /// contract defined in this file was deployed.
     pub fn is_upgraded() -> bool {
         true
+    }
+
+    pub fn get_counter(&self) -> u64 {
+        self.counter_1
     }
 }

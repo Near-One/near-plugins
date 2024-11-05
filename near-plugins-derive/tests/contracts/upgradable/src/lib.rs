@@ -1,5 +1,5 @@
 use near_plugins::{access_control, AccessControlRole, AccessControllable, Upgradable};
-use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::BorshDeserialize;
 use near_sdk::env;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{near, AccountId, Duration, PanicOnDefault};
@@ -50,7 +50,9 @@ pub enum Role {
     duration_update_stagers(Role::DurationManager, Role::DAO),
     duration_update_appliers(Role::DurationManager, Role::DAO),
 ))]
-pub struct Contract;
+pub struct Contract {
+    pub counter: u64,
+}
 
 #[near]
 impl Contract {
@@ -67,18 +69,18 @@ impl Contract {
     /// allowing immediate deployments of staged code.
     #[init]
     pub fn new(dao: Option<AccountId>, staging_duration: Option<Duration>) -> Self {
-        let mut contract = Self;
+        let contract = Self { counter: 0 };
 
         // Make the contract itself access control super admin, allowing it to grant and revoke
         // permissions.
         near_sdk::require!(
-            contract.acl_init_super_admin(env::current_account_id()),
+            Self::acl_init_super_admin(env::current_account_id()),
             "Failed to initialize super admin",
         );
 
         // Optionally grant `Role::DAO`.
         if let Some(account_id) = dao {
-            let res = contract.acl_grant_role(Role::DAO.into(), account_id);
+            let res = Self::acl_grant_role(Role::DAO.into(), account_id);
             assert_eq!(Some(true), res, "Failed to grant role");
         }
 
@@ -87,9 +89,9 @@ impl Contract {
             // Temporarily grant `Role::DurationManager` to the contract to authorize it for
             // initializing the staging duration. Granting and revoking the role is possible since
             // the contract was made super admin above.
-            contract.acl_grant_role(Role::DurationManager.into(), env::current_account_id());
-            contract.up_init_staging_duration(staging_duration);
-            contract.acl_revoke_role(Role::DurationManager.into(), env::current_account_id());
+            Self::acl_grant_role(Role::DurationManager.into(), env::current_account_id());
+            Self::up_init_staging_duration(staging_duration);
+            Self::acl_revoke_role(Role::DurationManager.into(), env::current_account_id());
         }
 
         contract
@@ -98,5 +100,9 @@ impl Contract {
     /// Function to verify the contract was deployed and initialized successfully.
     pub fn is_set_up(&self) -> bool {
         true
+    }
+
+    pub fn get_counter(&self) -> u64 {
+        self.counter
     }
 }

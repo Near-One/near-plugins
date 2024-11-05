@@ -73,10 +73,10 @@ pub trait Upgradable {
     /// #[upgradable(storage_prefix="CUSTOM_KEY")]
     /// struct Contract { /* ... */}
     /// ```
-    fn up_storage_prefix(&self) -> &'static [u8];
+    fn up_storage_prefix() -> &'static [u8];
 
     /// Returns all staging durations and timestamps.
-    fn up_get_delay_status(&self) -> UpgradableDurationStatus;
+    fn up_get_delay_status() -> UpgradableDurationStatus;
 
     /// Allows an authorized account to stage code to be potentially deployed later. It sets the
     /// staging timestamp, which is the earliest time at which `code` may be deployed. The staging
@@ -91,13 +91,13 @@ pub trait Upgradable {
     /// specified via the `code_stagers` field of the `Upgradable` macro's `access_control_roles`
     /// attribute. The example contract (accessible via the `README`) shows how access control roles
     /// can be defined and passed on to the `Upgradable` macro.
-    fn up_stage_code(&mut self, code: Vec<u8>);
+    fn up_stage_code(code: Vec<u8>);
 
     /// Returns the staged code.
-    fn up_staged_code(&self) -> Option<Vec<u8>>;
+    fn up_staged_code() -> Option<Vec<u8>>;
 
     /// Returns the hash of the staged code
-    fn up_staged_code_hash(&self) -> Option<CryptoHash>;
+    fn up_staged_code_hash() -> Option<CryptoHash>;
 
     /// Allows an authorized account to deploy the staged code. It panics if no code is staged.
     ///
@@ -154,7 +154,6 @@ pub trait Upgradable {
     /// [state migration]: https://docs.near.org/develop/upgrade#migrating-the-state
     /// [storage staked]: https://docs.near.org/concepts/storage/storage-staking#btw-you-can-remove-data-to-unstake-some-tokens
     fn up_deploy_code(
-        &mut self,
         hash: String,
         function_call_args: Option<FunctionCallArgs>,
     ) -> Promise;
@@ -170,7 +169,7 @@ pub trait Upgradable {
     /// specified via the `duration_initializers` field of the `Upgradable` macro's
     /// `access_control_roles` attribute. The example contract (accessible via the `README`) shows
     /// how access control roles can be defined and passed on to the `Upgradable` macro.
-    fn up_init_staging_duration(&mut self, staging_duration: near_sdk::Duration);
+    fn up_init_staging_duration(staging_duration: near_sdk::Duration);
 
     /// Allows an authorized account to stage an update of the staging duration. It panics if the
     /// staging duration was not previously initialized with [`Self::up_init_staging_duration`]. It
@@ -183,7 +182,7 @@ pub trait Upgradable {
     /// via the `duration_update_stagers` field of the `Upgradable` macro's `access_control_roles`
     /// attribute. The example contract (accessible via the `README`) shows how access control roles
     /// can be defined and passed on to the `Upgradable` macro.
-    fn up_stage_update_staging_duration(&mut self, staging_duration: near_sdk::Duration);
+    fn up_stage_update_staging_duration(staging_duration: near_sdk::Duration);
 
     /// Allows an authorized account to apply the staged update of the staging duration. It fails if
     /// no staging duration update is staged.
@@ -193,7 +192,7 @@ pub trait Upgradable {
     /// via the `duration_update_appliers` field of the `Upgradable` macro's `access_control_roles`
     /// attribute. The example contract (accessible via the `README`) shows how access control roles
     /// can be defined and passed on to the `Upgradable` macro.
-    fn up_apply_update_staging_duration(&mut self);
+    fn up_apply_update_staging_duration();
 }
 
 #[near(serializers = [json])]
