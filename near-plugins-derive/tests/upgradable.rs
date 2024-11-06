@@ -672,11 +672,7 @@ async fn test_deploy_code_with_missed_migration() -> anyhow::Result<()> {
     // Deploy staged code
     let res = setup
         .upgradable_contract
-        .up_deploy_code(
-            &dao,
-            convert_code_to_deploy_hash(&code),
-            None,
-        )
+        .up_deploy_code(&dao, convert_code_to_deploy_hash(&code), None)
         .await?;
     assert_failure_with(res, "Cannot deserialize the contract state");
 
