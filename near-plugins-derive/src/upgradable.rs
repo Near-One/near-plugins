@@ -216,7 +216,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 let promise = ::near_sdk::Promise::new(::near_sdk::env::current_account_id())
                     .deploy_contract(code);
                 match function_call_args {
-                    None => promise,
+                    None => promise.function_call("up_verify_state".to_owned(), vec![], near_sdk::NearToken::from_yoctonear(0), near_sdk::Gas::from_tgas(2)),
                     Some(args) => {
                         // Execute the `DeployContract` and `FunctionCall` actions in a batch
                         // transaction to make a failure of the function call roll back the code
@@ -224,6 +224,10 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                         promise.function_call(args.function_name, args.arguments, args.amount, args.gas)
                     },
                 }
+            }
+
+            fn up_verify_state(&self) -> bool {
+                true
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_duration_initializers),*))]
