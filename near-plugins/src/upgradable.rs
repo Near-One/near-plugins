@@ -195,8 +195,8 @@ pub trait Upgradable {
     /// can be defined and passed on to the `Upgradable` macro.
     fn up_apply_update_staging_duration(&mut self);
 
-    /// Returns true if the contract state is valid, panic otherwise.
-    fn up_verify_state(&self) -> bool;
+    /// Panic if state is not valid.
+    fn up_verify_state(&self);
 }
 
 #[near(serializers = [json])]

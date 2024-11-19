@@ -438,7 +438,7 @@ async fn test_deploy_code_without_delay() -> anyhow::Result<()> {
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
     // Stage some code.
-    let code = vec![1, 2, 3];
+    let code = common::repo::compile_project(Path::new(PROJECT_PATH), "upgradable").await?;
     let res = setup
         .upgradable_contract
         .up_stage_code(&dao, code.clone())
@@ -463,7 +463,7 @@ async fn test_deploy_code_with_hash_success() -> anyhow::Result<()> {
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
     // Stage some code.
-    let code = vec![1, 2, 3];
+    let code = common::repo::compile_project(Path::new(PROJECT_PATH), "upgradable").await?;
     let res = setup
         .upgradable_contract
         .up_stage_code(&dao, code.clone())
@@ -491,7 +491,7 @@ async fn test_deploy_code_with_hash_invalid_hash() -> anyhow::Result<()> {
     let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
 
     // Stage some code.
-    let code = vec![1, 2, 3];
+    let code = common::repo::compile_project(Path::new(PROJECT_PATH), "upgradable").await?;
     let res = setup
         .upgradable_contract
         .up_stage_code(&dao, code.clone())
@@ -712,7 +712,7 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
     // Construct the function call actions to be executed in a batch transaction.
     // Note that we are attaching a call to `migrate_with_failure`, which will fail.
     let fn_call_deploy = near_workspaces::operations::Function::new("up_deploy_code")
-        .args_json(json!({ 
+        .args_json(json!({
             "hash": convert_code_to_deploy_hash(&code),
             "function_call_args": FunctionCallArgs {
         function_name: "migrate_with_failure".to_string(),
@@ -770,7 +770,7 @@ async fn test_deploy_code_with_delay() -> anyhow::Result<()> {
     .await?;
 
     // Stage some code.
-    let code = vec![1, 2, 3];
+    let code = common::repo::compile_project(Path::new(PROJECT_PATH), "upgradable").await?;
     let res = setup
         .upgradable_contract
         .up_stage_code(&dao, code.clone())
@@ -803,7 +803,7 @@ async fn test_deploy_code_with_delay_failure_too_early() -> anyhow::Result<()> {
     .await?;
 
     // Stage some code.
-    let code = vec![1, 2, 3];
+    let code = common::repo::compile_project(Path::new(PROJECT_PATH), "upgradable").await?;
     let res = setup
         .upgradable_contract
         .up_stage_code(&dao, code.clone())

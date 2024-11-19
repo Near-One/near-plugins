@@ -226,9 +226,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 }
             }
 
-            fn up_verify_state(&self) -> bool {
-                true
-            }
+            fn up_verify_state(&self) {}
 
             #[#cratename::access_control_any(roles(#(#acl_roles_duration_initializers),*))]
             fn up_init_staging_duration(&mut self, staging_duration: ::near_sdk::Duration) {
