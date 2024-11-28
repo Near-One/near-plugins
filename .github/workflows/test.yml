@@ -8,7 +8,7 @@ on:
 
 env:
   RUST_BACKTRACE: full
-  MSRV: 1.79.0
+  MSRV: 1.80.0
 
 jobs:
   tests:

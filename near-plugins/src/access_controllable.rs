@@ -192,7 +192,7 @@ pub trait AccessControllable {
     ///    }
     /// }
     /// ```
-    ///     
+    ///
     /// ```json
     /// {
     ///    "standard":"AccessControllable",
@@ -356,7 +356,7 @@ pub trait AccessControllable {
     ///
     /// * Get roles with [`Self::acl_get_roles`].
     /// * Get (a subset) of permissioned accounts with [`Self::acl_get_super_admins`],
-    /// [`Self::acl_get_admins`], or [`Self::acl_get_grantees`].
+    ///   [`Self::acl_get_admins`], or [`Self::acl_get_grantees`].
     ///
     /// [gas limit]: https://github.com/near/nearcore/pull/4381
     fn acl_get_permissioned_accounts(&self) -> PermissionedAccounts;

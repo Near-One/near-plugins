@@ -194,6 +194,9 @@ pub trait Upgradable {
     /// attribute. The example contract (accessible via the `README`) shows how access control roles
     /// can be defined and passed on to the `Upgradable` macro.
     fn up_apply_update_staging_duration(&mut self);
+
+    /// Panic if state is not valid.
+    fn up_verify_state(&self);
 }
 
 #[near(serializers = [json])]
