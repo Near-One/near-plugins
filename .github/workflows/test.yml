@@ -8,7 +8,8 @@ on:
 
 env:
   RUST_BACKTRACE: full
-  MSRV: 1.83.0
+  PRIMARY_RUST_VERSION: 1.83.0
+  MSRV: 1.80.0
 
 jobs:
   tests:
@@ -18,19 +19,38 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install toolchain
+      # Install the primary Rust version first
+      - name: Install primary toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.PRIMARY_RUST_VERSION }}
+          override: false  # Don't override - we want multiple versions
+          target: wasm32-unknown-unknown
+
+      # Install the MSRV (Minimum Supported Rust Version)
+      - name: Install MSRV toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.MSRV }}
-          override: true
+          override: false  # Don't override - allow local rust-toolchain files to take precedence
           target: wasm32-unknown-unknown
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: rust-version-${{ env.MSRV }}-msrv-2
+          key: rust-multi-version-${{ env.PRIMARY_RUST_VERSION }}-${{ env.MSRV }}
 
-      - name: add wasm32-unknown-unknown
-        run: rustup target add wasm32-unknown-unknown
+      - name: add wasm32-unknown-unknown for both toolchains
+        run: |
+          rustup target add wasm32-unknown-unknown --toolchain ${{ env.PRIMARY_RUST_VERSION }}
+          rustup target add wasm32-unknown-unknown --toolchain ${{ env.MSRV }}
+
+      # Set the primary toolchain as default but allow local rust-toolchain files to override
+      - name: Set default toolchain
+        run: rustup default ${{ env.PRIMARY_RUST_VERSION }}
+
+      # List installed toolchains for debugging purposes
+      - name: Show installed toolchains
+        run: rustup toolchain list
 
       - name: cargo test
         run: cargo test --all --all-features
@@ -45,13 +65,13 @@ jobs:
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: ${{ env.MSRV }}
+          toolchain: ${{ env.PRIMARY_RUST_VERSION }}
           override: true
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: rust-version-${{ env.MSRV }}-msrv-2
+          key: rust-version-${{ env.PRIMARY_RUST_VERSION }}-fmt-clippy
 
       - name: cargo fmt
         run: cargo fmt --all -- --check
