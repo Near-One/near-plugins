@@ -181,9 +181,9 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 ::near_sdk::env::storage_read(self.up_storage_key(__UpgradableStorageKey::Code).as_ref())
             }
 
-            fn up_staged_code_hash(&self) -> Option<::near_sdk::CryptoHash> {
+            fn up_staged_code_hash(&self) -> Option<String> {
                 self.up_staged_code()
-                    .map(|code| Self::up_hash_code(code.as_ref()))
+                    .map(|code| ::near_sdk::bs58::encode(Self::up_hash_code(code.as_ref())).into_string())
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_code_deployers),*))]
@@ -202,7 +202,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 }
 
                 let code = self.up_staged_code().unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged code"));
-                let expected_hash = ::near_sdk::base64::encode(Self::up_hash_code(code.as_ref()));
+                let expected_hash = ::near_sdk::bs58::encode(Self::up_hash_code(code.as_ref())).into_string();
                 if hash != expected_hash {
                     near_sdk::env::panic_str(
                         format!(

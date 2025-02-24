@@ -1,7 +1,6 @@
 use near_plugins::upgradable::{FunctionCallArgs, UpgradableDurationStatus};
 
 use near_sdk::serde_json::json;
-use near_sdk::CryptoHash;
 use near_sdk::Duration;
 use near_workspaces::result::ExecutionFinalResult;
 use near_workspaces::{Account, Contract};
@@ -54,16 +53,13 @@ impl UpgradableContract {
         Ok(res.borsh::<Option<Vec<u8>>>()?)
     }
 
-    pub async fn up_staged_code_hash(
-        &self,
-        caller: &Account,
-    ) -> anyhow::Result<Option<CryptoHash>> {
+    pub async fn up_staged_code_hash(&self, caller: &Account) -> anyhow::Result<Option<String>> {
         let res = caller
             .call(self.contract.id(), "up_staged_code_hash")
             .max_gas()
             .transact()
             .await?;
-        Ok(res.json::<Option<CryptoHash>>()?)
+        Ok(res.json::<Option<String>>()?)
     }
 
     /// The `Promise` returned by trait method `up_deploy_code` is resolved in the `near_workspaces`
