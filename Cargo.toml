@@ -36,3 +36,4 @@ proc-macro2 = "1.0"
 quote = "1.0.9"
 syn = { version = "1.0.69", features = ["full"] }
 proc-macro-crate = "0.1.5"
+home = "=0.5.9"
