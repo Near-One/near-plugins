@@ -165,14 +165,28 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_code_stagers),*))]
-            fn up_stage_code(&mut self, #[serializer(borsh)] code: Vec<u8>) {
-                if code.is_empty() {
-                    ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::Code).as_ref());
-                    ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::StagingTimestamp).as_ref());
-                } else {
-                    let timestamp = ::near_sdk::env::block_timestamp() + self.up_get_duration(__UpgradableStorageKey::StagingDuration).unwrap_or(0);
-                    self.up_storage_write(__UpgradableStorageKey::Code, &code);
-                    self.up_set_timestamp(__UpgradableStorageKey::StagingTimestamp, timestamp);
+            fn up_stage_code(&mut self) {
+                match ::near_sdk::env::input() {
+                    None => {
+                        ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::Code).as_ref());
+                        ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::StagingTimestamp).as_ref());
+                    },
+                    Some(code) if code.is_empty() => {
+                        ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::Code).as_ref());
+                        ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::StagingTimestamp).as_ref());
+                    },
+                    Some(code) => {
+                        // Calculate timestamp more safely with checked_add to prevent overflow
+                        let duration = self.up_get_duration(__UpgradableStorageKey::StagingDuration).unwrap_or(0);
+                        let timestamp = match ::near_sdk::env::block_timestamp().checked_add(duration) {
+                            Some(ts) => ts,
+                            None => ::near_sdk::env::panic_str("Timestamp calculation overflow"),
+                        };
+
+                        // Store the new code and timestamp
+                        self.up_storage_write(__UpgradableStorageKey::Code, &code);
+                        self.up_set_timestamp(__UpgradableStorageKey::StagingTimestamp, timestamp);
+                    }
                 }
             }
 

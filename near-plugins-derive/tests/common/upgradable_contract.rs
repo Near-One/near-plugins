@@ -38,7 +38,7 @@ impl UpgradableContract {
     ) -> near_workspaces::Result<ExecutionFinalResult> {
         caller
             .call(self.contract.id(), "up_stage_code")
-            .args_borsh(code)
+            .args(code)
             .max_gas()
             .transact()
             .await

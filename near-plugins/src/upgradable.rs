@@ -91,7 +91,7 @@ pub trait Upgradable {
     /// specified via the `code_stagers` field of the `Upgradable` macro's `access_control_roles`
     /// attribute. The example contract (accessible via the `README`) shows how access control roles
     /// can be defined and passed on to the `Upgradable` macro.
-    fn up_stage_code(&mut self, code: Vec<u8>);
+    fn up_stage_code(&mut self);
 
     /// Returns the staged code.
     fn up_staged_code(&self) -> Option<Vec<u8>>;

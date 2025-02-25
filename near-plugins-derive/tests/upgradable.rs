@@ -720,7 +720,7 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
     } }))
         .gas(Gas::from_tgas(220));
     let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
-        .args_borsh(Vec::<u8>::new())
+        .args(Vec::<u8>::new())
         .gas(Gas::from_tgas(80));
 
     let res = dao
