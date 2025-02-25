@@ -10,8 +10,10 @@ use near_sdk::{env, near, AccountId, PanicOnDefault};
 #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub enum Role {
-    /// May pause and unpause features.
+    /// May pause features.
     PauseManager,
+    /// May unpause features.
+    UnpauseManager,
     /// May call `increase_4` even when it is paused.
     Unrestricted4Increaser,
     /// May call `decrease_4` even when `increase_4` is not paused.
@@ -23,7 +25,7 @@ pub enum Role {
 #[access_control(role_type(Role))]
 #[near(contract_state)]
 #[derive(Pausable, PanicOnDefault)]
-#[pausable(manager_roles(Role::PauseManager))]
+#[pausable(pause_roles(Role::PauseManager), unpause_roles(Role::UnpauseManager))]
 pub struct Counter {
     counter: u64,
 }
@@ -34,13 +36,12 @@ impl Counter {
     ///
     /// * Making the contract itself super admin.
     /// * Granting `Role::PauseManager` to the account id `pause_manager`.
+    /// * Granting `Role::UnpauseManager` to the account id `unpause_manager`.
     ///
     /// For a general overview of access control, please refer to the `AccessControllable` plugin.
     #[init]
-    pub fn new(pause_manager: AccountId) -> Self {
-        let mut contract = Self {
-            counter: 0,
-        };
+    pub fn new(pause_manager: AccountId, unpause_manager: AccountId) -> Self {
+        let mut contract = Self { counter: 0 };
 
         // Make the contract itself super admin. This allows us to grant any role in the
         // constructor.
@@ -51,7 +52,11 @@ impl Counter {
 
         // Grant `Role::PauseManager` to the provided account.
         let result = contract.acl_grant_role(Role::PauseManager.into(), pause_manager);
-        near_sdk::require!(Some(true) == result, "Failed to grant role");
+        near_sdk::require!(Some(true) == result, "Failed to grant pause role");
+
+        // Grant `Role::UnpauseManager` to the provided account.
+        let result = contract.acl_grant_role(Role::UnpauseManager.into(), unpause_manager);
+        near_sdk::require!(Some(true) == result, "Failed to grant unpause role");
 
         contract
     }
@@ -99,7 +104,10 @@ impl Counter {
 
     /// Similar to `#[if_paused]` but roles passed as argument may successfully call the method even
     /// when the feature is _not_ paused.
-    #[if_paused(name = "increase_4", except(roles(Role::Unrestricted4Decreaser)))]
+    #[if_paused(
+        name = "increase_4",
+        except(roles(Role::Unrestricted4Decreaser, Role::Unrestricted4Modifier))
+    )]
     pub fn decrease_4(&mut self) {
         self.counter -= 4;
     }
