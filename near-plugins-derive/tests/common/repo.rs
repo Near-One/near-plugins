@@ -17,6 +17,7 @@ pub async fn compile_project(project_path: &Path, package_name: &str) -> anyhow:
                 .expect("camino PathBuf from str"),
         ),
         no_abi: true, // TODO remove this flag when we fix ABI generation
+        no_locked: true,
         ..Default::default()
     })
     .unwrap_or_else(|_| panic!("building contract {package_name} from {project_path:?}"));
