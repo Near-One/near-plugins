@@ -172,12 +172,9 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::Code).as_ref());
                     ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::StagingTimestamp).as_ref());
                 } else {
-                    // Calculate timestamp more safely with checked_add to prevent overflow
+                    // Use saturating_add to prevent overflow
                     let duration = self.up_get_duration(__UpgradableStorageKey::StagingDuration).unwrap_or(0);
-                    let timestamp = match ::near_sdk::env::block_timestamp().checked_add(duration) {
-                        Some(ts) => ts,
-                        None => ::near_sdk::env::panic_str("Timestamp calculation overflow"),
-                    };
+                    let timestamp = ::near_sdk::env::block_timestamp().saturating_add(duration);
 
                     // Store the new code and timestamp
                     self.up_storage_write(__UpgradableStorageKey::Code, &code);
