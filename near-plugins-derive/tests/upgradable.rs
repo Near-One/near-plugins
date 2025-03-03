@@ -12,7 +12,7 @@ use common::utils::{
 };
 use near_plugins::upgradable::FunctionCallArgs;
 use near_sdk::serde_json::json;
-use near_sdk::{CryptoHash, Duration, Gas, NearToken, Timestamp};
+use near_sdk::{Duration, Gas, NearToken, Timestamp};
 use near_workspaces::network::Sandbox;
 use near_workspaces::result::ExecutionFinalResult;
 use near_workspaces::{Account, AccountId, Contract, Worker};
@@ -203,19 +203,17 @@ impl Setup {
     }
 }
 
-/// Panics if the conversion fails.
-fn convert_code_to_crypto_hash(code: &[u8]) -> CryptoHash {
-    near_sdk::env::sha256(code)
-        .try_into()
-        .expect("Code should be converted to CryptoHash")
+/// Converts code to a base58-encoded CryptoHash string.
+fn convert_code_to_crypto_hash(code: &[u8]) -> String {
+    let hash = near_sdk::env::sha256(code);
+    near_sdk::bs58::encode(hash).into_string()
 }
 
 /// Computes the hash `code` according the to requirements of the `hash` parameter of
 /// `Upgradable::up_deploy_code`.
 fn convert_code_to_deploy_hash(code: &[u8]) -> String {
-    use near_sdk::base64::Engine;
     let hash = near_sdk::env::sha256(code);
-    near_sdk::base64::prelude::BASE64_STANDARD.encode(hash)
+    near_sdk::bs58::encode(hash).into_string()
 }
 
 /// Smoke test of contract setup.
@@ -722,7 +720,7 @@ async fn test_deploy_code_in_batch_transaction_pitfall() -> anyhow::Result<()> {
     } }))
         .gas(Gas::from_tgas(220));
     let fn_call_remove_code = near_workspaces::operations::Function::new("up_stage_code")
-        .args_borsh(Vec::<u8>::new())
+        .args(Vec::<u8>::new())
         .gas(Gas::from_tgas(80));
 
     let res = dao

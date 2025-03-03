@@ -165,25 +165,30 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_code_stagers),*))]
-            fn up_stage_code(&mut self, #[serializer(borsh)] code: Vec<u8>) {
+            fn up_stage_code(&mut self) {
+                let code = ::near_sdk::env::input().unwrap_or_default();
+
                 if code.is_empty() {
                     ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::Code).as_ref());
                     ::near_sdk::env::storage_remove(self.up_storage_key(__UpgradableStorageKey::StagingTimestamp).as_ref());
                 } else {
-                    let timestamp = ::near_sdk::env::block_timestamp() + self.up_get_duration(__UpgradableStorageKey::StagingDuration).unwrap_or(0);
+                    // Use saturating_add to prevent overflow
+                    let duration = self.up_get_duration(__UpgradableStorageKey::StagingDuration).unwrap_or(0);
+                    let timestamp = ::near_sdk::env::block_timestamp().saturating_add(duration);
+
+                    // Store the new code and timestamp
                     self.up_storage_write(__UpgradableStorageKey::Code, &code);
                     self.up_set_timestamp(__UpgradableStorageKey::StagingTimestamp, timestamp);
                 }
             }
-
             #[result_serializer(borsh)]
             fn up_staged_code(&self) -> Option<Vec<u8>> {
                 ::near_sdk::env::storage_read(self.up_storage_key(__UpgradableStorageKey::Code).as_ref())
             }
 
-            fn up_staged_code_hash(&self) -> Option<::near_sdk::CryptoHash> {
+            fn up_staged_code_hash(&self) -> Option<String> {
                 self.up_staged_code()
-                    .map(|code| Self::up_hash_code(code.as_ref()))
+                    .map(|code| ::near_sdk::bs58::encode(Self::up_hash_code(code.as_ref())).into_string())
             }
 
             #[#cratename::access_control_any(roles(#(#acl_roles_code_deployers),*))]
@@ -202,7 +207,7 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                 }
 
                 let code = self.up_staged_code().unwrap_or_else(|| ::near_sdk::env::panic_str("Upgradable: No staged code"));
-                let expected_hash = ::near_sdk::base64::encode(Self::up_hash_code(code.as_ref()));
+                let expected_hash = ::near_sdk::bs58::encode(Self::up_hash_code(code.as_ref())).into_string();
                 if hash != expected_hash {
                     near_sdk::env::panic_str(
                         format!(

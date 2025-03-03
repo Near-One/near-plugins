@@ -91,13 +91,13 @@ pub trait Upgradable {
     /// specified via the `code_stagers` field of the `Upgradable` macro's `access_control_roles`
     /// attribute. The example contract (accessible via the `README`) shows how access control roles
     /// can be defined and passed on to the `Upgradable` macro.
-    fn up_stage_code(&mut self, code: Vec<u8>);
+    fn up_stage_code(&mut self);
 
     /// Returns the staged code.
     fn up_staged_code(&self) -> Option<Vec<u8>>;
 
     /// Returns the hash of the staged code
-    fn up_staged_code_hash(&self) -> Option<CryptoHash>;
+    fn up_staged_code_hash(&self) -> Option<String>;
 
     /// Allows an authorized account to deploy the staged code. It panics if no code is staged.
     ///
@@ -106,10 +106,8 @@ pub trait Upgradable {
     /// Some workflows (e.g. when a DAO interacts with an `Upgradable` contract) are facilitated if
     /// deployment succeeds only in case the hash of staged code corresponds to a given hash. This
     /// behavior can be enabled with the `hash` parameter. In case it is `h`, the deployment
-    /// succeeds only if `h` equals the base64 encoded string of the staged code's `sha256` hash. In
-    /// particular, the encoding according to [`near_sdk::base64::encode`] is expected. Note that
-    /// `near_sdk` uses a rather dated version of the `base64` crate whose API differs from current
-    /// versions.
+    /// succeeds only if `h` equals the bs58 encoded string of the staged code's `sha256` hash. In
+    /// particular, the encoding according to [`near_sdk::bs58::encode`] is expected.
     ///
     ///
     /// # Attaching a function call
