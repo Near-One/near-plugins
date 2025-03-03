@@ -12,8 +12,10 @@ struct Opts {
     /// Storage key under which the set of paused features is stored. If it is
     /// `None` the default value will be used.
     paused_storage_key: Option<String>,
-    /// Access control roles whose grantees may pause and unpause features.
-    manager_roles: PathList,
+    /// Access control roles whose grantees may pause features.
+    pause_roles: PathList,
+    /// Access control roles whose grantees may unpause features.
+    unpause_roles: PathList,
 }
 
 /// Generates the token stream that implements `Pausable`.
@@ -27,10 +29,15 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
     let paused_storage_key = opts
         .paused_storage_key
         .unwrap_or_else(|| "__PAUSE__".to_string());
-    let manager_roles = opts.manager_roles;
+    let pause_roles = opts.pause_roles;
+    let unpause_roles = opts.unpause_roles;
     assert!(
-        manager_roles.len() > 0,
-        "Specify at least one role for manager_roles"
+        pause_roles.len() > 0,
+        "Specify at least one role for pause_roles"
+    );
+    assert!(
+        unpause_roles.len() > 0,
+        "Specify at least one role for unpause_roles"
     );
 
     let output = quote! {
@@ -53,7 +60,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                 })
             }
 
-            #[#cratename::access_control_any(roles(#(#manager_roles),*))]
+            #[#cratename::access_control_any(roles(#(#pause_roles),*))]
             fn pa_pause_feature(&mut self, key: String) -> bool {
                 let mut paused_keys = self.pa_all_paused().unwrap_or_default();
                 let newly_paused = paused_keys.insert(key.clone());
@@ -80,7 +87,7 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
                 true
             }
 
-            #[#cratename::access_control_any(roles(#(#manager_roles),*))]
+            #[#cratename::access_control_any(roles(#(#unpause_roles),*))]
             fn pa_unpause_feature(&mut self, key: String) -> bool {
                 let mut paused_keys = self.pa_all_paused().unwrap_or_default();
                 let was_paused = paused_keys.remove(&key);
