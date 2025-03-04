@@ -65,6 +65,12 @@ impl Contract {
     pub fn is_migrated(&self) -> bool {
         self.is_migrated
     }
+
+    pub fn migrate_empty() -> bool {
+        // This method is used to test the rollback mechanism of `Upgradable::up_deploy_code` when
+        // the migration method is empty.
+        true
+    }
 }
 
 /// Corresponds to the state defined in the initial `../upgradable` contract.
