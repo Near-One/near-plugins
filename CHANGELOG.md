@@ -1,3 +1,27 @@
+# 0.3.0 (TBD)
+
+## BREAKING CHANGES:
+
+### Pausable Plugin
+
+- Replaced the combined `manager_roles` attribute with separate `pause_roles` and `unpause_roles` attributes for the `Pausable` plugin.
+- This allows for separate permissions for pausing and unpausing features, enabling more granular access control.
+
+To migrate from the previous version:
+```rust
+// Old format
+#[pausable(manager_roles(Role::PauseManager))]
+
+// New format
+#[pausable(
+    pause_roles(Role::PauseManager),
+    unpause_roles(Role::UnpauseManager) 
+)]
+```
+
+See the [migration guide](docs/migrations/pausable-separate-roles.md) for more details.
+
+
 # 0.2.0 (TBD)
 
 ## BREAKING CHANGES:

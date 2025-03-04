@@ -30,8 +30,10 @@ struct Setup {
     /// Wrapper around the deployed contract that facilitates interacting with
     /// methods provided by the `AccessControllable` plugin.
     acl_contract: AccessControllableContract,
-    /// An account with permission to pause and unpause features.
+    /// An account with permission to pause features.
     pause_manager: Account,
+    /// An account with permission to unpause features.
+    unpause_manager: Account,
     /// A newly created account without any `AccessControllable` permissions.
     unauth_account: Account,
 }
@@ -48,10 +50,12 @@ impl Setup {
 
         // Call the contract's constructor.
         let pause_manager = worker.dev_create_account().await?;
+        let unpause_manager = worker.dev_create_account().await?;
         contract
             .call("new")
             .args_json(json!({
                 "pause_manager": pause_manager.id(),
+                "unpause_manager": unpause_manager.id(),
             }))
             .max_gas()
             .transact()
@@ -65,6 +69,7 @@ impl Setup {
             pausable_contract,
             acl_contract,
             pause_manager,
+            unpause_manager,
             unauth_account,
         })
     }
@@ -186,19 +191,25 @@ async fn assert_pause_feature_acl_failure(contract: &PausableContract, caller: &
 }
 
 #[tokio::test]
-/// Only accounts that were granted a manager role may pause features.
+/// Only accounts that were granted a pause role may pause features.
 async fn test_pause_not_allowed_from_unauthorized_account() -> anyhow::Result<()> {
     let Setup {
         pausable_contract,
         unauth_account,
+        unpause_manager,
         ..
     } = Setup::new().await?;
+    // Unauthorized account cannot pause
     assert_pause_feature_acl_failure(&pausable_contract, &unauth_account).await;
+
+    // Unpause manager cannot pause either
+    assert_pause_feature_acl_failure(&pausable_contract, &unpause_manager).await;
+
     Ok(())
 }
 
 #[tokio::test]
-/// If not granted a manager role, the contract itself may not pause features.
+/// If not granted a pause role, the contract itself may not pause features.
 async fn test_pause_not_allowed_from_self() -> anyhow::Result<()> {
     let Setup {
         contract,
@@ -227,7 +238,7 @@ async fn test_unpause_feature() -> anyhow::Result<()> {
     // Unpause a feature that is paused. The method it protected can then be called successfully.
     let res = setup
         .pausable_contract
-        .pa_unpause_feature(&setup.pause_manager, "increase_1")
+        .pa_unpause_feature(&setup.unpause_manager, "increase_1")
         .await?;
     assert_success_with(res, true);
     setup
@@ -238,7 +249,7 @@ async fn test_unpause_feature() -> anyhow::Result<()> {
     // Unpause a feature that is not paused.
     let res = setup
         .pausable_contract
-        .pa_unpause_feature(&setup.pause_manager, "increase_1")
+        .pa_unpause_feature(&setup.unpause_manager, "increase_1")
         .await?;
     assert_success_with(res, false);
     setup
@@ -258,24 +269,30 @@ async fn assert_unpause_feature_acl_failure(contract: &PausableContract, caller:
     assert_insufficient_acl_permissions(
         result,
         "pa_unpause_feature",
-        vec!["PauseManager".to_string()],
+        vec!["UnpauseManager".to_string()],
     );
 }
 
 #[tokio::test]
-/// Only accounts that were granted a manager role may unpause features.
+/// Only accounts that were granted an unpause role may unpause features.
 async fn test_unpause_not_allowed_from_unauthorized_account() -> anyhow::Result<()> {
     let Setup {
         pausable_contract,
         unauth_account,
+        pause_manager,
         ..
     } = Setup::new().await?;
+    // Unauthorized account cannot unpause
     assert_unpause_feature_acl_failure(&pausable_contract, &unauth_account).await;
+
+    // Pause manager cannot unpause either
+    assert_unpause_feature_acl_failure(&pausable_contract, &pause_manager).await;
+
     Ok(())
 }
 
 #[tokio::test]
-/// If not granted a manager role, the contract itself may not unpause features.
+/// If not granted an unpause role, the contract itself may not unpause features.
 async fn test_unpause_not_allowed_from_self() -> anyhow::Result<()> {
     let Setup {
         contract,
@@ -322,7 +339,7 @@ async fn test_pause_with_all_allows_except() -> anyhow::Result<()> {
     assert_success_with_unit_return(res);
     let res = setup
         .pausable_contract
-        .pa_unpause_feature(&setup.pause_manager, "ALL")
+        .pa_unpause_feature(&setup.unpause_manager, "ALL")
         .await?;
     assert_success_with(res, true);
     assert_eq!(setup.get_counter().await?, 4);
@@ -384,7 +401,7 @@ async fn test_work_after_unpause() -> anyhow::Result<()> {
     // After unpausing function call succeeds.
     let res = setup
         .pausable_contract
-        .pa_unpause_feature(&setup.pause_manager, "increase_1")
+        .pa_unpause_feature(&setup.unpause_manager, "increase_1")
         .await?;
     assert_success_with(res, true);
     let res = setup
@@ -440,7 +457,7 @@ async fn test_paused_list() -> anyhow::Result<()> {
 
     let res = setup
         .pausable_contract
-        .pa_unpause_feature(&setup.pause_manager, "feature_a")
+        .pa_unpause_feature(&setup.unpause_manager, "feature_a")
         .await?;
     assert_success_with(res, true);
     assert_paused_list(
@@ -485,7 +502,7 @@ async fn test_is_paused() -> anyhow::Result<()> {
 
     let res = setup
         .pausable_contract
-        .pa_unpause_feature(&setup.pause_manager, "feature_a")
+        .pa_unpause_feature(&setup.unpause_manager, "feature_a")
         .await?;
     assert_success_with(res, true);
     assert_is_paused(
@@ -495,6 +512,37 @@ async fn test_is_paused() -> anyhow::Result<()> {
         setup.unauth_account.clone(),
     )
     .await;
+
+    Ok(())
+}
+
+/// Test combining both pause and unpause roles in one account
+#[tokio::test]
+async fn test_combined_pause_unpause_roles() -> anyhow::Result<()> {
+    let setup = Setup::new().await?;
+
+    // Create a new account with both pause and unpause roles
+    let combined_account = setup.worker.dev_create_account().await?;
+    setup
+        .must_grant_acl_role("PauseManager", combined_account.id())
+        .await;
+    setup
+        .must_grant_acl_role("UnpauseManager", combined_account.id())
+        .await;
+
+    // Test that the combined account can pause
+    let res = setup
+        .pausable_contract
+        .pa_pause_feature(&combined_account, "feature_c")
+        .await?;
+    assert_success_with(res, true);
+
+    // Test that the combined account can unpause
+    let res = setup
+        .pausable_contract
+        .pa_unpause_feature(&combined_account, "feature_c")
+        .await?;
+    assert_success_with(res, true);
 
     Ok(())
 }
