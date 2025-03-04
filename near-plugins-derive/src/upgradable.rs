@@ -218,17 +218,19 @@ pub fn derive_upgradable(input: TokenStream) -> TokenStream {
                     )
                 }
 
-                let promise = ::near_sdk::Promise::new(::near_sdk::env::current_account_id())
+                let deploy_promise = ::near_sdk::Promise::new(::near_sdk::env::current_account_id())
                     .deploy_contract(code);
-                match function_call_args {
-                    None => promise.function_call("up_verify_state".to_owned(), vec![], near_sdk::NearToken::from_yoctonear(0), near_sdk::Gas::from_tgas(2)),
+                let promise = match function_call_args {
+                    None => deploy_promise,
                     Some(args) => {
                         // Execute the `DeployContract` and `FunctionCall` actions in a batch
                         // transaction to make a failure of the function call roll back the code
                         // deployment.
-                        promise.function_call(args.function_name, args.arguments, args.amount, args.gas)
+                        deploy_promise.function_call(args.function_name, args.arguments, args.amount, args.gas)
                     },
-                }
+                };
+
+                promise.function_call("up_verify_state".to_owned(), vec![], near_sdk::NearToken::from_yoctonear(0), near_sdk::Gas::from_tgas(2))
             }
 
             fn up_verify_state(&self) {}

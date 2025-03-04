@@ -681,6 +681,53 @@ async fn test_deploy_code_with_missed_migration() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Deploys a new version of the contract with wrong migration
+/// Verifies the failure rolls back the deployment, i.e. the initial
+/// code remains active.
+#[tokio::test]
+async fn test_deploy_code_with_wrong_migration() -> anyhow::Result<()> {
+    let worker = near_workspaces::sandbox().await?;
+    let dao = worker.dev_create_account().await?;
+    let setup = Setup::new(worker.clone(), Some(dao.id().clone()), None).await?;
+
+    // Compile the other version of the contract and stage its code.
+    let code = common::repo::compile_project(
+        Path::new(PROJECT_PATH_STATE_MIGRATION),
+        "upgradable_state_migration",
+    )
+    .await?;
+    let res = setup
+        .upgradable_contract
+        .up_stage_code(&dao, code.clone())
+        .await?;
+    assert_success_with_unit_return(res);
+    setup.assert_staged_code(Some(&code)).await;
+
+    // Deploy staged code with wrong migration function
+    let function_call_args: FunctionCallArgs = FunctionCallArgs {
+        function_name: "migrate_empty".to_string(),
+        arguments: Vec::new(),
+        amount: NearToken::from_yoctonear(0),
+        gas: Gas::from_tgas(3),
+    };
+
+    let res = setup
+        .upgradable_contract
+        .up_deploy_code(
+            &dao,
+            convert_code_to_deploy_hash(&code),
+            Some(function_call_args),
+        )
+        .await?;
+    assert_failure_with(res, "Cannot deserialize the contract state");
+
+    // Verify `code` wasn't deployed by calling a function that is defined only in the initial
+    // contract but not in the contract corresponding to the `code`.
+    setup.assert_is_set_up(&setup.unauth_account).await;
+
+    Ok(())
+}
+
 /// Deploys staged code in a batch transaction with two function call actions:
 ///
 /// 1. `up_deploy_code` with a function call to a migration method that fails
