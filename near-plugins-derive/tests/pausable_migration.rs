@@ -121,7 +121,7 @@ impl MigrationTest {
             common::repo::compile_project(Path::new(NEW_CONTRACT_PATH), "pausable_new").await?;
 
         // Deploy the new contract code
-        self.contract.as_account().deploy(&wasm).await?.result;
+        let _ = self.contract.as_account().deploy(&wasm).await?;
 
         // Call the migration function to maintain backward compatibility
         let res = self
