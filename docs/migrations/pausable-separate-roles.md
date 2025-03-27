@@ -54,26 +54,12 @@ With this change, you can:
    #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
    #[serde(crate = "near_sdk::serde")]
    pub enum Role {
-       // Keep existing variants in the same order
-       PauseManager,   // Original role that could both pause and unpause
+       // Existing roles (DO NOT change order)
+       PauseManager,   // Will now be used for pause permissions only
        // Other existing roles...
        
-       // Add new roles at the end
-       UnpauseManager, // New role that can only unpause features
-   }
-   ```
-
-   Alternatively, if you want to keep using your existing PauseManager role for pause permissions and create a new role for unpause:
-
-   ```rust
-   #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
-   #[serde(crate = "near_sdk::serde")]
-   pub enum Role {
-       PauseManager,   // Now used only for pausing
-       // Other existing roles...
-       
-       // Add new roles at the end
-       UnpauseManager, // New role for unpausing
+       // Add new roles at the end only
+       UnpauseManager, // New role for unpause permissions
    }
    ```
 
@@ -90,7 +76,7 @@ With this change, you can:
    )]
    ```
 
-   If you want to maintain backward compatibility where existing PauseManager accounts can still do both operations:
+   To maintain backward compatibility where existing PauseManager accounts can still do both operations:
 
    ```rust
    #[pausable(
@@ -126,8 +112,8 @@ With this change, you can:
    ```rust
    #[private]
    pub fn migrate_pause_unpause_roles(&mut self) {
-       // Optionally grant UnpauseManager role to existing PauseManager accounts
-       // This gives existing managers the same capabilities they had before
+       // Grant UnpauseManager role to existing PauseManager accounts
+       // This maintains the same capabilities they had before
        
        let pause_managers = self.acl_get_grantees("PauseManager", 0, 100);
        for account_id in pause_managers {
@@ -138,7 +124,7 @@ With this change, you can:
 
 5. **Update tests** to test both pause and unpause permissions separately.
 
-## Example
+## Complete Example
 
 Here's a complete example of a contract using the new separated roles:
 
