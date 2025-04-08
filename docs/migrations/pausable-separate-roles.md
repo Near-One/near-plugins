@@ -2,6 +2,16 @@
 
 This guide explains how to migrate your code to use the new `pause_roles` and `unpause_roles` attributes instead of the consolidated `manager_roles` attribute in the Pausable plugin.
 
+## Important Warning About Role Enums
+
+When using `#[derive(AccessControlRole)]`, **never remove existing variants or add new variants in the middle of the enum**. The order of variants is critical because:
+
+1. Each variant is mapped to specific bit positions in the permissions bitflags
+2. Removing or reordering variants will cause existing permissions to be mapped incorrectly
+3. This can result in accounts unintentionally gaining or losing access to features
+
+**Always add new variants at the end of the enum to preserve existing permission mappings.**
+
 ## Changes Required
 
 ### Before
@@ -38,19 +48,18 @@ With this change, you can:
 
 ## Step-by-Step Migration
 
-1. **Update your Role enum** to include separate roles for pausing and unpausing, if desired:
+1. **Update your Role enum** by adding new roles at the end to preserve existing mappings:
 
    ```rust
    #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]
    #[serde(crate = "near_sdk::serde")]
    pub enum Role {
-       // Previous role that could both pause and unpause
-       // PauseManager,
+       // Existing roles (DO NOT change order)
+       PauseManager,   // Will now be used for pause permissions only
+       // Other existing roles...
        
-       // New separate roles
-       PauseManager,   // Can only pause features
-       UnpauseManager, // Can only unpause features
-       // Other roles...
+       // Add new roles at the end only
+       UnpauseManager, // New role for unpause permissions
    }
    ```
 
@@ -64,6 +73,15 @@ With this change, you can:
    #[pausable(
        pause_roles(Role::PauseManager),
        unpause_roles(Role::UnpauseManager)
+   )]
+   ```
+
+   To maintain backward compatibility where existing PauseManager accounts can still do both operations:
+
+   ```rust
+   #[pausable(
+       pause_roles(Role::PauseManager),
+       unpause_roles(Role::PauseManager, Role::UnpauseManager)
    )]
    ```
 
@@ -89,9 +107,24 @@ With this change, you can:
    }
    ```
 
-4. **Update tests** to test both pause and unpause permissions separately.
+4. **Update or add a migration function** if you're upgrading an existing contract:
 
-## Example
+   ```rust
+   #[private]
+   pub fn migrate_pause_unpause_roles(&mut self) {
+       // Grant UnpauseManager role to existing PauseManager accounts
+       // This maintains the same capabilities they had before
+       
+       let pause_managers = self.acl_get_grantees("PauseManager", 0, 100);
+       for account_id in pause_managers {
+           self.acl_grant_role(Role::UnpauseManager.into(), account_id);
+       }
+   }
+   ```
+
+5. **Update tests** to test both pause and unpause permissions separately.
+
+## Complete Example
 
 Here's a complete example of a contract using the new separated roles:
 
