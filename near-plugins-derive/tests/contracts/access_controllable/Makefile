@@ -1,4 +1,4 @@
-universal dev stack
+universal devstack
 FROM mcr.microsoft.com/devcontainers/universal:2
 
 # Встановлюємо NEAR CLI та NEARAI
