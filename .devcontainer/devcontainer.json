@@ -2,5 +2,56 @@
 ├── devcontainer.json
 └── Dockerfile
   "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {}
+  {
+      "name": "NEAR Dev Env",
+        "build": {
+            "dockerfile": "Dockerfile"
+              },
+                "customizations": {
+                    "vscode": {
+                          "extensions": [
+                                  "rust-lang.rust-analyzer",
+                                          "ms-python.python",
+                                                  "esbenp.prettier-vscode",
+                                                          "dbaeumer.vscode-eslint"
+                                                                ]
+                                                                    }
+                                                                      },
+                                                                        "postCreateCommand": "rustup component add clippy && near --version && nearai --version",
+                                                                          "settings": {
+                                                                              "terminal.integrated.defaultProfile.linux": "bash"
+                                                                                },
+                                                                                  "forwardPorts": [3000, 3030],
+                                                                                    "remoteUser": "vscode",
+                                                                                      "mounts": [
+                                                                                          "source=${localWorkspaceFolder}/.near-credentials,target=/home/vscode/.near-credentials,type=bind"
+                                                                                            ]
+                                                                                            }
+  }"features": {}
+}
+{
+    "name": "NEAR Dev Env",
+      "build": {
+          "dockerfile": "Dockerfile"
+            },
+              "customizations": {
+                  "vscode": {
+                        "extensions": [
+                                "rust-lang.rust-analyzer",
+                                        "ms-python.python",
+                                                "esbenp.prettier-vscode",
+                                                        "dbaeumer.vscode-eslint"
+                                                              ]
+                                                                  }
+                                                                    },
+                                                                      "postCreateCommand": "rustup component add clippy && near --version && nearai --version",
+                                                                        "settings": {
+                                                                            "terminal.integrated.defaultProfile.linux": "bash"
+                                                                              },
+                                                                                "forwardPorts": [3000, 3030],
+                                                                                  "remoteUser": "vscode",
+                                                                                    "mounts": [
+                                                                                        "source=${localWorkspaceFolder}/.near-credentials,target=/home/vscode/.near-credentials,type=bind"
+                                                                                          ]
+                                                                                          }
 }
