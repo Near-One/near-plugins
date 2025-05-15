@@ -2,5 +2,8 @@
 ├── devcontainer.json
 └── Dockerfile
   "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {}
+  "features": {
+  "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+  "ghcr.io/devcontainers-contrib/features/nvm:1": {
+    "version": "20"
 }
