@@ -9,17 +9,6 @@ on:
 env:
   RUST_BACKTRACE: full
   MSRV: 1.86.0
-  # Test contracts are workspace members but can only be compiled for wasm32.
-  # Exclude them from host-target commands (test, clippy) via this list.
-  CONTRACT_EXCLUDES: >-
-    --exclude access_controllable
-    --exclude ownable
-    --exclude pausable
-    --exclude pausable_new
-    --exclude pausable_old
-    --exclude upgradable
-    --exclude upgradable_2
-    --exclude upgradable_state_migration
 
 jobs:
   tests:
@@ -41,7 +30,7 @@ jobs:
           cache-all-crates: true
 
       - name: cargo test
-        run: cargo test --workspace --all-features ${{ env.CONTRACT_EXCLUDES }}
+        run: cargo test --all-features
 
   lint:
     name: Format and Clippy
@@ -65,4 +54,4 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: cargo clippy
-        run: cargo clippy --workspace --all-features --all-targets ${{ env.CONTRACT_EXCLUDES }} -- -D warnings
+        run: cargo clippy --all-features --all-targets -- -D warnings
