@@ -732,7 +732,7 @@ pub fn access_control_any(attrs: TokenStream, item: TokenStream) -> TokenStream 
         }
     };
     let roles = macro_args.roles;
-    assert!(roles.len() > 0, "Specify at least one role");
+    assert!(!roles.is_empty(), "Specify at least one role");
 
     // TODO optimize case `roles.len() == 1` (speed up expected common case)
     let acl_check = quote! {

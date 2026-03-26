@@ -33,11 +33,11 @@ pub fn derive_pausable(input: TokenStream) -> TokenStream {
     let pause_roles = opts.pause_roles;
     let unpause_roles = opts.unpause_roles;
     assert!(
-        pause_roles.len() > 0,
+        !pause_roles.is_empty(),
         "Specify at least one role for pause_roles"
     );
     assert!(
-        unpause_roles.len() > 0,
+        !unpause_roles.is_empty(),
         "Specify at least one role for unpause_roles"
     );
 
@@ -219,7 +219,7 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn get_bypass_condition(args: &ExceptSubArgs) -> proc_macro2::TokenStream {
-    if args.roles.len() == 0 {
+    if args.roles.is_empty() {
         return quote!();
     }
 
