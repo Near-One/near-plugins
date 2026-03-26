@@ -1,9 +1,9 @@
 //! A simple contract to be deployed via `Upgradable`.
 
-use near_plugins::{access_control, AccessControlRole, AccessControllable, Upgradable};
+use near_plugins::{AccessControlRole, AccessControllable, Upgradable, access_control};
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{near, PanicOnDefault};
+use near_sdk::{PanicOnDefault, near};
 
 /// Roles correspond to those defined in the initial contract `../upgradable`, to make permissions
 /// granted before the upgrade remain valid.

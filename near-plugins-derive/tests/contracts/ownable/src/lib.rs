@@ -1,6 +1,6 @@
-use near_plugins::{only, Ownable};
+use near_plugins::{Ownable, only};
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
-use near_sdk::{near, AccountId, PanicOnDefault};
+use near_sdk::{AccountId, PanicOnDefault, near};
 
 #[near(contract_state)]
 #[derive(Ownable, PanicOnDefault)]

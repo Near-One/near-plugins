@@ -9,6 +9,17 @@ on:
 env:
   RUST_BACKTRACE: full
   MSRV: 1.86.0
+  # Test contracts are workspace members but can only be compiled for wasm32.
+  # Exclude them from host-target commands (test, clippy) via this list.
+  CONTRACT_EXCLUDES: >-
+    --exclude access_controllable
+    --exclude ownable
+    --exclude pausable
+    --exclude pausable_new
+    --exclude pausable_old
+    --exclude upgradable
+    --exclude upgradable_2
+    --exclude upgradable_state_migration
 
 jobs:
   tests:
@@ -30,7 +41,7 @@ jobs:
           cache-all-crates: true
 
       - name: cargo test
-        run: cargo test --all --all-features
+        run: cargo test --workspace --all-features ${{ env.CONTRACT_EXCLUDES }}
 
   lint:
     name: Format and Clippy
@@ -39,9 +50,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install Rust ${{ env.MSRV }} with components
+      - name: Install Rust ${{ env.MSRV }} with wasm32 target and components
         run: |
-          rustup toolchain install ${{ env.MSRV }} --profile minimal --component rustfmt,clippy
+          rustup toolchain install ${{ env.MSRV }} --profile minimal --target wasm32-unknown-unknown --component rustfmt,clippy
           rustup override set ${{ env.MSRV }}
 
       - uses: Swatinem/rust-cache@v2
@@ -54,4 +65,4 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: cargo clippy
-        run: cargo clippy --all --all-features --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-features --all-targets ${{ env.CONTRACT_EXCLUDES }} -- -D warnings

@@ -1,6 +1,16 @@
 [workspace]
-members = ["near-plugins", "near-plugins-derive"]
-exclude = ["target", "examples"]
+members = [
+    "near-plugins",
+    "near-plugins-derive",
+    "near-plugins-derive/tests/contracts/access_controllable",
+    "near-plugins-derive/tests/contracts/ownable",
+    "near-plugins-derive/tests/contracts/pausable",
+    "near-plugins-derive/tests/contracts/pausable_new",
+    "near-plugins-derive/tests/contracts/pausable_old",
+    "near-plugins-derive/tests/contracts/upgradable",
+    "near-plugins-derive/tests/contracts/upgradable_2",
+    "near-plugins-derive/tests/contracts/upgradable_state_migration",
+]
 resolver = "3"
 
 [workspace.metadata.workspaces]
@@ -10,9 +20,6 @@ version = "0.15.0"
 version = "0.5.0"
 edition = "2024"
 authors = ["Aurora Labs <hello@aurora.dev>"]
-# An update of the MSRV requires updating:
-# - `rust-toolchain` files in `near-plugins-derive/tests/contracts/**`
-# - the toolchain installed in CI via the `toolchain` parameter of `actions-rs/toolchain@v1`
 rust-version = "1.86.0"
 description = "Ergonomic plugin system to extend NEAR contracts."
 license = "CC0-1.0"
@@ -38,3 +45,12 @@ quote = "1.0.9"
 syn = { version = "2", features = ["full"] }
 proc-macro-crate = "0.1.5"
 cargo-near-build = { version = "0.11", features = ["build_internal"] }
+
+# Optimization settings for wasm contract builds (used by cargo_near_build in release mode)
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+overflow-checks = true
