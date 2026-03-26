@@ -3,7 +3,7 @@ use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
 use darling::FromDeriveInput;
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use syn::{parse, parse_macro_input, DeriveInput, ItemFn};
+use syn::{DeriveInput, ItemFn, parse, parse_macro_input};
 
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(ownable), forward_attrs(allow, doc, cfg))]

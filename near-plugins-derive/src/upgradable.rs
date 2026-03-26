@@ -3,7 +3,7 @@ use darling::util::PathList;
 use darling::{FromDeriveInput, FromMeta};
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput};
+use syn::{DeriveInput, parse_macro_input};
 
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(upgradable), forward_attrs(allow, doc, cfg))]

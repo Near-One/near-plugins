@@ -1,5 +1,5 @@
-use near_sdk::serde::de::DeserializeOwned;
 use near_sdk::Duration;
+use near_sdk::serde::de::DeserializeOwned;
 use near_workspaces::network::Sandbox;
 use near_workspaces::result::{ExecutionFinalResult, ExecutionOutcome};
 use near_workspaces::{AccountId, Block, Worker};

@@ -8,8 +8,8 @@ pub mod upgradable;
 pub use access_control_role::AccessControlRole;
 pub use access_controllable::AccessControllable;
 pub use near_plugins_derive::{
-    access_control, access_control_any, if_paused, only, pause, AccessControlRole, Ownable,
-    Pausable, Upgradable,
+    AccessControlRole, Ownable, Pausable, Upgradable, access_control, access_control_any,
+    if_paused, only, pause,
 };
 pub use ownable::Ownable;
 pub use pausable::Pausable;
