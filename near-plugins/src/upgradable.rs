@@ -60,7 +60,7 @@
 //! [batch transaction]: https://docs.near.org/concepts/basics/transactions/overview
 //! [time between scheduling and execution]: https://docs.near.org/sdk/rust/promises/intro
 use crate::events::{AsEvent, EventMetadata};
-use near_sdk::{near, serde::Serialize, AccountId, CryptoHash, Gas, NearToken, Promise};
+use near_sdk::{AccountId, CryptoHash, Gas, NearToken, Promise, near, serde::Serialize};
 
 /// Trait describing the functionality of the _Upgradable_ plugin.
 pub trait Upgradable {

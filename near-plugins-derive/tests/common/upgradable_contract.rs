@@ -1,7 +1,7 @@
 use near_plugins::upgradable::{FunctionCallArgs, UpgradableDurationStatus};
 
-use near_sdk::serde_json::json;
 use near_sdk::Duration;
+use near_sdk::serde_json::json;
 use near_workspaces::result::ExecutionFinalResult;
 use near_workspaces::{Account, Contract};
 

@@ -44,7 +44,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use std::convert::TryFrom;
-use syn::{parse_macro_input, ItemEnum};
+use syn::{ItemEnum, parse_macro_input};
 
 /// Roles as are represented by enum variants which are, in turn, represented by
 /// `u128` bitflags. Each variant requires two flags, one for the role itself

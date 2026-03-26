@@ -35,7 +35,7 @@
 //! Inspired by OpenZeppelin's
 //! [AccessControl](https://docs.openzeppelin.com/contracts/3.x/api/access#AccessControl) module.
 
-use near_sdk::{near, AccountId};
+use near_sdk::{AccountId, near};
 use std::collections::HashMap;
 
 /// # Representation of roles
@@ -423,8 +423,8 @@ pub struct PermissionedAccountsPerRole {
 
 pub mod events {
     use crate::events::{AsEvent, EventMetadata};
-    use near_sdk::serde::Serialize;
     use near_sdk::AccountId;
+    use near_sdk::serde::Serialize;
 
     const STANDARD: &str = "AccessControllable";
     const VERSION: &str = "1.0.0";
