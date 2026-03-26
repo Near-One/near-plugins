@@ -13,45 +13,42 @@ env:
 jobs:
   tests:
     name: Tests
-    runs-on: ubuntu-latest
+    runs-on: warp-ubuntu-latest-x64-4x
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.MSRV }}
-          override: true
-          target: wasm32-unknown-unknown
+      - name: Install Rust ${{ env.MSRV }} with wasm32 target
+        run: |
+          rustup toolchain install ${{ env.MSRV }} --profile minimal --target wasm32-unknown-unknown
+          rustup override set ${{ env.MSRV }}
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         with:
-          key: rust-version-${{ env.MSRV }}-msrv-2
-
-      - name: add wasm32-unknown-unknown
-        run: rustup target add wasm32-unknown-unknown
+          cache-provider: warpbuild
+          shared-key: "linux-${{ env.MSRV }}-test"
+          cache-all-crates: true
 
       - name: cargo test
         run: cargo test --all --all-features
 
   lint:
-    name: Format
-    runs-on: ubuntu-latest
+    name: Format and Clippy
+    runs-on: warp-ubuntu-latest-x64-4x
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.MSRV }}
-          override: true
-          components: rustfmt, clippy
+      - name: Install Rust ${{ env.MSRV }} with components
+        run: |
+          rustup toolchain install ${{ env.MSRV }} --profile minimal --component rustfmt,clippy
+          rustup override set ${{ env.MSRV }}
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         with:
-          key: rust-version-${{ env.MSRV }}-msrv-2
+          cache-provider: warpbuild
+          shared-key: "linux-${{ env.MSRV }}-lint"
+          cache-all-crates: true
 
       - name: cargo fmt
         run: cargo fmt --all -- --check
