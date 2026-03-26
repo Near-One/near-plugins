@@ -1,10 +1,11 @@
 use crate::utils;
 use crate::utils::{cratename, is_near_bindgen_wrapped_or_marshall};
+use darling::ast::NestedMeta;
 use darling::util::PathList;
 use darling::{FromDeriveInput, FromMeta};
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use syn::{parse, parse_macro_input, AttributeArgs, DeriveInput, ItemFn};
+use syn::{DeriveInput, ItemFn, parse, parse_macro_input};
 
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(pausable), forward_attrs(allow, doc, cfg))]
@@ -148,7 +149,12 @@ pub fn pause(attrs: TokenStream, item: TokenStream) -> TokenStream {
         return item;
     }
 
-    let attr_args = parse_macro_input!(attrs as AttributeArgs);
+    let attr_args = match NestedMeta::parse_meta_list(attrs.into()) {
+        Ok(parsed_args) => parsed_args,
+        Err(e) => {
+            return TokenStream::from(e.into_compile_error());
+        }
+    };
     let args = PauseArgs::from_list(&attr_args).expect("Invalid arguments");
 
     let fn_name = args.name.unwrap_or_else(|| input.sig.ident.to_string());
@@ -182,7 +188,12 @@ pub fn if_paused(attrs: TokenStream, item: TokenStream) -> TokenStream {
         return item;
     }
 
-    let attr_args = parse_macro_input!(attrs as AttributeArgs);
+    let attr_args = match NestedMeta::parse_meta_list(attrs.into()) {
+        Ok(parsed_args) => parsed_args,
+        Err(e) => {
+            return TokenStream::from(e.into_compile_error());
+        }
+    };
     let args = IfPausedArgs::from_list(&attr_args).expect("Invalid arguments");
 
     let fn_name = args.name;

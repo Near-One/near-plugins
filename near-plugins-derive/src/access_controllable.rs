@@ -1,8 +1,9 @@
 use darling::FromMeta;
+use darling::ast::NestedMeta;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{parse_macro_input, AttributeArgs, ItemFn, ItemStruct};
+use syn::{ItemFn, ItemStruct, parse_macro_input};
 
 use crate::access_control_role::new_bitflags_type_ident;
 use crate::utils::{self, cratename, is_near_bindgen_wrapped_or_marshall};
@@ -24,7 +25,12 @@ const ERR_PARSE_ROLE: &str = "Value does not correspond to a role";
 /// Generates the token stream that implements `AccessControllable`.
 pub fn access_controllable(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let cratename = cratename();
-    let attr_args = parse_macro_input!(attrs as AttributeArgs);
+    let attr_args = match NestedMeta::parse_meta_list(attrs.into()) {
+        Ok(parsed_args) => parsed_args,
+        Err(e) => {
+            return TokenStream::from(e.into_compile_error());
+        }
+    };
     let input: ItemStruct = parse_macro_input!(item);
     let acl_type = syn::Ident::new(DEFAULT_ACL_TYPE_NAME, Span::call_site());
     let bitflags_type = new_bitflags_type_ident(Span::call_site());
@@ -705,7 +711,12 @@ pub struct MacroArgsAny {
 
 /// Generates the token stream for the `access_control_any` macro.
 pub fn access_control_any(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let attr_args = parse_macro_input!(attrs as AttributeArgs);
+    let attr_args = match NestedMeta::parse_meta_list(attrs.into()) {
+        Ok(parsed_args) => parsed_args,
+        Err(e) => {
+            return TokenStream::from(e.into_compile_error());
+        }
+    };
     let cloned_item = item.clone();
     let input: ItemFn = parse_macro_input!(cloned_item);
     if is_near_bindgen_wrapped_or_marshall(&input) {
