@@ -1,21 +1,11 @@
 [package]
 name = "ownable"
 version = "0.0.0"
-edition = "2024"
+edition.workspace = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-near-plugins = { path = "../../../../near-plugins" }
-near-sdk = "5.25"
-
-[profile.release]
-codegen-units = 1
-opt-level = "z"
-lto = true
-debug = false
-panic = "abort"
-overflow-checks = true
-
-[workspace]
+near-plugins.workspace = true
+near-sdk.workspace = true

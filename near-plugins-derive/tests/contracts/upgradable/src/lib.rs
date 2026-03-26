@@ -1,8 +1,8 @@
-use near_plugins::{access_control, AccessControlRole, AccessControllable, Upgradable};
+use near_plugins::{AccessControlRole, AccessControllable, Upgradable, access_control};
 use near_sdk::borsh::BorshDeserialize;
 use near_sdk::env;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{near, AccountId, Duration, PanicOnDefault};
+use near_sdk::{AccountId, Duration, PanicOnDefault, near};
 
 /// Defines roles for access control of protected methods provided by the `Upgradable` plugin.
 #[derive(AccessControlRole, Deserialize, Serialize, Copy, Clone)]

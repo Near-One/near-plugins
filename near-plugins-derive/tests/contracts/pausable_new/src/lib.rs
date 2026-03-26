@@ -1,9 +1,9 @@
 use near_plugins::{
-    access_control, if_paused, pause, AccessControlRole, AccessControllable, Pausable,
+    AccessControlRole, AccessControllable, Pausable, access_control, if_paused, pause,
 };
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near, AccountId, PanicOnDefault};
+use near_sdk::{AccountId, PanicOnDefault, env, near};
 
 /// Define roles for access control of `Pausable` features.
 /// IMPORTANT: Keep the same order of existing variants to preserve permission mappings.

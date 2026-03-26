@@ -1,7 +1,7 @@
-use near_plugins::{access_control, access_control_any, AccessControlRole, AccessControllable};
+use near_plugins::{AccessControlRole, AccessControllable, access_control, access_control_any};
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near, AccountId, PanicOnDefault};
+use near_sdk::{AccountId, PanicOnDefault, env, near};
 use std::collections::HashMap;
 
 /// Roles are represented by enum variants.

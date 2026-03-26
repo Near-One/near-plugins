@@ -30,7 +30,7 @@ jobs:
           cache-all-crates: true
 
       - name: cargo test
-        run: cargo test --all --all-features
+        run: cargo test --all-features
 
   lint:
     name: Format and Clippy
@@ -39,9 +39,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install Rust ${{ env.MSRV }} with components
+      - name: Install Rust ${{ env.MSRV }} with wasm32 target and components
         run: |
-          rustup toolchain install ${{ env.MSRV }} --profile minimal --component rustfmt,clippy
+          rustup toolchain install ${{ env.MSRV }} --profile minimal --target wasm32-unknown-unknown --component rustfmt,clippy
           rustup override set ${{ env.MSRV }}
 
       - uses: Swatinem/rust-cache@v2
@@ -54,4 +54,4 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: cargo clippy
-        run: cargo clippy --all --all-features --all-targets -- -D warnings
+        run: cargo clippy --all-features --all-targets -- -D warnings
