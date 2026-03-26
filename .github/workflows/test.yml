@@ -23,14 +23,22 @@ jobs:
           rustup toolchain install ${{ env.MSRV }} --profile minimal --target wasm32-unknown-unknown
           rustup override set ${{ env.MSRV }}
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
+
       - uses: Swatinem/rust-cache@v2
         with:
           cache-provider: warpbuild
           shared-key: "linux-${{ env.MSRV }}-test"
           cache-all-crates: true
 
-      - name: cargo test
-        run: cargo test --all-features
+      - name: cargo nextest run
+        run: cargo nextest run --all-features --profile ci
+
+      - name: cargo test (doctests)
+        run: cargo test --all-features --doc
 
   lint:
     name: Format and Clippy
