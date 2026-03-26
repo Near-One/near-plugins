@@ -47,7 +47,9 @@ syn = { version = "2", features = ["full"] }
 proc-macro-crate = "0.1.5"
 cargo-near-build = { version = "0.11", features = ["build_internal"] }
 
-# Optimization settings for wasm contract builds (used by cargo_near_build in release mode)
+# Optimization settings for wasm contract builds. Only contract packages are
+# built in release mode (via cargo_near_build); the library crates are never
+# built directly with --release, so these settings only affect contracts.
 [profile.release]
 codegen-units = 1
 opt-level = "z"
