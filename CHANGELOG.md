@@ -1,3 +1,19 @@
+# 0.5.1
+
+## Dependencies
+
+- Updated `syn` from 1.0 to 2.0, enabling parsing of `#[unsafe(no_mangle)]` required by Rust edition 2024.
+- Updated `darling` from 0.13 to >=0.20.
+- Updated `near-sdk` from >=5.2 to 5.25.
+- Updated `near-workspaces` from 0.14 to 0.22.
+- Updated `cargo-near-build` from 0.4.4 to 0.11.
+
+## Other
+
+- Rust edition updated from 2021 to 2024.
+- MSRV updated from 1.84.0 to 1.86.0.
+- Repository URLs updated from `aurora-is-near` to `Near-One`.
+
 # 0.3.0 (TBD)
 
 ## BREAKING CHANGES:
