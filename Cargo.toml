@@ -19,7 +19,7 @@ license = "CC0-1.0"
 readme = "README.md"
 repository = "https://github.com/Near-One/near-plugins"
 homepage = "https://github.com/Near-One/near-plugins"
-keywords = ["near", "smart contract", "plugin"]
+keywords = ["near", "smart-contract", "plugin"]
 
 [workspace.dependencies]
 bitflags = "1.3"
