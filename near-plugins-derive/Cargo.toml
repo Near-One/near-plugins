@@ -23,7 +23,7 @@ proc-macro-crate.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
-near-plugins.workspace = true
+near-plugins = { path = "../near-plugins/", version = "0.5.1" }
 near-sdk = { workspace = true, features = ["unit-testing"] }
 tokio.workspace = true
 near-workspaces.workspace = true
