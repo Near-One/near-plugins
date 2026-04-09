@@ -1,0 +1,5 @@
+[workspace]
+# near-sdk >= 5.26 emits a compile_error! on non-wasm targets, which breaks
+# the native build verification that `cargo publish` runs by default.
+# These crates are only meant to compile for wasm, so skip verification.
+publish_no_verify = true
