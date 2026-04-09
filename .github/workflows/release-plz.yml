@@ -24,18 +24,13 @@ jobs:
           fetch-depth: 0
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@main
-      - name: Install release-plz
-        run: cargo-binstall release-plz --no-confirm
       - name: Run release-plz
-        run: release-plz release --git-token "$GITHUB_TOKEN" -o json
+        uses: release-plz/action@v0.5
+        with:
+          command: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-          CARGO_BUILD_TARGET: wasm32-unknown-unknown
 
   # Create a PR with the new versions and changelog, preparing the next release.
   release-plz-pr:
@@ -54,15 +49,10 @@ jobs:
           fetch-depth: 0
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@main
-      - name: Install release-plz
-        run: cargo-binstall release-plz --no-confirm
       - name: Run release-plz
-        run: release-plz release-pr --git-token "$GITHUB_TOKEN" --repo-url "https://github.com/$GITHUB_REPOSITORY" -o json
+        uses: release-plz/action@v0.5
+        with:
+          command: release-pr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-          CARGO_BUILD_TARGET: wasm32-unknown-unknown

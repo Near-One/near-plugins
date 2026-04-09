@@ -1,0 +1,2 @@
+[workspace]
+publish_no_verify = true
