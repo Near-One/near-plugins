@@ -24,8 +24,6 @@ keywords = ["near", "smart-contract", "plugin"]
 [workspace.dependencies]
 bitflags = "1.3"
 near-sdk = "5.2"
-near-plugins = { path = "near-plugins" }
-near-plugins-derive = { path = "near-plugins-derive" }
 serde = "1"
 anyhow = "1.0"
 tokio = { version = "1", features = ["full"] }
