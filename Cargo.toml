@@ -7,7 +7,7 @@ resolver = "3"
 version = "0.15.0"
 
 [workspace.package]
-version = "0.5.1"
+version = "0.5.2"
 edition = "2024"
 authors = ["Aurora Labs <hello@aurora.dev>"]
 # An update of the MSRV requires updating:
