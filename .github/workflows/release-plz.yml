@@ -24,13 +24,6 @@ jobs:
           fetch-depth: 0
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      # Set build target via .cargo/config.toml instead of CARGO_BUILD_TARGET env var.
-      # cargo-binstall reads CARGO_BUILD_TARGET and would try to install a wasm32 binary,
-      # but it ignores .cargo/config.toml.
-      - name: Set cargo build target
-        run: |
-          mkdir -p .cargo
-          echo -e '[build]\ntarget = "wasm32-unknown-unknown"' > .cargo/config.toml
       - name: Run release-plz
         uses: release-plz/action@v0.5
         with:
@@ -56,10 +49,6 @@ jobs:
           fetch-depth: 0
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      - name: Set cargo build target
-        run: |
-          mkdir -p .cargo
-          echo -e '[build]\ntarget = "wasm32-unknown-unknown"' > .cargo/config.toml
       - name: Run release-plz
         uses: release-plz/action@v0.5
         with:
